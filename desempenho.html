@@ -1,0 +1,267 @@
+﻿<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Acompanhe o desempenho de vendas e a rentabilidade de cada produto do seu atelier." />
+  <title>Konditor | Desempenho de Produtos</title>
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/konditor.css" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="assets/js/konditor-config.js"></script>
+</head>
+<body class="bg-background font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+  <a href="#main-content" class="skip-link">Ir para o conteudo principal</a>
+
+  <!-- Mobile sidebar overlay -->
+  <div id="sidebar-overlay" class="fixed inset-0 z-30 bg-black/40 opacity-0 pointer-events-none lg:hidden" aria-hidden="true"></div>
+
+  <aside id="app-sidebar" class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-lowest flex flex-col p-6 gap-2 -translate-x-full lg:translate-x-0" aria-label="Menu principal">
+    <div class="mb-8 flex items-center gap-3 relative">
+      <div class="w-10 h-10 rounded-xl berry-gradient flex items-center justify-center text-white shadow-lg">
+        <span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings:'FILL' 1;">bakery_dining</span>
+      </div>
+      <div>
+        <p class="text-xl font-extrabold text-primary font-headline tracking-tight">Konditor</p>
+        <p class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-bold">Artisanal Intelligence</p>
+      </div>
+      <button id="sidebar-close-btn" class="lg:hidden absolute right-0 top-0 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-200 transition-colors" aria-label="Fechar menu">
+        <span class="material-symbols-outlined text-xl">close</span>
+      </button>
+    </div>
+    <nav class="flex-1 flex flex-col gap-1">
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="receitas.html">
+        <span class="material-symbols-outlined">menu_book</span> Receitas
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="ingredientes.html">
+        <span class="material-symbols-outlined">liquor</span> Ingredientes
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="custos.html">
+        <span class="material-symbols-outlined">payments</span> Custos
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="precos.html">
+        <span class="material-symbols-outlined">sell</span> Precificação
+      </a>
+      <a aria-current="page" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-primary bg-primary-container/20 border-r-4 border-primary font-headline text-sm" href="desempenho.html">
+        <span class="material-symbols-outlined">storefront</span> Desempenho
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="lucro.html">
+        <span class="material-symbols-outlined">monitoring</span> Visão de Lucro
+      </a>
+    </nav>
+    <div class="mt-auto pt-4 border-t border-outline-variant flex flex-col gap-1">
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-slate-900 hover:translate-x-1 transition-all text-sm" href="#">
+        <span class="material-symbols-outlined">help</span> Ajuda
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-slate-900 hover:translate-x-1 transition-all text-sm" href="login.html">
+        <span class="material-symbols-outlined">logout</span> Sair
+      </a>
+      <div class="mt-3 p-4 rounded-2xl bg-surface-container">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">C</div>
+          <div>
+            <p class="text-xs font-bold text-on-surface">Chef Julian</p>
+            <p class="text-[10px] text-on-surface-variant">Conta Premium</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Top Header -->
+  <header class="flex justify-between items-center px-4 md:px-8 lg:ml-64 bg-white/80 backdrop-blur-xl lg:w-[calc(100%-16rem)] w-full h-16 sticky top-0 z-40 shadow-[0_20px_40px_rgba(189,0,80,0.04)]">
+    <button id="sidebar-open-btn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors" aria-label="Abrir menu"><span class="material-symbols-outlined">menu</span></button>
+    <div class="relative">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+      <input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Buscar produtos..." type="text" />
+    </div>
+    <div class="flex items-center gap-4">
+      <button type="button" aria-label="Notifica&#231;&#245;es" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+      </button>
+      <button type="button" aria-label="Configura&#231;&#245;es" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined" aria-hidden="true">settings</span>
+      </button>
+      <div class="h-8 w-px bg-outline-variant/30 mx-2"></div>
+      <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container border-2 border-primary-container text-sm">C</div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main-content" class="lg:ml-64 p-12">
+    <div class="max-w-7xl mx-auto space-y-10">
+      <!-- Page Header -->
+      <div>
+        <span class="text-xs font-bold tracking-[0.2em] text-on-surface-variant uppercase font-label">Relatório</span>
+        <h2 class="text-4xl font-extrabold font-headline tracking-tight mt-1">Desempenho de <span class="text-secondary">Produtos</span></h2>
+        <p class="text-on-surface-variant mt-1">Análise comparativa de rentabilidade por produto e categoria.</p>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-secondary-container/20 rounded-3xl p-6 flex flex-col justify-between">
+          <div class="w-10 h-10 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary mb-4">
+            <span class="material-symbols-outlined">percent</span>
+          </div>
+          <p class="text-4xl font-extrabold font-headline text-secondary">68.4%</p>
+          <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant mt-2">Margem Média</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-3xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+          <div class="w-10 h-10 rounded-2xl bg-outline/10 flex items-center justify-center text-outline mb-4">
+            <span class="material-symbols-outlined">payments</span>
+          </div>
+          <p class="text-4xl font-extrabold font-headline">R$24.1k</p>
+          <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant mt-2">Receita do Mês</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-3xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+          <div class="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+            <span class="material-symbols-outlined">menu_book</span>
+          </div>
+          <p class="text-4xl font-extrabold font-headline">104</p>
+          <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant mt-2">Receitas Ativas</p>
+        </div>
+        <div class="bg-error/5 rounded-3xl p-6 border border-error/10 flex flex-col justify-between">
+          <div class="w-10 h-10 rounded-2xl bg-error/10 flex items-center justify-center text-error mb-4">
+            <span class="material-symbols-outlined">warning</span>
+          </div>
+          <p class="text-4xl font-extrabold font-headline text-error">3</p>
+          <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant mt-2">Abaixo da Meta</p>
+        </div>
+      </div>
+
+      <!-- Table Section -->
+      <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+        <!-- Filter Tabs -->
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex gap-2" data-filter-group>
+              <button type="button" data-filter-chip aria-pressed="true" class="px-5 py-2.5 rounded-full bg-primary text-on-primary font-headline font-bold text-sm">Todos</button>
+              <button type="button" data-filter-chip aria-pressed="false" class="px-5 py-2.5 rounded-full bg-surface-container text-on-surface-variant font-headline font-bold text-sm hover:bg-surface-container-high transition">Bolos</button>
+              <button type="button" data-filter-chip aria-pressed="false" class="px-5 py-2.5 rounded-full bg-surface-container text-on-surface-variant font-headline font-bold text-sm hover:bg-surface-container-high transition">Tortas</button>
+              <button type="button" data-filter-chip aria-pressed="false" class="px-5 py-2.5 rounded-full bg-surface-container text-on-surface-variant font-headline font-bold text-sm hover:bg-surface-container-high transition">Chocolates</button>
+              <button type="button" data-filter-chip aria-pressed="false" class="px-5 py-2.5 rounded-full bg-surface-container text-on-surface-variant font-headline font-bold text-sm hover:bg-surface-container-high transition">Macarons</button>
+          </div>
+          <button type="button" class="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-lg">download</span>
+            Exportar CSV
+          </button>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-outline-variant/20">
+                <th scope="col" class="text-left py-4 px-4 text-[10px] uppercase tracking-wider font-bold text-on-surface-variant">Produto</th>
+                <th scope="col" class="text-left py-4 px-4 text-[10px] uppercase tracking-wider font-bold text-on-surface-variant">Categoria</th>
+                <th scope="col" class="text-right py-4 px-4 text-[10px] uppercase tracking-wider font-bold text-on-surface-variant">Custo Unitário</th>
+                <th scope="col" class="text-right py-4 px-4 text-[10px] uppercase tracking-wider font-bold text-on-surface-variant">Preço de Venda</th>
+                <th scope="col" class="text-right py-4 px-4 text-[10px] uppercase tracking-wider font-bold text-on-surface-variant">Margem</th>
+                <th scope="col" class="text-right py-4 px-4 text-[10px] uppercase tracking-wider font-bold text-on-surface-variant">Tendência</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/10">
+              <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer">
+                <td class="py-4 px-4">
+                  <div class="flex items-center gap-3">
+                    <img alt="" class="w-10 h-10 rounded-xl object-cover" loading="lazy" src="https://images.unsplash.com/photo-1464195244916-405fa0a82545?w=80&q=80" />
+                    <span class="font-medium">Torta de Framboesa Valrhona</span>
+                  </div>
+                </td>
+                <td class="py-4 px-4"><span class="bg-primary-container/30 text-on-primary-container px-3 py-1 rounded-full text-xs font-bold">Tortas</span></td>
+                <td class="py-4 px-4 text-right font-medium">R$ 4,26</td>
+                <td class="py-4 px-4 text-right font-bold">R$ 12,17</td>
+                <td class="py-4 px-4 text-right"><span class="text-secondary font-extrabold">65%</span></td>
+                <td class="py-4 px-4 text-right"><span class="flex items-center justify-end gap-1 text-secondary text-xs font-bold"><span class="material-symbols-outlined text-sm">trending_up</span>+5%</span></td>
+              </tr>
+              <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer">
+                <td class="py-4 px-4">
+                  <div class="flex items-center gap-3">
+                    <img alt="" class="w-10 h-10 rounded-xl object-cover" loading="lazy" src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=80&q=80" />
+                    <span class="font-medium">Bolo de Amêndoas e Sal</span>
+                  </div>
+                </td>
+                <td class="py-4 px-4"><span class="bg-secondary-container/30 text-on-secondary-container px-3 py-1 rounded-full text-xs font-bold">Bolos</span></td>
+                <td class="py-4 px-4 text-right font-medium">R$ 6,80</td>
+                <td class="py-4 px-4 text-right font-bold">R$ 19,43</td>
+                <td class="py-4 px-4 text-right"><span class="text-secondary font-extrabold">65%</span></td>
+                <td class="py-4 px-4 text-right"><span class="flex items-center justify-end gap-1 text-secondary text-xs font-bold"><span class="material-symbols-outlined text-sm">trending_up</span>+2%</span></td>
+              </tr>
+              <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer">
+                <td class="py-4 px-4">
+                  <div class="flex items-center gap-3">
+                    <img alt="" class="w-10 h-10 rounded-xl object-cover" loading="lazy" src="https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=80&q=80" />
+                    <span class="font-medium">Macarons Pistachio Arabique</span>
+                  </div>
+                </td>
+                <td class="py-4 px-4"><span class="bg-tertiary-container/30 text-on-tertiary-container px-3 py-1 rounded-full text-xs font-bold">Macarons</span></td>
+                <td class="py-4 px-4 text-right font-medium">R$ 3,20</td>
+                <td class="py-4 px-4 text-right font-bold">R$ 6,15</td>
+                <td class="py-4 px-4 text-right"><span class="text-error font-extrabold">48%</span></td>
+                <td class="py-4 px-4 text-right"><span class="flex items-center justify-end gap-1 text-error text-xs font-bold"><span class="material-symbols-outlined text-sm">trending_down</span>−3%</span></td>
+              </tr>
+              <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer">
+                <td class="py-4 px-4">
+                  <div class="flex items-center gap-3">
+                    <img alt="" class="w-10 h-10 rounded-xl object-cover" loading="lazy" src="https://images.unsplash.com/photo-1606312619070-d48b5c9be6c8?w=80&q=80" />
+                    <span class="font-medium">Trufas Valrhona Single Origin</span>
+                  </div>
+                </td>
+                <td class="py-4 px-4"><span class="bg-surface-container-high px-3 py-1 rounded-full text-xs font-bold">Chocolates</span></td>
+                <td class="py-4 px-4 text-right font-medium">R$ 2,45</td>
+                <td class="py-4 px-4 text-right font-bold">R$ 7,00</td>
+                <td class="py-4 px-4 text-right"><span class="text-secondary font-extrabold">65%</span></td>
+                <td class="py-4 px-4 text-right"><span class="flex items-center justify-end gap-1 text-on-surface-variant text-xs font-bold"><span class="material-symbols-outlined text-sm">trending_flat</span>0%</span></td>
+              </tr>
+              <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer">
+                <td class="py-4 px-4">
+                  <div class="flex items-center gap-3">
+                    <img alt="" class="w-10 h-10 rounded-xl object-cover" loading="lazy" src="https://images.unsplash.com/photo-1551024601-bec78aea704b?w=80&q=80" />
+                    <span class="font-medium">Éclair de Caramelo Fleur de Sel</span>
+                  </div>
+                </td>
+                <td class="py-4 px-4"><span class="bg-surface-container-high px-3 py-1 rounded-full text-xs font-bold">Massas</span></td>
+                <td class="py-4 px-4 text-right font-medium">R$ 3,90</td>
+                <td class="py-4 px-4 text-right font-bold">R$ 11,14</td>
+                <td class="py-4 px-4 text-right"><span class="text-secondary font-extrabold">65%</span></td>
+                <td class="py-4 px-4 text-right"><span class="flex items-center justify-end gap-1 text-secondary text-xs font-bold"><span class="material-symbols-outlined text-sm">trending_up</span>+8%</span></td>
+              </tr>
+              <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer">
+                <td class="py-4 px-4">
+                  <div class="flex items-center gap-3">
+                    <img alt="" class="w-10 h-10 rounded-xl object-cover" loading="lazy" src="https://images.unsplash.com/photo-1587668178277-295251f900ce?w=80&q=80" />
+                    <span class="font-medium">Ganache de Baunilha Tahiti</span>
+                  </div>
+                </td>
+                <td class="py-4 px-4"><span class="bg-surface-container-high px-3 py-1 rounded-full text-xs font-bold">Chocolates</span></td>
+                <td class="py-4 px-4 text-right font-medium">R$ 5,15</td>
+                <td class="py-4 px-4 text-right font-bold">R$ 14,71</td>
+                <td class="py-4 px-4 text-right"><span class="text-secondary font-extrabold">65%</span></td>
+                <td class="py-4 px-4 text-right"><span class="flex items-center justify-end gap-1 text-secondary text-xs font-bold"><span class="material-symbols-outlined text-sm">trending_up</span>+3%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex items-center justify-between mt-6 pt-6 border-t border-outline-variant/20">
+          <p class="text-xs text-on-surface-variant">Exibindo <strong>1–6</strong> de <strong>104</strong> produtos</p>
+          <div class="flex items-center gap-2">
+            <button class="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition">
+              <span class="material-symbols-outlined text-lg">chevron_left</span>
+            </button>
+            <button class="w-9 h-9 flex items-center justify-center rounded-full bg-primary text-on-primary font-bold text-sm">1</button>
+            <button class="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition font-bold text-sm">2</button>
+            <button class="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition font-bold text-sm">3</button>
+            <button class="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition">
+              <span class="material-symbols-outlined text-lg">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="assets/js/konditor-app.js" defer></script>
+</body>
+</html>

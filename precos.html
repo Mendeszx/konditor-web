@@ -1,0 +1,258 @@
+﻿<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Defina estrategias de precificacao inteligentes baseadas em margens e benchmarks de mercado." />
+  <title>Konditor | Estratégia de Margens</title>
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/konditor.css" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="assets/js/konditor-config.js"></script>
+</head>
+<body class="bg-background font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+  <a href="#main-content" class="skip-link">Ir para o conteudo principal</a>
+
+  <!-- Mobile sidebar overlay -->
+  <div id="sidebar-overlay" class="fixed inset-0 z-30 bg-black/40 opacity-0 pointer-events-none lg:hidden" aria-hidden="true"></div>
+
+  <aside id="app-sidebar" class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-lowest flex flex-col p-6 gap-2 -translate-x-full lg:translate-x-0" aria-label="Menu principal">
+    <div class="mb-8 flex items-center gap-3 relative">
+      <div class="w-10 h-10 rounded-xl berry-gradient flex items-center justify-center text-white shadow-lg">
+        <span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings:'FILL' 1;">bakery_dining</span>
+      </div>
+      <div>
+        <p class="text-xl font-extrabold text-primary font-headline tracking-tight">Konditor</p>
+        <p class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-bold">Artisanal Intelligence</p>
+      </div>
+      <button id="sidebar-close-btn" class="lg:hidden absolute right-0 top-0 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-200 transition-colors" aria-label="Fechar menu">
+        <span class="material-symbols-outlined text-xl">close</span>
+      </button>
+    </div>
+    <nav class="flex-1 flex flex-col gap-1">
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="receitas.html">
+        <span class="material-symbols-outlined">menu_book</span> Receitas
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="ingredientes.html">
+        <span class="material-symbols-outlined">liquor</span> Ingredientes
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="custos.html">
+        <span class="material-symbols-outlined">payments</span> Custos
+      </a>
+      <a aria-current="page" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-primary bg-primary-container/20 border-r-4 border-primary font-headline text-sm" href="precos.html">
+        <span class="material-symbols-outlined">sell</span> Precificação
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="desempenho.html">
+        <span class="material-symbols-outlined">storefront</span> Desempenho
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="lucro.html">
+        <span class="material-symbols-outlined">monitoring</span> Visão de Lucro
+      </a>
+    </nav>
+    <div class="mt-auto pt-4 border-t border-outline-variant flex flex-col gap-1">
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-slate-900 hover:translate-x-1 transition-all text-sm" href="#">
+        <span class="material-symbols-outlined">help</span> Ajuda
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-slate-900 hover:translate-x-1 transition-all text-sm" href="login.html">
+        <span class="material-symbols-outlined">logout</span> Sair
+      </a>
+      <div class="mt-3 p-4 rounded-2xl bg-surface-container">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">C</div>
+          <div>
+            <p class="text-xs font-bold text-on-surface">Chef Julian</p>
+            <p class="text-[10px] text-on-surface-variant">Conta Premium</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Top Header -->
+  <header class="flex justify-between items-center px-4 md:px-8 lg:ml-64 bg-white/80 backdrop-blur-xl lg:w-[calc(100%-16rem)] w-full h-16 sticky top-0 z-40 shadow-[0_20px_40px_rgba(189,0,80,0.04)]">
+    <button id="sidebar-open-btn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors" aria-label="Abrir menu"><span class="material-symbols-outlined">menu</span></button>
+    <div class="relative">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+      <input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Buscar categorias ou produtos..." type="text" />
+    </div>
+    <div class="flex items-center gap-4">
+      <button type="button" aria-label="Notifica&#231;&#245;es" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+      </button>
+      <button type="button" aria-label="Configura&#231;&#245;es" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined" aria-hidden="true">settings</span>
+      </button>
+      <div class="h-8 w-px bg-outline-variant/30 mx-2"></div>
+      <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container border-2 border-primary-container text-sm">C</div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main-content" class="lg:ml-64 p-12">
+    <div class="max-w-7xl mx-auto space-y-10">
+      <!-- Page Header -->
+      <div>
+        <span class="text-xs font-bold tracking-[0.2em] text-primary uppercase font-label">Precificação</span>
+        <h2 class="text-4xl font-extrabold font-headline tracking-tight mt-1">Estratégia de <span class="text-primary">Margens</span></h2>
+        <p class="text-on-surface-variant mt-1">Calibre a rentabilidade de cada categoria com precisão cirúrgica.</p>
+      </div>
+
+      <!-- Financial Health + Suggestion -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Financial Health Glass Card (2 cols) -->
+        <div class="col-span-1 md:col-span-2 bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+          <div class="grid grid-cols-2 gap-8 items-start">
+            <div>
+              <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
+                  <span class="material-symbols-outlined">finance_mode</span>
+                </div>
+                <div>
+                  <p class="text-[10px] uppercase font-bold tracking-wider text-outline">Saúde Financeira</p>
+                  <h3 class="font-headline font-extrabold">Visão Global</h3>
+                </div>
+              </div>
+              <div class="space-y-5">
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <p class="text-sm text-on-surface-variant">Markup Médio</p>
+                    <p class="font-bold">265%</p>
+                  </div>
+                  <div class="h-2 bg-surface-container-low rounded-full">
+                    <div class="h-full bg-secondary rounded-full" style="width:75%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <p class="text-sm text-on-surface-variant">Meta de Margem Global</p>
+                    <p class="font-bold">62%</p>
+                  </div>
+                  <div class="h-2 bg-surface-container-low rounded-full">
+                    <div class="h-full bg-primary rounded-full" style="width:62%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Circular Indicator -->
+            <div class="flex flex-col items-center justify-center">
+              <div class="relative w-40 h-40">
+                <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
+                  <circle cx="50" cy="50" r="40" fill="none" stroke="#eceef1" stroke-width="10"/>
+                  <circle cx="50" cy="50" r="40" fill="none" stroke="#bd0050" stroke-width="10" stroke-dasharray="251.2" stroke-dashoffset="40.2" stroke-linecap="round"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <p class="text-3xl font-extrabold font-headline text-primary">84%</p>
+                  <p class="text-xs text-on-surface-variant">eficiência</p>
+                </div>
+              </div>
+              <p class="text-xs text-center text-on-surface-variant mt-4 max-w-[120px]">Eficiência geral do portfólio</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strategic Suggestion Card (1 col) -->
+        <div class="bg-primary rounded-3xl p-8 flex flex-col justify-between">
+          <div>
+            <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white mb-4">
+              <span class="material-symbols-outlined">lightbulb</span>
+            </div>
+            <p class="text-[10px] uppercase tracking-wider font-bold text-primary-container/80">Sugestão Estratégica</p>
+            <h3 class="text-xl font-extrabold font-headline text-white mt-2 leading-snug">
+              Aumente a margem de Macarons em 5%
+            </h3>
+            <p class="text-white/70 text-sm mt-3 leading-relaxed">
+              Macarons têm a menor margem do portfólio. Um ajuste de 5% pode gerar +R$1.200/mês sem impacto na demanda.
+            </p>
+          </div>
+          <button class="mt-6 px-6 py-3 rounded-full bg-white text-primary font-headline font-bold text-sm hover:bg-primary-container transition-colors active:scale-95">
+            Aplicar Sugestão
+          </button>
+        </div>
+      </div>
+
+      <!-- Category Margin Sliders -->
+      <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+        <div class="flex items-center justify-between mb-8">
+          <h3 class="text-xl font-bold font-headline">Margens por Categoria</h3>
+          <button class="text-sm text-primary font-bold hover:underline">Salvar Alterações</button>
+        </div>
+        <div class="space-y-8">
+          <!-- Bolos -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary-container/30 flex items-center justify-center text-primary text-sm font-bold">Bo</div>
+                <div>
+                  <p class="font-bold text-sm">Bolos</p>
+                  <p class="text-xs text-on-surface-variant">42 receitas ativas</p>
+                </div>
+              </div>
+              <span id="out-bolos" class="text-2xl font-extrabold font-headline text-primary">70%</span>
+            </div>
+            <input id="range-bolos" data-output="out-bolos" aria-label="Margem de Bolos" type="range" min="20" max="80" value="70" class="w-full" />
+          </div>
+          <!-- Chocolates -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-tertiary-container/30 flex items-center justify-center text-tertiary text-sm font-bold">Ch</div>
+                <div>
+                  <p class="font-bold text-sm">Chocolates</p>
+                  <p class="text-xs text-on-surface-variant">28 receitas ativas</p>
+                </div>
+              </div>
+              <span id="out-chocolates" class="text-2xl font-extrabold font-headline text-primary">65%</span>
+            </div>
+            <input id="range-chocolates" data-output="out-chocolates" aria-label="Margem de Chocolates" type="range" min="20" max="80" value="65" class="w-full" />
+          </div>
+          <!-- Macarons -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-secondary-container/30 flex items-center justify-center text-secondary text-sm font-bold">Ma</div>
+                <div>
+                  <p class="font-bold text-sm">Macarons</p>
+                  <p class="text-xs text-error">⚠ Abaixo da meta — considere ajustar</p>
+                </div>
+              </div>
+              <span id="out-macarons" class="text-2xl font-extrabold font-headline text-error">48%</span>
+            </div>
+            <input id="range-macarons" data-output="out-macarons" aria-label="Margem de Macarons" type="range" min="20" max="80" value="48" class="w-full" />
+          </div>
+          <!-- Tortas -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary-container/30 flex items-center justify-center text-primary text-sm font-bold">To</div>
+                <div>
+                  <p class="font-bold text-sm">Tortas</p>
+                  <p class="text-xs text-on-surface-variant">19 receitas ativas</p>
+                </div>
+              </div>
+              <span id="out-tortas" class="text-2xl font-extrabold font-headline text-primary">72%</span>
+            </div>
+            <input id="range-tortas" data-output="out-tortas" aria-label="Margem de Tortas" type="range" min="20" max="80" value="72" class="w-full" />
+          </div>
+          <!-- Doces Finos -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-on-surface-variant text-sm font-bold">Df</div>
+                <div>
+                  <p class="font-bold text-sm">Doces Finos</p>
+                  <p class="text-xs text-on-surface-variant">15 receitas ativas</p>
+                </div>
+              </div>
+              <span id="out-dfs" class="text-2xl font-extrabold font-headline text-primary">62%</span>
+            </div>
+            <input id="range-dfs" data-output="out-dfs" aria-label="Margem de Doces Finos" type="range" min="20" max="80" value="62" class="w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="assets/js/konditor-app.js" defer></script>
+</body>
+</html>

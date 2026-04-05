@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Konditor - Gerencie receitas, custos e lucros do seu atelier de confeitaria com inteligencia artesanal." />
+  <title>Konditor | Inteligência Artesanal para Confeitaria</title>
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/konditor.css" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="assets/js/konditor-config.js"></script>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+  <a href="#main-content" class="skip-link">Ir para o conteudo principal</a>
+
+  <!-- Top Navigation Bar -->
+  <nav class="fixed top-0 left-0 right-0 z-50 h-16 glass-nav shadow-[0_4px_32px_rgba(189,0,80,0.04)]">
+    <div class="max-w-7xl mx-auto h-full flex items-center justify-between px-8">
+      <a href="index.html" class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl berry-gradient flex items-center justify-center text-white shadow-lg">
+          <span class="material-symbols-outlined text-xl" style="font-variation-settings:'FILL' 1;">bakery_dining</span>
+        </div>
+        <span class="text-xl font-extrabold text-primary font-headline tracking-tight">Konditor</span>
+      </a>
+      <div class="hidden md:flex items-center gap-8 text-sm font-headline font-medium text-on-surface-variant">
+        <a href="#features" class="text-primary font-bold" aria-current="page">Funcionalidades</a>
+        <a href="planos.html" class="hover:text-primary transition-colors">Preços</a>
+        <a href="termos.html" class="hover:text-primary transition-colors">Termos</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="login.html" class="hidden md:inline px-5 py-2.5 rounded-full text-on-surface font-headline font-bold text-sm hover:bg-surface-container transition-colors">Entrar</a>
+        <a href="onboarding.html" class="px-6 py-2.5 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-md hover:scale-105 transition-transform active:scale-95">Começar Grátis</a>
+        <button id="nav-mobile-toggle" class="md:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors" aria-label="Abrir menu de navegacao" aria-expanded="false" aria-controls="nav-mobile-menu">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+      </div>
+    </div>
+    <!-- Mobile Navigation Menu -->
+    <div id="nav-mobile-menu" class="md:hidden hidden border-t border-outline-variant/20 bg-white/95 backdrop-blur-md">
+      <div class="max-w-7xl mx-auto px-8 py-3 flex flex-col">
+        <a class="py-3 px-2 text-primary font-bold font-headline" href="#features">Funcionalidades</a>
+        <a class="py-3 px-2 text-on-surface-variant font-headline hover:text-primary transition-colors" href="planos.html">Preços</a>
+        <a class="py-3 px-2 text-on-surface-variant font-headline hover:text-primary transition-colors" href="termos.html">Termos</a>
+        <a class="py-3 px-2 text-on-surface-variant font-headline hover:text-primary transition-colors border-t border-outline-variant/20 mt-2 pt-4" href="login.html">Entrar</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main-content">
+    <!-- Hero Section -->
+    <section class="pt-36 pb-24 px-6 max-w-7xl mx-auto">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <div class="space-y-8">
+          <div class="inline-flex items-center gap-2 px-3 py-1 bg-surface-container-high rounded-full">
+            <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+            <span class="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant font-label">Inteligência Artesanal</span>
+          </div>
+          <h1 class="text-6xl md:text-7xl font-extrabold font-headline leading-[1.1] tracking-tight text-on-background">
+            Sua Confeitaria, <br/>
+            <span class="text-primary italic">Sua Arte</span>, <br/>
+            Seus Lucros
+          </h1>
+          <p class="text-xl text-on-surface-variant max-w-lg leading-relaxed">
+            Transforme suas receitas artesanais em dados financeiros precisos. O Konditor equilibra a paixão pela confeitaria com o rigor da inteligência de negócios.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 pt-4">
+            <a href="onboarding.html" class="berry-gradient text-on-primary px-10 py-4 rounded-full font-headline font-bold text-lg active:scale-95 duration-200 shadow-xl shadow-primary/20 text-center">
+              Começar Agora
+            </a>
+            <a href="planos.html" class="bg-surface-container-highest text-on-surface px-10 py-4 rounded-full font-headline font-bold text-lg active:scale-95 duration-200 text-center">
+              Ver Planos
+            </a>
+          </div>
+          <div class="flex gap-8 pt-4">
+            <div class="flex flex-col">
+              <span class="text-2xl font-headline font-black text-primary">15k+</span>
+              <span class="text-xs font-label uppercase tracking-wider font-bold opacity-60">Receitas Criadas</span>
+            </div>
+            <div class="w-px h-12 bg-outline-variant/30"></div>
+            <div class="flex flex-col">
+              <span class="text-2xl font-headline font-black text-secondary">98%</span>
+              <span class="text-xs font-label uppercase tracking-wider font-bold opacity-60">Precisão de Custos</span>
+            </div>
+            <div class="w-px h-12 bg-outline-variant/30"></div>
+            <div class="flex flex-col">
+              <span class="text-2xl font-headline font-black text-tertiary">2.3k</span>
+              <span class="text-xs font-label uppercase tracking-wider font-bold opacity-60">Confeiteiros Ativos</span>
+            </div>
+          </div>
+        </div>
+        <div class="relative">
+          <div class="absolute -top-12 -left-12 w-64 h-64 bg-primary-container/30 rounded-full blur-3xl -z-10"></div>
+          <div class="absolute -bottom-12 -right-12 w-64 h-64 bg-secondary-container/30 rounded-full blur-3xl -z-10"></div>
+          <div class="rounded-xl overflow-hidden shadow-2xl shadow-primary/10 aspect-square">
+            <img class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700"
+              src="https://images.unsplash.com/photo-1607478900766-efe13248b125?w=800&q=80"
+              alt="Confeitaria artesanal de alta qualidade com glaze de framboesa e folha de ouro" />
+          </div>
+          <!-- Floating Data Card -->
+          <div class="absolute bottom-8 -left-8 bg-white/90 backdrop-blur-md p-6 rounded-xl shadow-xl border border-white/20 max-w-[240px]">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="p-2 bg-secondary-container rounded-lg">
+                <span class="material-symbols-outlined text-secondary text-xl">trending_up</span>
+              </div>
+              <span class="font-headline font-bold text-sm text-on-surface">Margem Real</span>
+            </div>
+            <div class="text-3xl font-black font-headline text-secondary">+24%</div>
+            <p class="text-xs text-on-surface-variant mt-1">Otimização de custo por ingrediente este mês.</p>
+          </div>
+          <!-- Second float card -->
+          <div class="absolute top-8 -right-4 bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-xl border border-white/20">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+              <span class="text-xs font-bold text-on-surface">Receita Premium</span>
+            </div>
+            <p class="text-[10px] text-on-surface-variant">Ganache Valrhona • R$ 18,50/unit</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Bento Grid -->
+    <section id="features" class="py-24 bg-surface-container-low">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="mb-16">
+          <div class="inline-block px-3 py-1 bg-primary-container/20 text-primary text-[10px] uppercase tracking-widest font-bold rounded-full mb-4">Funcionalidades</div>
+          <h2 class="text-4xl md:text-5xl font-extrabold font-headline mb-4 tracking-tight">Mestria em Cada Detalhe</h2>
+          <p class="text-on-surface-variant max-w-2xl text-lg leading-relaxed">Ferramentas desenhadas para quem entende que a perfeição de um doce começa na precisão dos números.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <!-- Feature 1 - Wide -->
+          <div class="md:col-span-8 bg-surface-container-lowest p-8 rounded-xl group hover:bg-white transition-colors">
+            <div class="flex flex-col md:flex-row gap-8 items-center">
+              <div class="flex-1 space-y-4">
+                <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-primary">menu_book</span>
+                </div>
+                <h3 class="text-2xl font-bold font-headline">Gestão de Receitas</h3>
+                <p class="text-on-surface-variant">Centralize suas criações com escalabilidade automática. Ajuste o rendimento e o sistema recalcula cada grama instantaneamente.</p>
+              </div>
+              <div class="flex-1 bg-surface-container rounded-xl p-6 w-full space-y-3">
+                <div class="flex justify-between items-center p-3 bg-surface-container-lowest rounded-xl">
+                  <span class="text-sm font-medium">Ganache de Framboesa</span>
+                  <span class="text-xs text-secondary font-bold">72% margem</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-surface-container-lowest rounded-xl">
+                  <span class="text-sm font-medium">Torta de Maracujá</span>
+                  <span class="text-xs text-secondary font-bold">68% margem</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-primary-container/20 rounded-xl">
+                  <span class="text-sm font-medium text-primary">Macaron Baunilha</span>
+                  <span class="text-xs text-primary font-bold">81% margem</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Feature 2 -->
+          <div class="md:col-span-4 bg-surface-container-lowest p-8 rounded-xl group flex flex-col justify-between">
+            <div class="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center mb-1">
+              <span class="material-symbols-outlined text-secondary">analytics</span>
+            </div>
+            <h3 class="text-2xl font-bold font-headline">Análise de Margens</h3>
+            <p class="text-on-surface-variant text-sm mt-1">Visualize o lucro real por unidade vendida, considerando desperdícios e custos variáveis.</p>
+          </div>
+          <!-- Feature 3 -->
+          <div class="md:col-span-4 bg-surface-container-lowest p-8 rounded-xl group flex flex-col justify-between">
+            <div class="w-12 h-12 rounded-xl bg-tertiary/10 flex items-center justify-center mb-6">
+              <span class="material-symbols-outlined text-tertiary">payments</span>
+            </div>
+            <div>
+              <h3 class="text-2xl font-bold font-headline mb-3">Precificação Inteligente</h3>
+              <p class="text-on-surface-variant text-sm">Nunca mais perca dinheiro. Sugestões de preços baseadas no mercado e na sua meta de lucratividade.</p>
+            </div>
+          </div>
+          <!-- Feature 4 - CTA -->
+          <div class="md:col-span-8 bg-primary text-on-primary p-8 rounded-xl flex items-center justify-between overflow-hidden relative">
+            <div class="z-10 space-y-4 max-w-md">
+              <h3 class="text-3xl font-black font-headline">Transforme sua paixão em um império lucrativo.</h3>
+              <a href="onboarding.html" class="inline-block bg-white text-primary px-6 py-3 rounded-full font-headline font-bold hover:bg-surface-container-low transition-colors">
+                Experimentar Grátis
+              </a>
+            </div>
+            <span class="material-symbols-outlined text-[160px] absolute -right-8 opacity-10 rotate-12">cake</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Artisanal Detail Section -->
+    <section class="py-24 px-6 max-w-7xl mx-auto">
+      <div class="flex flex-col md:flex-row items-center gap-16">
+        <div class="md:w-1/2 order-2 md:order-1">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-4 pt-12">
+              <div class="bg-surface-container-high aspect-square rounded-xl overflow-hidden">
+                <img class="w-full h-full object-cover" loading="lazy" src="https://images.unsplash.com/photo-1517093728432-a0440f8d45af?w=400&q=80" alt="Farinha artesanal em superfície de mármore" />
+              </div>
+              <div class="bg-surface-container-high aspect-[3/4] rounded-xl overflow-hidden">
+                <img class="w-full h-full object-cover" loading="lazy" src="https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400&q=80" alt="Chef colocando decoração em doce gourmet" />
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="bg-surface-container-high aspect-[3/4] rounded-xl overflow-hidden">
+                <img class="w-full h-full object-cover" loading="lazy" src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" alt="Macarons coloridos em mármore" />
+              </div>
+              <div class="bg-surface-container-high aspect-square rounded-xl overflow-hidden">
+                <img class="w-full h-full object-cover" loading="lazy" src="https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=400&q=80" alt="Doce artesanal com mel" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="md:w-1/2 order-1 md:order-2 space-y-8">
+          <div class="inline-block px-3 py-1 bg-primary-container/20 text-primary text-[10px] uppercase tracking-widest font-bold rounded-full">Nossa Missão</div>
+          <h2 class="text-5xl font-extrabold font-headline leading-tight">Onde a Precisão <br/> Encontra a <span class="text-primary italic">Arte</span>.</h2>
+          <p class="text-lg text-on-surface-variant leading-relaxed">
+            No Konditor, acreditamos que a confeitaria de alta performance exige mais do que talento—exige controle. Nossa plataforma foi construída por chefs e analistas para garantir que seu negócio seja tão doce quanto suas criações.
+          </p>
+          <ul class="space-y-4">
+            <li class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 1;">check_circle</span>
+              <span class="font-semibold">Inventário em tempo real</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 1;">check_circle</span>
+              <span class="font-semibold">Cálculo de impostos e taxas automáticos</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 1;">check_circle</span>
+              <span class="font-semibold">Relatórios de performance mensal</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 1;">check_circle</span>
+              <span class="font-semibold">Precificação com sugestão de IA</span>
+            </li>
+          </ul>
+          <a href="planos.html" class="inline-flex items-center gap-2 berry-gradient text-on-primary px-8 py-4 rounded-full font-headline font-bold shadow-lg shadow-primary/20">
+            Conhecer Planos <span class="material-symbols-outlined text-xl">arrow_forward</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Social Proof / Testimonials -->
+    <section class="py-24 bg-surface-container-low">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="mb-16 text-center">
+          <h2 class="text-4xl font-extrabold font-headline mb-4 tracking-tight">O que nossos confeiteiros dizem</h2>
+          <p class="text-on-surface-variant max-w-xl mx-auto">Histórias reais de quem transformou paixão em lucro com o Konditor.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-surface-container-lowest p-8 rounded-3xl">
+            <div class="flex items-center gap-1 mb-4">
+              <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+              <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+              <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+              <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+              <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+            </div>
+            <p class="text-on-surface-variant text-sm leading-relaxed mb-6">"Aumentei minha margem em 30% no primeiro mês. Finalmente entendo o custo real de cada receita. O Konditor mudou meu negócio."</p>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-primary">A</div>
+              <div>
+                <p class="font-bold text-sm">Ana Beatriz S.</p>
+                <p class="text-xs text-on-surface-variant">Confeitaria Atelier Doce</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-primary text-on-primary p-8 rounded-3xl">
+            <div class="flex items-center gap-1 mb-4">
+              <span class="material-symbols-outlined text-primary-fixed text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+              <span class="material-symbols-outlined text-primary-fixed text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+              <span class="material-symbols-outlined text-primary-fixed text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+              <span class="material-symbols-outlined text-primary-fixed text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+              <span class="material-symbols-outlined text-primary-fixed text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+            </div>
+            <p class="text-on-primary/80 text-sm leading-relaxed mb-6">"A funcionalidade de precificação inteligente é incrível. Parei de vender abaixo do custo sem perceber. Agora cada produto tem margem garantida."</p>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold">M</div>
+              <div>
+                <p class="font-bold text-sm">Marcos Oliveira</p>
+                <p class="text-xs text-on-primary/70">Chef Pâtissier Independente</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-surface-container-lowest p-8 rounded-3xl">
+            <div class="flex items-center gap-1 mb-4">
+              <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+              <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+              <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+              <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+              <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+            </div>
+            <p class="text-on-surface-variant text-sm leading-relaxed mb-6">"Gerencio um ateliê com 3 funcionários. O Konditor nos permite controlar tudo: estoque, custos e relatórios. Simplesmente indispensável."</p>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center font-bold text-secondary">C</div>
+              <div>
+                <p class="font-bold text-sm">Carla Mendonça</p>
+                <p class="text-xs text-on-surface-variant">Ateliê Sucré Premium</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24 px-6 max-w-4xl mx-auto text-center">
+      <div class="inline-block px-3 py-1 bg-primary-container/20 text-primary text-[10px] uppercase tracking-widest font-bold rounded-full mb-6">Comece Hoje</div>
+      <h2 class="text-5xl md:text-6xl font-extrabold font-headline tracking-tighter mb-6">Pronto para <span class="text-primary italic">transformar</span> sua confeitaria?</h2>
+      <p class="text-xl text-on-surface-variant mb-10 max-w-2xl mx-auto leading-relaxed">Junte-se a mais de 2.300 confeiteiros que já descobriram o poder de unir arte e inteligência financeira.</p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="onboarding.html" class="berry-gradient text-on-primary px-12 py-4 rounded-full font-headline font-bold text-lg shadow-xl shadow-primary/20 active:scale-95 transition-transform">
+          Criar Conta Grátis
+        </a>
+        <a href="planos.html" class="bg-surface-container-highest text-on-surface px-12 py-4 rounded-full font-headline font-bold text-lg active:scale-95 transition-transform">
+          Ver Planos
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-outline-variant/20 py-10 px-8">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg berry-gradient flex items-center justify-center text-white shadow">
+          <span class="material-symbols-outlined text-base" style="font-variation-settings:'FILL' 1;">bakery_dining</span>
+        </div>
+        <span class="font-headline font-extrabold text-primary">Konditor</span>
+      </div>
+      <p class="text-xs text-on-surface-variant text-center">© 2026 Konditor. Inteligência Artesanal. Todos os direitos reservados.</p>
+      <div class="flex gap-6 text-sm">
+        <a href="planos.html" class="text-on-surface-variant hover:text-primary transition-colors">Planos</a>
+        <a href="termos.html#privacidade" class="text-on-surface-variant hover:text-primary transition-colors">Privacidade</a>
+        <a href="termos.html" class="text-on-surface-variant hover:text-primary transition-colors">Termos</a>
+      </div>
+    </div>
+  </footer>
+  <script src="assets/js/konditor-app.js" defer></script>
+</body>
+</html>

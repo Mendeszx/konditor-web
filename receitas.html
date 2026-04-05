@@ -1,0 +1,297 @@
+﻿<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Centralize e gerencie suas receitas artesanais com calculo automatico de custos e margens." />
+  <title>Konditor | Receitas</title>
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/konditor.css" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="assets/js/konditor-config.js"></script>
+</head>
+<body class="bg-background font-body text-on-surface antialiased">
+  <a href="#main-content" class="skip-link">Ir para o conteudo principal</a>
+
+  <!-- Mobile sidebar overlay -->
+  <div id="sidebar-overlay" class="fixed inset-0 z-30 bg-black/40 opacity-0 pointer-events-none lg:hidden" aria-hidden="true"></div>
+
+  <aside id="app-sidebar" class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-lowest flex flex-col p-6 gap-2 -translate-x-full lg:translate-x-0" aria-label="Menu principal">
+    <div class="mb-8 flex items-center gap-3 relative">
+      <div class="w-10 h-10 rounded-xl berry-gradient flex items-center justify-center text-white shadow-lg">
+        <span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings:'FILL' 1;">bakery_dining</span>
+      </div>
+      <div>
+        <p class="text-xl font-extrabold text-primary font-headline tracking-tight">Konditor</p>
+        <p class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-bold">Artisanal Intelligence</p>
+      </div>
+      <button id="sidebar-close-btn" class="lg:hidden absolute right-0 top-0 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-200 transition-colors" aria-label="Fechar menu">
+        <span class="material-symbols-outlined text-xl">close</span>
+      </button>
+    </div>
+    <nav class="flex-1 flex flex-col gap-1">
+      <a aria-current="page" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-primary bg-primary-container/20 border-r-4 border-primary font-headline text-sm" href="receitas.html">
+        <span class="material-symbols-outlined">menu_book</span> Receitas
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="ingredientes.html">
+        <span class="material-symbols-outlined">liquor</span> Ingredientes
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="custos.html">
+        <span class="material-symbols-outlined">payments</span> Custos
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="precos.html">
+        <span class="material-symbols-outlined">sell</span> Precificação
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="desempenho.html">
+        <span class="material-symbols-outlined">storefront</span> Desempenho
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="lucro.html">
+        <span class="material-symbols-outlined">monitoring</span> Visão de Lucro
+      </a>
+    </nav>
+    <div class="mt-auto pt-4 border-t border-outline-variant flex flex-col gap-1">
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-slate-900 hover:translate-x-1 transition-all text-sm" href="#">
+        <span class="material-symbols-outlined">help</span> Ajuda
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-slate-900 hover:translate-x-1 transition-all text-sm" href="login.html">
+        <span class="material-symbols-outlined">logout</span> Sair
+      </a>
+      <div class="mt-3 p-4 rounded-2xl bg-surface-container">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">C</div>
+          <div>
+            <p class="text-xs font-bold text-on-surface">Chef Julian</p>
+            <p class="text-[10px] text-on-surface-variant">Conta Premium</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Top Header -->
+  <header class="flex justify-between items-center px-4 md:px-8 lg:ml-64 bg-white/80 backdrop-blur-xl lg:w-[calc(100%-16rem)] w-full h-16 sticky top-0 z-40 shadow-[0_20px_40px_rgba(189,0,80,0.04)]">
+    <button id="sidebar-open-btn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors" aria-label="Abrir menu"><span class="material-symbols-outlined">menu</span></button>
+    <div class="flex items-center gap-4">
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+        <input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm w-72 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Buscar receitas..." type="text" />
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <button type="button" aria-label="Notifica&#231;&#245;es" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+      </button>
+      <button type="button" aria-label="Configura&#231;&#245;es" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined" aria-hidden="true">settings</span>
+      </button>
+      <div class="h-8 w-px bg-outline-variant/30 mx-1"></div>
+      <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container border-2 border-primary-container text-sm">C</div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main-content" class="lg:ml-64 p-10 min-h-[calc(100vh-64px)]">
+    <div class="max-w-6xl mx-auto">
+
+      <!-- Page Header -->
+      <section class="mb-10 flex items-end justify-between">
+        <div class="space-y-2">
+          <span class="text-xs font-bold tracking-[0.2em] text-primary uppercase font-label">Laboratório</span>
+          <h2 class="text-5xl font-extrabold font-headline text-on-surface tracking-tight leading-tight">
+            Minhas <span class="text-primary italic">Receitas</span>
+          </h2>
+          <p class="text-on-surface-variant max-w-md font-body text-lg">Gerencie todas as suas criações artesanais com precisão financeira.</p>
+        </div>
+        <div class="flex gap-4">
+          <button class="px-6 py-3 rounded-full bg-surface-container-highest text-on-surface font-headline font-bold text-sm hover:opacity-80 transition-opacity active:scale-95">
+            Filtrar
+          </button>
+          <a href="criar-receita.html" class="px-8 py-3 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-xl shadow-primary/20 hover:scale-105 transition-transform active:scale-95 flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">add</span> Nova Receita
+          </a>
+        </div>
+      </section>
+
+      <!-- Stats Row -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div class="bg-surface-container-lowest p-6 rounded-3xl shadow-sm">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">TOTAL DE RECEITAS</p>
+          <p class="text-4xl font-headline font-extrabold text-on-surface">42</p>
+        </div>
+        <div class="bg-surface-container-lowest p-6 rounded-3xl shadow-sm">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">MARGEM MÉDIA</p>
+          <p class="text-4xl font-headline font-extrabold text-secondary">68.4%</p>
+        </div>
+        <div class="bg-surface-container-lowest p-6 rounded-3xl shadow-sm">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">RECEITA NO MÊS</p>
+          <p class="text-4xl font-headline font-extrabold text-on-surface">R$ 24k</p>
+        </div>
+        <div class="bg-primary p-6 rounded-3xl shadow-lg shadow-primary/20 text-on-primary relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 opacity-10">
+            <span class="material-symbols-outlined text-8xl">cake</span>
+          </div>
+          <p class="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-3">MELHOR MARGEM</p>
+          <p class="text-2xl font-headline font-extrabold">Macaron Baunilha</p>
+          <p class="text-sm opacity-80 mt-1">81% de margem</p>
+        </div>
+      </div>
+
+      <!-- Filter Chips -->
+      <div class="flex gap-3 mb-8 overflow-x-auto pb-2" data-filter-group>
+        <button type="button" data-filter-chip aria-pressed="true" class="whitespace-nowrap px-6 py-2 rounded-full bg-primary text-on-primary font-bold text-sm shadow-lg">Todas</button>
+        <button type="button" data-filter-chip aria-pressed="false" class="whitespace-nowrap px-6 py-2 rounded-full bg-surface-container-lowest border border-slate-200 text-on-surface-variant hover:border-primary/30 hover:text-primary transition-colors font-semibold text-sm">Bolos</button>
+        <button type="button" data-filter-chip aria-pressed="false" class="whitespace-nowrap px-6 py-2 rounded-full bg-surface-container-lowest border border-slate-200 text-on-surface-variant hover:border-primary/30 hover:text-primary transition-colors font-semibold text-sm">Tortas</button>
+        <button type="button" data-filter-chip aria-pressed="false" class="whitespace-nowrap px-6 py-2 rounded-full bg-surface-container-lowest border border-slate-200 text-on-surface-variant hover:border-primary/30 hover:text-primary transition-colors font-semibold text-sm">Doces</button>
+        <button type="button" data-filter-chip aria-pressed="false" class="whitespace-nowrap px-6 py-2 rounded-full bg-surface-container-lowest border border-slate-200 text-on-surface-variant hover:border-primary/30 hover:text-primary transition-colors font-semibold text-sm">Chocolates</button>
+        <button type="button" data-filter-chip aria-pressed="false" class="whitespace-nowrap px-6 py-2 rounded-full bg-surface-container-lowest border border-slate-200 text-on-surface-variant hover:border-primary/30 hover:text-primary transition-colors font-semibold text-sm">Macarons</button>
+      </div>
+
+      <!-- Recipe Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- Recipe Card 1 -->
+        <div class="group bg-surface-container-lowest rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 border border-slate-100 hover:border-primary/10">
+          <div class="h-48 relative overflow-hidden">
+            <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"
+              src="https://images.unsplash.com/photo-1587668178277-295251f900ce?w=500&q=80" alt="Ganache de Framboesa Valrhona" />
+            <div class="absolute top-4 left-4">
+              <span class="bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-primary shadow-sm">Tortas</span>
+            </div>
+            <div class="absolute top-4 right-4">
+              <span class="bg-secondary text-on-secondary px-3 py-1 rounded-full text-[10px] font-bold shadow-md">72% margem</span>
+            </div>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <h3 class="text-xl font-headline font-bold text-on-surface">Ganache de Framboesa</h3>
+              <p class="text-xs text-on-surface-variant font-medium mt-1">24 mini tortas • Custo: R$ 38,40</p>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-2xl font-headline font-extrabold text-primary">R$ 8,50 <span class="text-sm font-medium text-on-surface-variant">/unid.</span></span>
+              <a href="custos.html" class="flex items-center gap-1 text-primary text-sm font-bold hover:underline">
+                Analisar <span class="material-symbols-outlined text-sm">arrow_forward</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recipe Card 2 -->
+        <div class="group bg-surface-container-lowest rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 border border-slate-100 hover:border-primary/10">
+          <div class="h-48 relative overflow-hidden">
+            <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"
+              src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80" alt="Macarons de Baunilha" />
+            <div class="absolute top-4 left-4">
+              <span class="bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-primary shadow-sm">Macarons</span>
+            </div>
+            <div class="absolute top-4 right-4">
+              <span class="bg-secondary text-on-secondary px-3 py-1 rounded-full text-[10px] font-bold shadow-md">81% margem</span>
+            </div>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <h3 class="text-xl font-headline font-bold text-on-surface">Macaron de Baunilha</h3>
+              <p class="text-xs text-on-surface-variant font-medium mt-1">30 unidades • Custo: R$ 22,50</p>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-2xl font-headline font-extrabold text-primary">R$ 4,20 <span class="text-sm font-medium text-on-surface-variant">/unid.</span></span>
+              <a href="custos.html" class="flex items-center gap-1 text-primary text-sm font-bold hover:underline">
+                Analisar <span class="material-symbols-outlined text-sm">arrow_forward</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recipe Card 3 - Low Margin Warning -->
+        <div class="group bg-surface-container-lowest rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-error/5 transition-all duration-300 border border-error/10 hover:border-error/20">
+          <div class="h-48 relative overflow-hidden">
+            <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"
+              src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&q=80" alt="Caramelos de Sal Marinho" />
+            <div class="absolute top-4 left-4">
+              <span class="bg-error text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-md">Margem Baixa</span>
+            </div>
+            <div class="absolute top-4 right-4">
+              <span class="bg-error/90 text-white px-3 py-1 rounded-full text-[10px] font-bold shadow-md">32% margem</span>
+            </div>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <h3 class="text-xl font-headline font-bold text-on-surface">Caramelos de Sal Marinho</h3>
+              <p class="text-xs text-on-surface-variant font-medium mt-1">20 unidades • Custo: R$ 34,00</p>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-2xl font-headline font-extrabold text-error">R$ 2,50 <span class="text-sm font-medium text-on-surface-variant">/unid.</span></span>
+              <a href="custos.html" class="flex items-center gap-1 text-error text-sm font-bold hover:underline">
+                Revisar <span class="material-symbols-outlined text-sm">arrow_forward</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recipe Card 4 -->
+        <div class="group bg-surface-container-lowest rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 border border-slate-100 hover:border-primary/10">
+          <div class="h-48 relative overflow-hidden">
+            <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"
+              src="https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=500&q=80" alt="Bolo de Chocolate Belga" />
+            <div class="absolute top-4 left-4">
+              <span class="bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-tertiary shadow-sm">Bolos</span>
+            </div>
+            <div class="absolute top-4 right-4">
+              <span class="bg-secondary text-on-secondary px-3 py-1 rounded-full text-[10px] font-bold shadow-md">65% margem</span>
+            </div>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <h3 class="text-xl font-headline font-bold text-on-surface">Bolo Chocolate Belga</h3>
+              <p class="text-xs text-on-surface-variant font-medium mt-1">12 fatias • Custo: R$ 65,00</p>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-2xl font-headline font-extrabold text-primary">R$ 15,50 <span class="text-sm font-medium text-on-surface-variant">/fatia</span></span>
+              <a href="custos.html" class="flex items-center gap-1 text-primary text-sm font-bold hover:underline">
+                Analisar <span class="material-symbols-outlined text-sm">arrow_forward</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recipe Card 5 -->
+        <div class="group bg-surface-container-lowest rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 border border-slate-100 hover:border-primary/10">
+          <div class="h-48 relative overflow-hidden">
+            <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"
+              src="https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500&q=80" alt="Torta de Maracujá" />
+            <div class="absolute top-4 left-4">
+              <span class="bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-primary shadow-sm">Tortas</span>
+            </div>
+            <div class="absolute top-4 right-4">
+              <span class="bg-secondary text-on-secondary px-3 py-1 rounded-full text-[10px] font-bold shadow-md">68% margem</span>
+            </div>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <h3 class="text-xl font-headline font-bold text-on-surface">Torta de Maracuá</h3>
+              <p class="text-xs text-on-surface-variant font-medium mt-1">8 fatias • Custo: R$ 28,00</p>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-2xl font-headline font-extrabold text-primary">R$ 11,00 <span class="text-sm font-medium text-on-surface-variant">/fatia</span></span>
+              <a href="custos.html" class="flex items-center gap-1 text-primary text-sm font-bold hover:underline">
+                Analisar <span class="material-symbols-outlined text-sm">arrow_forward</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Create New Card -->
+        <a href="criar-receita.html" class="group bg-surface-container-low rounded-3xl border-2 border-dashed border-outline-variant hover:border-primary/50 transition-all duration-300 flex flex-col items-center justify-center p-8 min-h-[300px] hover:bg-primary-container/5 cursor-pointer">
+          <div class="w-16 h-16 rounded-2xl bg-surface-container-highest group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
+            <span class="material-symbols-outlined text-3xl text-on-surface-variant group-hover:text-primary transition-colors">add</span>
+          </div>
+          <p class="font-headline font-bold text-on-surface-variant group-hover:text-primary transition-colors text-center">Criar Nova Receita</p>
+          <p class="text-xs text-on-surface-variant/60 text-center mt-2">Adicione uma nova obra-prima ao seu catálogo</p>
+        </a>
+      </div>
+    </div>
+  </main>
+  <script src="assets/js/konditor-app.js" defer></script>
+</body>
+</html>

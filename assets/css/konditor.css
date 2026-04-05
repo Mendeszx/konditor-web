@@ -1,0 +1,165 @@
+/* =============================================================
+   Konditor — Global Stylesheet
+   Design system utilities, responsive sidebar, accessibility.
+   ============================================================= */
+
+/* ── Skip to content (accessibility) ── */
+.skip-link {
+  position: absolute;
+  top: -48px;
+  left: 1rem;
+  z-index: 9999;
+  background: #bd0050;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* ── Material Symbols ── */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+  line-height: 1;
+  /* prevent layout shift from icon font loading */
+  font-display: block;
+}
+
+/* ── Gradient & Glass utilities ── */
+.berry-gradient  { background: linear-gradient(135deg, #bd0050 0%, #ffa9b9 100%); }
+.glass,
+.glass-nav,
+.glass-card,
+.glass-panel     { background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+
+/* ── Sidebar — mobile slide-in / desktop static ── */
+#app-sidebar {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (min-width: 1024px) {
+  /* Desktop: always visible, no transform needed */
+  #app-sidebar {
+    transform: translateX(0) !important;
+  }
+}
+
+/* ── Sidebar overlay ── */
+#sidebar-overlay {
+  background: rgba(0, 0, 0, 0.45);
+  transition: opacity 0.3s ease;
+}
+
+/* ── Focus visible — consistent across all browsers ── */
+:focus-visible {
+  outline: 2px solid #bd0050;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+/* suppress focus ring for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── Range input — cross-browser ── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, #bd0050 65%, #e6e8ec 65%);
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #bd0050;
+  box-shadow: 0 2px 8px rgba(189, 0, 80, 0.3);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(189, 0, 80, 0.4);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #bd0050;
+  box-shadow: 0 2px 8px rgba(189, 0, 80, 0.3);
+  cursor: pointer;
+}
+input[type="range"]:focus-visible {
+  outline: 2px solid #bd0050;
+  outline-offset: 3px;
+}
+
+/* ── Scrollbar utilities ── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Prose styles for termos.html ── */
+.prose-konditor h3 {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #2f3336;
+  margin-bottom: 0.625rem;
+  margin-top: 1.75rem;
+}
+.prose-konditor p {
+  color: #5c5f63;
+  line-height: 1.8;
+  margin-bottom: 1rem;
+  font-size: 0.9375rem;
+}
+.prose-konditor ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 1rem;
+}
+.prose-konditor ul li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  color: #5c5f63;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  margin-bottom: 0.5rem;
+}
+.prose-konditor ul li::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  min-width: 6px;
+  background: #bd0050;
+  border-radius: 50%;
+  margin-top: 0.525rem;
+  flex-shrink: 0;
+}
+
+/* ── Responsive layout helpers ── */
+/* Ensure images always respect container on mobile */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── Print: hide sidebar/header ── */
+@media print {
+  #app-sidebar, #sidebar-overlay, header { display: none !important; }
+  main { margin-left: 0 !important; }
+}

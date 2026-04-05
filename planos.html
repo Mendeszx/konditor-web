@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Escolha o plano Konditor ideal para o seu atelier. Planos flexiveis, cancele quando quiser." />
+  <title>Konditor | Planos e Assinaturas</title>
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/konditor.css" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="assets/js/konditor-config.js"></script>
+</head>
+<body class="bg-background font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+  <a href="#main-content" class="skip-link">Ir para o conteudo principal</a>
+
+  <!-- Top Nav -->
+  <nav class="fixed top-0 left-0 right-0 z-50 h-16 glass-nav shadow-[0_4px_32px_rgba(189,0,80,0.04)]">
+    <div class="max-w-7xl mx-auto h-full flex items-center justify-between px-8">
+      <a href="index.html" class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl berry-gradient flex items-center justify-center text-white shadow-lg">
+          <span class="material-symbols-outlined text-xl" style="font-variation-settings:'FILL' 1;">bakery_dining</span>
+        </div>
+        <span class="text-xl font-extrabold text-primary font-headline tracking-tight">Konditor</span>
+      </a>
+      <div class="hidden md:flex items-center gap-8 text-sm font-headline font-medium text-on-surface-variant">
+        <a href="index.html#features" class="hover:text-primary transition-colors">Funcionalidades</a>
+        <a href="planos.html" class="text-primary font-bold" aria-current="page">Preços</a>
+        <a href="termos.html" class="hover:text-primary transition-colors">Termos</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="login.html" class="hidden md:inline px-5 py-2.5 rounded-full text-on-surface font-headline font-bold text-sm hover:bg-surface-container transition-colors">Entrar</a>
+        <a href="onboarding.html" class="px-6 py-2.5 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-md hover:scale-105 transition-transform active:scale-95">Começar Grátis</a>
+        <button id="nav-mobile-toggle" class="md:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors" aria-label="Abrir menu de navegacao" aria-expanded="false" aria-controls="nav-mobile-menu">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+      </div>
+    </div>
+    <!-- Mobile Navigation Menu -->
+    <div id="nav-mobile-menu" class="md:hidden hidden border-t border-outline-variant/20 bg-white/95 backdrop-blur-md">
+      <div class="max-w-7xl mx-auto px-8 py-3 flex flex-col">
+        <a class="py-3 px-2 text-on-surface-variant font-headline hover:text-primary transition-colors" href="index.html#features">Funcionalidades</a>
+        <a class="py-3 px-2 text-primary font-bold font-headline" href="planos.html">Precos</a>
+        <a class="py-3 px-2 text-on-surface-variant font-headline hover:text-primary transition-colors" href="termos.html">Termos</a>
+        <a class="py-3 px-2 text-on-surface-variant font-headline hover:text-primary transition-colors border-t border-outline-variant/20 mt-2 pt-4" href="login.html">Entrar</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main-content">
+  <!-- Hero -->
+  <section class="pt-40 pb-24 text-center px-8">
+    <div class="max-w-3xl mx-auto">
+      <span class="inline-block bg-primary-container text-on-primary-container text-xs font-bold tracking-widest uppercase px-4 py-2 rounded-full mb-6">Planos e Assinaturas</span>
+      <h1 class="text-6xl font-extrabold font-headline tracking-tight leading-none mb-6">
+        Invista no seu <span class="text-primary italic">ateliê.</span>
+      </h1>
+      <p class="text-on-surface-variant text-xl leading-relaxed">
+        Escolha o plano que acompanha o seu crescimento. Cancele quando quiser, sem complicações.
+      </p>
+      <!-- Toggle Billing -->
+      <div class="mt-8 flex justify-center">
+        <div id="billing-toggle" class="inline-flex items-center bg-surface-container-high rounded-full p-1.5 shadow-inner" role="group" aria-label="Ciclo de cobrança">
+          <button id="billing-monthly" class="billing-tab px-7 py-2.5 rounded-full text-sm font-headline font-bold transition-all duration-200 text-on-surface-variant" aria-pressed="false">
+            Mensal
+          </button>
+          <button id="billing-annual" class="billing-tab px-7 py-2.5 rounded-full text-sm font-headline font-bold transition-all duration-200 berry-gradient text-on-primary shadow-md" aria-pressed="true">
+            Anual
+            <span class="ml-1.5 inline-block bg-white/25 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full tracking-wide">−20%</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Cards -->
+  <section class="pb-24 px-8">
+    <div class="max-w-5xl mx-auto flex flex-wrap items-start justify-center gap-6">
+
+      <!-- Basic -->
+      <div class="flex-1 bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+        <div class="mb-6">
+          <span class="text-xs font-bold tracking-widest uppercase text-on-surface-variant">Básico</span>
+          <div class="flex items-baseline gap-1 mt-3">
+            <span class="text-4xl font-extrabold font-headline">Grátis</span>
+          </div>
+          <p class="text-sm text-on-surface-variant mt-2">Para quem está começando</p>
+        </div>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center gap-3 text-sm">
+            <span class="material-symbols-outlined text-secondary">check_circle</span>
+            Até 15 receitas
+          </li>
+          <li class="flex items-center gap-3 text-sm">
+            <span class="material-symbols-outlined text-secondary">check_circle</span>
+            20 ingredientes catalogados
+          </li>
+          <li class="flex items-center gap-3 text-sm">
+            <span class="material-symbols-outlined text-secondary">check_circle</span>
+            Calculadora de custos básica
+          </li>
+          <li class="flex items-center gap-3 text-sm text-on-surface-variant">
+            <span class="material-symbols-outlined text-outline-variant">remove_circle</span>
+            Análise de mercado em tempo real
+          </li>
+          <li class="flex items-center gap-3 text-sm text-on-surface-variant">
+            <span class="material-symbols-outlined text-outline-variant">remove_circle</span>
+            Relatórios de desempenho
+          </li>
+          <li class="flex items-center gap-3 text-sm text-on-surface-variant">
+            <span class="material-symbols-outlined text-outline-variant">remove_circle</span>
+            Suporte prioritário
+          </li>
+        </ul>
+        <a href="onboarding.html" class="block w-full py-3 rounded-full bg-surface-container text-on-surface font-headline font-bold text-sm text-center hover:bg-surface-container-high transition-colors active:scale-95">
+          Começar Grátis
+        </a>
+      </div>
+
+      <!-- Professional – Featured -->
+      <div class="flex-1 bg-surface-container-lowest rounded-3xl shadow-[0_20px_60px_rgba(189,0,80,0.12)] border-2 border-primary relative scale-105 z-10">
+        <div class="absolute -top-4 right-6 bg-primary text-on-primary px-6 py-1.5 rounded-bl-2xl rounded-br-2xl text-xs font-extrabold uppercase tracking-widest">
+          Mais Popular
+        </div>
+        <div class="p-8">
+          <div class="mb-6">
+            <span class="text-xs font-bold tracking-widest uppercase text-primary">Profissional</span>
+            <div class="flex items-baseline gap-1 mt-3">
+              <span class="text-4xl font-extrabold font-headline text-primary pricing-price" data-annual="R$ 39" data-monthly="R$ 49">R$ 39</span>
+              <span class="text-on-surface-variant text-sm">/mês</span>
+            </div>
+            <p class="text-sm text-on-surface-variant mt-2">Para confeiteiros em crescimento</p>
+          </div>
+          <ul class="space-y-3 mb-8">
+            <li class="flex items-center gap-3 text-sm">
+              <span class="material-symbols-outlined text-secondary">check_circle</span>
+              Receitas ilimitadas
+            </li>
+            <li class="flex items-center gap-3 text-sm">
+              <span class="material-symbols-outlined text-secondary">check_circle</span>
+              Ingredientes ilimitados
+            </li>
+            <li class="flex items-center gap-3 text-sm">
+              <span class="material-symbols-outlined text-secondary">check_circle</span>
+              Análise de custos avançada
+            </li>
+            <li class="flex items-center gap-3 text-sm">
+              <span class="material-symbols-outlined text-secondary">check_circle</span>
+              Análise de mercado em tempo real
+            </li>
+            <li class="flex items-center gap-3 text-sm">
+              <span class="material-symbols-outlined text-secondary">check_circle</span>
+              Relatórios de desempenho
+            </li>
+            <li class="flex items-center gap-3 text-sm text-on-surface-variant">
+              <span class="material-symbols-outlined text-outline-variant">remove_circle</span>
+              Suporte prioritário 24/7
+            </li>
+          </ul>
+          <a href="onboarding.html" class="block w-full py-3 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm text-center shadow-lg shadow-primary/20 hover:scale-105 transition-transform active:scale-95">
+            Começar Agora
+          </a>
+        </div>
+      </div>
+
+      <!-- Master -->
+      <div class="flex-1 bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+        <div class="mb-6">
+          <span class="text-xs font-bold tracking-widest uppercase text-on-surface-variant">Ateliê Master</span>
+          <div class="flex items-baseline gap-1 mt-3">
+            <span class="text-4xl font-extrabold font-headline pricing-price" data-annual="R$ 79" data-monthly="R$ 99">R$ 79</span>
+            <span class="text-on-surface-variant text-sm">/mês</span>
+          </div>
+          <p class="text-sm text-on-surface-variant mt-2">Para grandes ateliês e equipes</p>
+        </div>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center gap-3 text-sm">
+            <span class="material-symbols-outlined text-secondary">check_circle</span>
+            Tudo do Profissional
+          </li>
+          <li class="flex items-center gap-3 text-sm">
+            <span class="material-symbols-outlined text-secondary">check_circle</span>
+            Multi-usuários (até 10)
+          </li>
+          <li class="flex items-center gap-3 text-sm">
+            <span class="material-symbols-outlined text-secondary">check_circle</span>
+            API de integração
+          </li>
+          <li class="flex items-center gap-3 text-sm">
+            <span class="material-symbols-outlined text-secondary">check_circle</span>
+            Exportação de relatórios PDF
+          </li>
+          <li class="flex items-center gap-3 text-sm">
+            <span class="material-symbols-outlined text-secondary">check_circle</span>
+            Gerente de conta dedicado
+          </li>
+          <li class="flex items-center gap-3 text-sm">
+            <span class="material-symbols-outlined text-secondary">check_circle</span>
+            Suporte prioritário 24/7
+          </li>
+        </ul>
+        <a href="onboarding.html" class="block w-full py-3 rounded-full bg-surface-container text-on-surface font-headline font-bold text-sm text-center hover:bg-surface-container-high transition-colors active:scale-95">
+          Falar com Vendas
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hero Image Section -->
+  <section class="relative mx-8 mb-16 rounded-[3rem] overflow-hidden h-48 sm:h-80 md:h-[480px]">
+    <img alt="Konditor em uso no ateliê" class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1400&q=80" />
+    <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent"></div>
+    <div class="absolute inset-0 flex flex-col justify-center px-16">
+      <p class="text-white/70 text-sm font-bold uppercase tracking-widest mb-3">Usado por artesãos do Brasil</p>
+      <h2 class="text-5xl font-extrabold font-headline text-white leading-tight mb-8">
+        O futuro da confeitaria<br/>é <span class="text-primary-container">inteligente.</span>
+      </h2>
+      <div class="flex items-center gap-8">
+        <div class="text-center">
+          <p class="text-4xl font-extrabold font-headline text-white">15k+</p>
+          <p class="text-white/60 text-xs uppercase tracking-wider mt-1">Receitas criadas</p>
+        </div>
+        <div class="w-px h-12 bg-white/20"></div>
+        <div class="text-center">
+          <p class="text-4xl font-extrabold font-headline text-white">98%</p>
+          <p class="text-white/60 text-xs uppercase tracking-wider mt-1">Precisão nos custos</p>
+        </div>
+        <div class="w-px h-12 bg-white/20"></div>
+        <div class="text-center">
+          <p class="text-4xl font-extrabold font-headline text-white">2.400+</p>
+          <p class="text-white/60 text-xs uppercase tracking-wider mt-1">Confeiteiros ativos</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  </main>
+
+  <footer class="border-t border-outline-variant/20 py-10 px-8">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg berry-gradient flex items-center justify-center text-white shadow">
+          <span class="material-symbols-outlined text-base" style="font-variation-settings:'FILL' 1;">bakery_dining</span>
+        </div>
+        <span class="font-headline font-extrabold text-primary">Konditor</span>
+      </div>
+      <p class="text-xs text-on-surface-variant text-center">© 2026 Konditor. Inteligência Artesanal. Todos os direitos reservados.</p>
+      <div class="flex gap-6 text-sm">
+        <a href="planos.html" class="text-primary font-bold">Planos</a>
+        <a href="termos.html#privacidade" class="text-on-surface-variant hover:text-primary transition-colors">Privacidade</a>
+        <a href="termos.html" class="text-on-surface-variant hover:text-primary transition-colors">Termos</a>
+      </div>
+    </div>
+  </footer>
+  <script src="assets/js/konditor-app.js" defer></script>
+</body>
+</html>

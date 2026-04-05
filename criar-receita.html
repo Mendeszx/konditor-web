@@ -1,0 +1,335 @@
+﻿<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Crie novas receitas no Konditor com custo por ingrediente calculado automaticamente." />
+  <title>Konditor | Criação de Receita</title>
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/konditor.css" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="assets/js/konditor-config.js"></script>
+</head>
+<body class="bg-background font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+  <a href="#main-content" class="skip-link">Ir para o conteudo principal</a>
+
+  <!-- Mobile sidebar overlay -->
+  <div id="sidebar-overlay" class="fixed inset-0 z-30 bg-black/40 opacity-0 pointer-events-none lg:hidden" aria-hidden="true"></div>
+
+  <aside id="app-sidebar" class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-lowest flex flex-col p-6 gap-2 -translate-x-full lg:translate-x-0" aria-label="Menu principal">
+    <div class="mb-8 flex items-center gap-3 relative">
+      <div class="w-10 h-10 rounded-xl berry-gradient flex items-center justify-center text-white shadow-lg">
+        <span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings:'FILL' 1;">bakery_dining</span>
+      </div>
+      <div>
+        <p class="text-xl font-extrabold text-primary font-headline tracking-tight">Konditor</p>
+        <p class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-bold">Artisanal Intelligence</p>
+      </div>
+      <button id="sidebar-close-btn" class="lg:hidden absolute right-0 top-0 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-200 transition-colors" aria-label="Fechar menu">
+        <span class="material-symbols-outlined text-xl">close</span>
+      </button>
+    </div>
+    <nav class="flex-1 flex flex-col gap-1">
+      <a aria-current="page" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-primary bg-primary-container/20 border-r-4 border-primary font-headline text-sm" href="receitas.html">
+        <span class="material-symbols-outlined">menu_book</span> Receitas
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="ingredientes.html">
+        <span class="material-symbols-outlined">liquor</span> Ingredientes
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="custos.html">
+        <span class="material-symbols-outlined">payments</span> Custos
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="precos.html">
+        <span class="material-symbols-outlined">sell</span> Precificação
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="desempenho.html">
+        <span class="material-symbols-outlined">storefront</span> Desempenho
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="lucro.html">
+        <span class="material-symbols-outlined">monitoring</span> Visão de Lucro
+      </a>
+    </nav>
+    <div class="mt-auto pt-4 border-t border-outline-variant">
+      <div class="p-4 rounded-2xl bg-surface-container">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">C</div>
+          <div>
+            <p class="text-xs font-bold text-on-surface">Chef Julian</p>
+            <p class="text-[10px] text-on-surface-variant">Conta Premium</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Top Header -->
+  <header class="flex justify-between items-center px-4 md:px-8 lg:ml-64 bg-white/80 backdrop-blur-xl lg:w-[calc(100%-16rem)] w-full h-16 sticky top-0 z-40 shadow-[0_20px_40px_rgba(189,0,80,0.04)]">
+    <button id="sidebar-open-btn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors" aria-label="Abrir menu"><span class="material-symbols-outlined">menu</span></button>
+    <div class="relative">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+      <input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Buscar receitas ou componentes..." type="text" />
+    </div>
+    <div class="flex items-center gap-4">
+      <button type="button" aria-label="Notifica&#231;&#245;es" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+      </button>
+      <button type="button" aria-label="Configura&#231;&#245;es" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined" aria-hidden="true">settings</span>
+      </button>
+      <div class="h-8 w-px bg-outline-variant/30 mx-2"></div>
+      <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container border-2 border-primary-container text-sm">C</div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main-content" class="lg:ml-64 p-12 min-h-[calc(100vh-64px)]">
+    <div class="max-w-6xl mx-auto">
+
+      <!-- Hero Header -->
+      <section class="mb-12 flex items-end justify-between">
+        <div class="space-y-2">
+          <span class="text-xs font-bold tracking-[0.2em] text-primary uppercase font-label">Laboratório</span>
+          <h2 class="text-5xl font-extrabold font-headline text-on-surface tracking-tight leading-tight">
+            Criar <span class="text-primary italic">Nova Obra-Prima</span>
+          </h2>
+          <p class="text-on-surface-variant max-w-md font-body text-lg">
+            Defina sua visão culinária. Nosso motor de inteligência calcula custos precisos enquanto você cria.
+          </p>
+        </div>
+        <div class="flex gap-4">
+          <button class="px-6 py-3 rounded-full bg-surface-container-highest text-on-surface font-headline font-bold text-sm hover:opacity-80 transition-opacity active:scale-95">
+            Salvar Rascunho
+          </button>
+          <a href="receitas.html" class="px-8 py-3 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-xl shadow-primary/20 hover:scale-105 transition-transform active:scale-95">
+            Publicar Receita
+          </a>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <!-- Left Column: Form -->
+        <div class="col-span-full lg:col-span-8 space-y-8">
+
+          <!-- Basic Info -->
+          <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              <div class="space-y-2">
+                <label for="input-nome" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Nome da Receita</label>
+                <input id="input-nome" class="w-full bg-surface-container-low border-none border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant" placeholder="ex: Ganache de Framboesa Valrhona" type="text" />
+              </div>
+              <div class="space-y-2">
+                <label for="input-rendimento" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Rendimento</label>
+                <input id="input-rendimento" class="w-full bg-surface-container-low border-none border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant" placeholder="ex: 24 Mini Tortas" type="text" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-8 mt-8">
+              <div class="space-y-2">
+                <label for="input-categoria" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Categoria</label>
+                <select id="input-categoria" class="w-full bg-surface-container-low border-none border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-2xl py-4 px-6 text-lg font-headline transition-all text-on-surface">
+                  <option>Tortas</option>
+                  <option>Bolos</option>
+                  <option>Macarons</option>
+                  <option>Doces</option>
+                  <option>Chocolates</option>
+                </select>
+              </div>
+              <div class="space-y-2">
+                <label for="input-tempo" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Tempo de Preparo</label>
+                <input id="input-tempo" class="w-full bg-surface-container-low border-none border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant" placeholder="ex: 3h 30min" type="text" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Ingredients List -->
+          <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+            <div class="flex items-center justify-between mb-8">
+              <h3 class="text-xl font-bold font-headline">Componentes da Receita</h3>
+              <button type="button" class="flex items-center gap-2 text-primary text-sm font-bold hover:bg-primary-container/10 px-4 py-2 rounded-full transition-all">
+                <span class="material-symbols-outlined text-xl">add_circle</span>
+                Adicionar Ingrediente
+              </button>
+            </div>
+
+            <!-- Header Row -->
+            <div class="grid grid-cols-12 gap-4 px-4 mb-2">
+              <div class="col-span-6 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Ingrediente</div>
+              <div class="col-span-3 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant text-right">Quantidade</div>
+              <div class="col-span-3 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Unidade</div>
+            </div>
+
+            <!-- Ingredient Row 1 -->
+            <div class="flex items-center gap-4 mb-4 group transition-all">
+              <div class="flex-grow grid grid-cols-12 gap-4 p-4 rounded-2xl bg-surface-container-low group-hover:bg-white group-hover:shadow-md transition-all">
+                <div class="col-span-6">
+                  <input class="w-full bg-transparent border-none focus:ring-0 font-medium py-1" type="text" value="Creme de Leite 35%" />
+                </div>
+                <div class="col-span-3">
+                  <input class="w-full bg-transparent border-none focus:ring-0 text-right font-medium py-1" type="text" value="500" />
+                </div>
+                <div class="col-span-3">
+                  <select class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-outline uppercase py-1">
+                    <option>ml</option><option>g</option><option>oz</option><option>un</option>
+                  </select>
+                </div>
+              </div>
+              <button type="button" aria-label="Remover ingrediente" class="w-10 h-10 flex items-center justify-center rounded-full text-outline-variant hover:text-error hover:bg-error/10 transition-all">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+
+            <!-- Ingredient Row 2 -->
+            <div class="flex items-center gap-4 mb-4 group transition-all">
+              <div class="flex-grow grid grid-cols-12 gap-4 p-4 rounded-2xl bg-surface-container-low group-hover:bg-white group-hover:shadow-md transition-all border-l-4 border-primary">
+                <div class="col-span-6">
+                  <input class="w-full bg-transparent border-none focus:ring-0 font-medium py-1" type="text" value="Purê de Framboesa" />
+                </div>
+                <div class="col-span-3">
+                  <input class="w-full bg-transparent border-none focus:ring-0 text-right font-medium py-1" type="text" value="125" />
+                </div>
+                <div class="col-span-3">
+                  <select class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-outline uppercase py-1">
+                    <option>g</option><option>ml</option><option>un</option>
+                  </select>
+                </div>
+              </div>
+              <button type="button" aria-label="Remover ingrediente" class="w-10 h-10 flex items-center justify-center rounded-full text-outline-variant hover:text-error hover:bg-error/10 transition-all">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+
+            <!-- Ingredient Row 3 -->
+            <div class="flex items-center gap-4 mb-4 group transition-all">
+              <div class="flex-grow grid grid-cols-12 gap-4 p-4 rounded-2xl bg-surface-container-low group-hover:bg-white group-hover:shadow-md transition-all">
+                <div class="col-span-6">
+                  <input class="w-full bg-transparent border-none focus:ring-0 font-medium py-1" type="text" value="Chocolate Branco Valrhona" />
+                </div>
+                <div class="col-span-3">
+                  <input class="w-full bg-transparent border-none focus:ring-0 text-right font-medium py-1" type="text" value="200" />
+                </div>
+                <div class="col-span-3">
+                  <select class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-outline uppercase py-1">
+                    <option>g</option><option>ml</option><option>un</option>
+                  </select>
+                </div>
+              </div>
+              <button type="button" aria-label="Remover ingrediente" class="w-10 h-10 flex items-center justify-center rounded-full text-outline-variant hover:text-error hover:bg-error/10 transition-all">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+
+            <!-- Empty Row -->
+            <div class="flex items-center gap-4 mb-4 group transition-all">
+              <div class="flex-grow grid grid-cols-12 gap-4 p-4 rounded-2xl bg-surface-container-low group-hover:bg-white group-hover:shadow-md transition-all border-2 border-dashed border-outline-variant/30">
+                <div class="col-span-6">
+                  <input class="w-full bg-transparent border-none focus:ring-0 font-medium py-1 italic text-outline-variant" placeholder="Comece a digitar o ingrediente..." type="text" />
+                </div>
+                <div class="col-span-3">
+                  <input class="w-full bg-transparent border-none focus:ring-0 text-right py-1" placeholder="Qtd." type="text" />
+                </div>
+                <div class="col-span-3">
+                  <select class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-outline uppercase py-1">
+                    <option>Unid.</option><option>g</option><option>ml</option>
+                  </select>
+                </div>
+              </div>
+              <button type="button" aria-label="Remover ingrediente" class="w-10 h-10 flex items-center justify-center rounded-full text-outline-variant hover:text-error hover:bg-error/10 transition-all opacity-0 group-hover:opacity-100">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Notes & Visual Reference -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+            <div class="bg-surface-container-low rounded-3xl p-8 border border-outline-variant/10">
+              <h3 class="text-sm font-bold font-headline mb-4 uppercase tracking-widest text-outline">Notas do Processo</h3>
+              <textarea class="w-full h-40 bg-transparent border-none focus:ring-0 resize-none font-body placeholder:text-outline-variant/60 text-sm leading-relaxed" placeholder="Temperar o chocolate a 31°C antes de incorporar o purê..."></textarea>
+            </div>
+            <div class="relative rounded-3xl overflow-hidden group cursor-pointer">
+              <img alt="Referência Visual da Receita" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                src="https://images.unsplash.com/photo-1587668178277-295251f900ce?w=500&q=80" />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
+                <p class="text-white font-headline font-bold">Referência Visual</p>
+                <p class="text-white/70 text-xs">Carregue sua foto de apresentação final</p>
+                <div class="mt-3 inline-flex items-center gap-2 bg-white/20 backdrop-blur rounded-full px-4 py-2 w-fit">
+                  <span class="material-symbols-outlined text-white text-sm">upload</span>
+                  <span class="text-white text-xs font-bold">Carregar Foto</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Real-time Analysis -->
+        <aside class="col-span-full lg:col-span-4 sticky top-24 space-y-6">
+          <!-- Cost Calculator Card -->
+          <div class="glass-panel rounded-[2.5rem] p-8 shadow-[0_40px_80px_rgba(189,0,80,0.08)] border border-white/40">
+            <div class="flex items-center gap-3 mb-8">
+              <div class="w-12 h-12 rounded-2xl bg-secondary-container/30 flex items-center justify-center text-secondary">
+                <span class="material-symbols-outlined">calculate</span>
+              </div>
+              <div>
+                <h3 class="font-headline font-extrabold text-xl tracking-tight">Inteligência</h3>
+                <p class="text-[10px] uppercase font-bold text-outline">Valoração em Tempo Real</p>
+              </div>
+            </div>
+
+            <!-- Metrics -->
+            <div class="space-y-4 mb-8">
+              <div class="flex justify-between items-center p-4 bg-surface-container-low rounded-2xl">
+                <span class="text-sm text-on-surface-variant">Custo de Ingredientes</span>
+                <span class="font-bold text-on-surface">R$ 28,40</span>
+              </div>
+              <div class="flex justify-between items-center p-4 bg-surface-container-low rounded-2xl">
+                <span class="text-sm text-on-surface-variant">Mão de Obra (est.)</span>
+                <span class="font-bold text-on-surface">R$ 10,20</span>
+              </div>
+              <div class="flex justify-between items-center p-4 bg-surface-container-low rounded-2xl">
+                <span class="text-sm text-on-surface-variant">Custos Fixos</span>
+                <span class="font-bold text-on-surface">R$ 4,00</span>
+              </div>
+              <div class="h-px bg-outline-variant/20"></div>
+              <div class="flex justify-between items-center p-4 bg-primary-container/20 rounded-2xl">
+                <span class="text-sm font-bold text-on-surface">Custo Total</span>
+                <span class="font-extrabold text-primary text-lg">R$ 42,60</span>
+              </div>
+            </div>
+
+            <!-- Price Suggestion -->
+            <div class="bg-surface-container-lowest rounded-2xl p-6 space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Preço Sugerido (65%)</span>
+                <span class="text-2xl font-extrabold font-headline text-secondary">R$ 10,18</span>
+              </div>
+              <div class="w-full h-2 bg-surface-container-high rounded-full">
+                <div class="h-full bg-secondary rounded-full" style="width: 65%"></div>
+              </div>
+              <p class="text-xs text-on-surface-variant">por unidade • margem de 65%</p>
+            </div>
+
+            <button type="button" class="mt-6 w-full h-12 berry-gradient text-on-primary font-headline font-bold rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+              Aplicar Preço Sugerido
+            </button>
+          </div>
+
+          <!-- Ingredient Alert Card -->
+          <div class="bg-surface-container-lowest rounded-3xl p-6 border border-error/10">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="material-symbols-outlined text-error">warning</span>
+              <h4 class="font-bold text-sm">Alerta de Ingrediente</h4>
+            </div>
+            <p class="text-xs text-on-surface-variant leading-relaxed">
+              <strong class="text-on-surface">Purê de Framboesa</strong> apresenta aumento de 8% no custo. Considere ajustar o preço final.
+            </p>
+            <a href="ingredientes.html" class="mt-3 inline-flex items-center gap-1 text-primary text-xs font-bold hover:underline">
+              Ver Ingredientes <span class="material-symbols-outlined text-xs">arrow_forward</span>
+            </a>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+  <script src="assets/js/konditor-app.js" defer></script>
+</body>
+</html>
