@@ -185,6 +185,254 @@
   }
 
   /* ─────────────────────────────────────────────
+     Google Sign-In — OIDC implicit popup → id_token → POST /auth/google
+     Opens a popup to Google OAuth (response_type=id_token).
+     auth-callback.html reads the fragment and postMessages id_token back.
+     No FedCM, no GIS library required for the auth step.
+  ───────────────────────────────────────────── */
+  function initGoogleAuth() {
+    var CLIENT_ID    = '1045651153478-4379bpb4fepqg0gvlg4goktic09vl883.apps.googleusercontent.com';
+    var CALLBACK_URI = window.location.origin + '/auth-callback.html';
+    var btns = document.querySelectorAll('[data-google-signin]');
+    if (!btns.length) return;
+
+    var lastClickedBtn = null;
+    var popupTimer    = null;
+
+    /* Listen for the id_token posted back from auth-callback.html */
+    window.addEventListener('message', function (e) {
+      if (e.origin !== window.location.origin) return;
+      if (!e.data) return;
+
+      clearInterval(popupTimer);
+      var btn = lastClickedBtn || btns[0];
+
+      if (e.data.konditor_error) {
+        setLoading(btn, false);
+        showAuthError(btn, 'Login cancelado ou recusado pelo Google. Tente novamente.');
+        return;
+      }
+
+      if (e.data.konditor_idToken) {
+        sessionStorage.setItem('konditor_id_token_temp', e.data.konditor_idToken);
+        setLoading(btn, true);
+        postAuthGoogle(e.data.konditor_idToken, btn);
+      }
+    });
+
+    btns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        lastClickedBtn = btn;
+        setLoading(btn, true);
+
+        var nonce  = Math.random().toString(36).slice(2) + Date.now().toString(36);
+        var params = new URLSearchParams({
+          client_id:     CLIENT_ID,
+          redirect_uri:  CALLBACK_URI,
+          response_type: 'id_token',
+          scope:         'openid email profile',
+          nonce:         nonce
+        });
+
+        var w = 500, h = 600;
+        var left = Math.max(0, (screen.width  - w) / 2);
+        var top  = Math.max(0, (screen.height - h) / 2);
+        var popup = window.open(
+          'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString(),
+          'konditor-google-signin',
+          'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',scrollbars=yes'
+        );
+
+        if (!popup || popup.closed) {
+          setLoading(btn, false);
+          showAuthError(btn, 'Popup bloqueado pelo navegador. Permita popups para este site e tente novamente.');
+          return;
+        }
+
+        /* Detect popup closed without completing */
+        clearInterval(popupTimer);
+        popupTimer = setInterval(function () {
+          if (popup.closed) {
+            clearInterval(popupTimer);
+            setLoading(btn, false);
+          }
+        }, 600);
+      });
+    });
+
+    function postAuthGoogle(idToken, triggerBtn) {
+      var isOnboard = triggerBtn && triggerBtn.dataset.googleSignin === 'onboard';
+
+      fetch((window.KONDITOR_API || '') + '/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: idToken })
+      })
+        .then(function (r) {
+          return r.json().then(function (d) { return { ok: r.ok, data: d }; });
+        })
+        .then(function (res) {
+          if (!res.ok) {
+            setLoading(triggerBtn, false);
+            showAuthError(triggerBtn, (res.data && res.data.detail) || 'Erro ao autenticar. Tente novamente.');
+            return;
+          }
+
+          var data = res.data;
+          localStorage.setItem('konditor_token', data.accessToken);
+          localStorage.setItem('konditor_user', JSON.stringify(data.usuario));
+
+          if (data.workspace) {
+            localStorage.setItem('konditor_workspace', JSON.stringify(data.workspace));
+            sessionStorage.removeItem('konditor_id_token_temp');
+            window.location.href = 'receitas.html';
+          } else {
+            localStorage.removeItem('konditor_workspace');
+            if (isOnboard) {
+              setLoading(triggerBtn, false);
+              triggerBtn.disabled = true;
+              triggerBtn.classList.add('cursor-default', 'opacity-80');
+              triggerBtn.innerHTML =
+                '<span class="material-symbols-outlined" style="color:#006f1d;font-variation-settings:\'FILL\' 1;">check_circle</span>' +
+                '<span>Conectado como <strong>' + data.usuario.nome + '</strong></span>';
+              var submitBtn = document.getElementById('onboarding-submit-btn');
+              if (submitBtn) submitBtn.removeAttribute('disabled');
+            } else {
+              window.location.href = 'onboarding.html';
+            }
+          }
+        })
+        .catch(function () {
+          setLoading(triggerBtn, false);
+          showAuthError(triggerBtn, 'Falha de conexão. Verifique sua internet e tente novamente.');
+        });
+    }
+
+    function setLoading(btn, loading) {
+      if (!btn) return;
+      if (loading) {
+        if (!btn.dataset.origHtml) btn.dataset.origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem;animation:spin .9s linear infinite;">progress_activity</span><span>Aguarde…</span>';
+      } else {
+        btn.disabled = false;
+        if (btn.dataset.origHtml) { btn.innerHTML = btn.dataset.origHtml; delete btn.dataset.origHtml; }
+      }
+    }
+
+    function showAuthError(btn, msg) {
+      var section = btn && btn.closest('section,div.glass-card');
+      var errEl = section ? section.querySelector('[data-auth-error]') : document.querySelector('[data-auth-error]');
+      if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
+    }
+  }
+
+  /* ─────────────────────────────────────────────
+     Onboarding — POST /onboarding → re-auth → app
+  ───────────────────────────────────────────── */
+  function initOnboarding() {
+    var submitBtn = document.getElementById('onboarding-submit-btn');
+    var nameInput = document.getElementById('workspace-name-input');
+    if (!submitBtn || !nameInput) return;
+
+    /* Se já há workspace salvo, usuário não deveria estar aqui */
+    if (localStorage.getItem('konditor_workspace')) {
+      window.location.href = 'receitas.html';
+      return;
+    }
+
+    nameInput.addEventListener('input', function () {
+      var errEl = document.getElementById('onboarding-name-error');
+      if (errEl && nameInput.value.trim().length >= 2) errEl.classList.add('hidden');
+    });
+
+    submitBtn.addEventListener('click', function () {
+      var nome = nameInput.value.trim();
+      var errEl = document.getElementById('onboarding-name-error');
+
+      if (nome.length === 0) {
+        if (errEl) { errEl.textContent = 'O nome do ateliê é obrigatório.'; errEl.classList.remove('hidden'); }
+        nameInput.focus(); return;
+      }
+      if (nome.length < 2) {
+        if (errEl) { errEl.textContent = 'O nome deve ter pelo menos 2 caracteres.'; errEl.classList.remove('hidden'); }
+        nameInput.focus(); return;
+      }
+      if (nome.length > 100) {
+        if (errEl) { errEl.textContent = 'O nome deve ter no máximo 100 caracteres.'; errEl.classList.remove('hidden'); }
+        nameInput.focus(); return;
+      }
+      if (errEl) errEl.classList.add('hidden');
+
+      var accessToken = localStorage.getItem('konditor_token');
+      if (!accessToken) {
+        alert('Conecte sua conta Google no Passo 1 antes de continuar.');
+        return;
+      }
+
+      var origHtml = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Criando seu ateliê…</span><span class="material-symbols-outlined">hourglass_top</span>';
+
+      fetch((window.KONDITOR_API || '') + '/onboarding', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + accessToken
+        },
+        body: JSON.stringify({ nomeWorkspace: nome, moeda: 'BRL' })
+      })
+        .then(function (r) {
+          return r.json().then(function (d) { return { ok: r.ok, status: r.status, data: d }; });
+        })
+        .then(function (res) {
+          if (!res.ok) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origHtml;
+            var errEl2 = document.getElementById('onboarding-name-error');
+            var msg = (res.data && res.data.detail) || 'Erro ao criar o ateliê. Tente novamente.';
+            if (errEl2) { errEl2.textContent = msg; errEl2.classList.remove('hidden'); }
+            else alert(msg);
+            return;
+          }
+
+          /* Onboarding criado — re-auth com idToken para obter token com workspace */
+          var idToken = sessionStorage.getItem('konditor_id_token_temp');
+          if (!idToken) {
+            /* Token expirou — vai para login buscar um novo */
+            localStorage.removeItem('konditor_token');
+            window.location.href = 'login.html';
+            return;
+          }
+
+          fetch((window.KONDITOR_API || '') + '/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken: idToken })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              sessionStorage.removeItem('konditor_id_token_temp');
+              localStorage.setItem('konditor_token', data.accessToken);
+              if (data.usuario) localStorage.setItem('konditor_user', JSON.stringify(data.usuario));
+              if (data.workspace) localStorage.setItem('konditor_workspace', JSON.stringify(data.workspace));
+              window.location.href = 'receitas.html';
+            })
+            .catch(function () {
+              sessionStorage.removeItem('konditor_id_token_temp');
+              localStorage.removeItem('konditor_token');
+              window.location.href = 'login.html';
+            });
+        })
+        .catch(function () {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = origHtml;
+          alert('Falha de conexão. Verifique sua internet e tente novamente.');
+        });
+    });
+  }
+
+  /* ─────────────────────────────────────────────
      Init
   ───────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', function () {
@@ -194,5 +442,7 @@
     initFilterChips();
     initBillingToggle();
     initTermsScrollSpy();
+    initGoogleAuth();
+    initOnboarding();
   });
 })();

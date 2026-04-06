@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Konditor - Autenticando…</title>
+</head>
+<body>
+<script>
+  (function () {
+    var hash = window.location.hash.slice(1);
+    var params = new URLSearchParams(hash);
+    var idToken = params.get('id_token');
+    var error   = params.get('error');
+
+    if (window.opener) {
+      if (idToken) {
+        window.opener.postMessage({ konditor_idToken: idToken }, window.location.origin);
+      } else {
+        window.opener.postMessage({ konditor_error: error || 'unknown' }, window.location.origin);
+      }
+    }
+    window.close();
+  })();
+</script>
+</body>
+</html>

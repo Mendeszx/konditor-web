@@ -3,6 +3,10 @@
  * Single source of truth for design tokens.
  * Load this file AFTER the Tailwind CDN script.
  */
+
+/** Base URL do backend. */
+window.KONDITOR_API = 'http://localhost:8080';
+
 tailwind.config = {
   darkMode: "class",
   theme: {
