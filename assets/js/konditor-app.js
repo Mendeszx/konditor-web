@@ -390,7 +390,38 @@
             submitBtn.disabled = false;
             submitBtn.innerHTML = origHtml;
             var errEl2 = document.getElementById('onboarding-name-error');
-            var msg = (res.data && res.data.detail) || 'Erro ao criar o ateliê. Tente novamente.';
+            var msg;
+            if (res.data && res.data.fieldErrors && res.data.fieldErrors.nomeWorkspace) {
+              msg = res.data.fieldErrors.nomeWorkspace;
+            } else if (res.status === 422) {
+              /* Workspace já existe — token completo, ir direto para o app */
+              var idTokenRetry = sessionStorage.getItem('konditor_id_token_temp');
+              if (idTokenRetry) {
+                fetch((window.KONDITOR_API || '') + '/auth/google', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ idToken: idTokenRetry })
+                })
+                  .then(function (r) { return r.json(); })
+                  .then(function (data) {
+                    sessionStorage.removeItem('konditor_id_token_temp');
+                    localStorage.setItem('konditor_token', data.accessToken);
+                    if (data.usuario) localStorage.setItem('konditor_user', JSON.stringify(data.usuario));
+                    if (data.workspace) localStorage.setItem('konditor_workspace', JSON.stringify(data.workspace));
+                    window.location.href = 'receitas.html';
+                  })
+                  .catch(function () { window.location.href = 'login.html'; });
+              } else {
+                window.location.href = 'login.html';
+              }
+              return;
+            } else if (res.status === 401) {
+              localStorage.removeItem('konditor_token');
+              window.location.href = 'login.html';
+              return;
+            } else {
+              msg = (res.data && res.data.detail) || 'Erro ao criar o ateliê. Tente novamente.';
+            }
             if (errEl2) { errEl2.textContent = msg; errEl2.classList.remove('hidden'); }
             else alert(msg);
             return;
