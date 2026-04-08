@@ -85,19 +85,23 @@
      Filter chip groups — single-select toggle
   ───────────────────────────────────────────── */
   function initFilterChips() {
+    var ACTIVE   = ['bg-primary', 'text-on-primary', 'shadow-md', 'shadow-primary/20'];
+    var INACTIVE = ['bg-surface-container-lowest', 'border', 'border-slate-200', 'text-on-surface-variant'];
+
     document.querySelectorAll('[data-filter-group]').forEach(function (group) {
       var chips = group.querySelectorAll('[data-filter-chip]');
 
       chips.forEach(function (chip) {
         chip.addEventListener('click', function () {
           chips.forEach(function (c) {
-            c.classList.remove('bg-primary', 'text-on-primary', 'shadow-lg');
-            c.classList.add('bg-surface-container', 'text-on-surface-variant');
+            ACTIVE.forEach(function (cls) { c.classList.remove(cls); });
+            INACTIVE.forEach(function (cls) { c.classList.add(cls); });
             c.setAttribute('aria-pressed', 'false');
           });
-          chip.classList.remove('bg-surface-container', 'text-on-surface-variant');
-          chip.classList.add('bg-primary', 'text-on-primary', 'shadow-lg');
+          INACTIVE.forEach(function (cls) { chip.classList.remove(cls); });
+          ACTIVE.forEach(function (cls) { chip.classList.add(cls); });
           chip.setAttribute('aria-pressed', 'true');
+          filterRecipeCards(chip.textContent.trim());
         });
       });
     });
@@ -182,6 +186,206 @@
     }
 
     if (sections.length) setActive(sections[0].id); // initial state
+  }
+
+  /* ─────────────────────────────────────────────     Sidebar — injeção dinâmica do menu lateral
+     (única fonte de verdade para o HTML do aside)
+  ─────────────────────────────────────────────── */
+  function initSidebarHtml() {
+    var aside = document.getElementById('app-sidebar');
+    if (!aside) return;
+
+    /* Mapeamentos de página → link ativo */
+    var PAGE_ACTIVE_MAP = {
+      'criar-receita.html': 'receitas.html'
+    };
+    var filename   = window.location.pathname.split('/').pop() || 'receitas.html';
+    var activePage = PAGE_ACTIVE_MAP[filename] || filename;
+
+    var NAV = [
+      { href: 'receitas.html',     icon: 'menu_book',  label: 'Receitas' },
+      { href: 'ingredientes.html', icon: 'liquor',     label: 'Ingredientes' },
+      { href: 'custos.html',       icon: 'payments',   label: 'Custos' },
+      { href: 'precos.html',       icon: 'sell',       label: 'Precificação' },
+      { href: 'desempenho.html',   icon: 'storefront', label: 'Desempenho' },
+      { href: 'lucro.html',        icon: 'monitoring', label: 'Visão de Lucro' }
+    ];
+
+    var INACTIVE = 'flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200';
+    var ACTIVE   = 'flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-primary bg-primary-container/20 border-r-4 border-primary font-headline text-sm';
+
+    var navHtml = NAV.map(function (item) {
+      var isActive = item.href === activePage;
+      return (isActive
+        ? '<a aria-current="page" class="' + ACTIVE   + '" href="' + item.href + '">'
+        : '<a class="'                      + INACTIVE + '" href="' + item.href + '">')
+        + '<span class="material-symbols-outlined">' + item.icon + '</span> ' + item.label
+        + '</a>';
+    }).join('');
+
+    /* nome do usuário a partir do localStorage */
+    var userName = 'Usuário';
+    try {
+      var u = JSON.parse(localStorage.getItem('konditor_user') || 'null');
+      if (u && u.nome) userName = u.nome;
+    } catch (e) {}
+    var initial = userName.charAt(0).toUpperCase();
+
+    aside.innerHTML =
+      '<div class="mb-8 flex items-center gap-3 relative">'
+      + '<div class="w-10 h-10 rounded-xl berry-gradient flex items-center justify-center text-white shadow-lg">'
+      + '<span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings:\'FILL\' 1;">bakery_dining</span>'
+      + '</div>'
+      + '<div>'
+      + '<p class="text-xl font-extrabold text-primary font-headline tracking-tight">Konditor</p>'
+      + '<p class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-bold">Artisanal Intelligence</p>'
+      + '</div>'
+      + '<button id="sidebar-close-btn" class="lg:hidden absolute right-0 top-0 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-200 transition-colors" aria-label="Fechar menu">'
+      + '<span class="material-symbols-outlined text-xl">close</span>'
+      + '</button>'
+      + '</div>'
+      + '<nav class="flex-1 flex flex-col gap-1">' + navHtml + '</nav>'
+      + '<div class="mt-auto pt-4 border-t border-outline-variant flex flex-col gap-1">'
+      + '<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-slate-900 hover:translate-x-1 transition-all text-sm" href="#">'
+      + '<span class="material-symbols-outlined">help</span> Ajuda'
+      + '</a>'
+      + '<button type="button" data-logout class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-slate-900 hover:translate-x-1 transition-all text-sm w-full text-left">'
+      + '<span class="material-symbols-outlined">logout</span> Sair'
+      + '</button>'
+      + '<div class="mt-3 p-4 rounded-2xl bg-surface-container">'
+      + '<div class="flex items-center gap-3">'
+      + '<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">' + escHtml(initial) + '</div>'
+      + '<div>'
+      + '<p class="text-xs font-bold text-on-surface">' + escHtml(userName) + '</p>'
+      + '<p class="text-[10px] text-on-surface-variant">Minha Conta</p>'
+      + '</div>'
+      + '</div>'
+      + '</div>'
+      + '</div>';
+  }
+
+  /* ─────────────────────────────────────────────     Dashboard — receitas.html
+     GET /dashboard/estatisticas  → stats
+     GET /dashboard/receitas      → recipe grid
+  ───────────────────────────────────────────── */
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function filterRecipeCards(categoria) {
+    var grid = document.getElementById('recipe-grid');
+    if (!grid) return;
+    grid.querySelectorAll('[data-categoria]').forEach(function (card) {
+      card.style.display = (categoria === 'Todas' || card.dataset.categoria === categoria) ? '' : 'none';
+    });
+  }
+
+  function buildRecipeCard(r) {
+    var isLow       = r.margemStatus === 'baixa';
+    var borderCls   = isLow ? 'border-error/15 hover:border-error/30 hover:shadow-error/10' : 'border-slate-100 hover:border-primary/15 hover:shadow-primary/8';
+    var catBadge    = isLow
+      ? '<span class="bg-error/10 text-error px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">' + escHtml(r.categoria) + '</span>'
+      : '<span class="bg-primary-container/30 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">' + escHtml(r.categoria) + '</span>';
+    var margemBadge = isLow
+      ? '<span class="bg-error/10 text-error px-3 py-1 rounded-full text-[10px] font-bold">' + r.margem + '% margem</span>'
+      : '<span class="bg-secondary/15 text-secondary px-3 py-1 rounded-full text-[10px] font-bold">' + r.margem + '% margem</span>';
+    var sepCls      = isLow ? 'border-error/10' : 'border-slate-100';
+    var priceCls    = isLow ? 'text-error' : 'text-primary';
+    var linkCls     = isLow ? 'text-error' : 'text-primary';
+    var linkLabel   = isLow ? 'Revisar' : 'Analisar';
+    var custo = r.custoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    var preco = r.precoUnitario.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    return '<div class="group bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border hover:-translate-y-0.5 ' + borderCls + '" data-categoria="' + escHtml(r.categoria) + '">'
+      + '<div class="p-6 flex flex-col gap-4 h-full">'
+      + '<div class="flex items-center justify-between">' + catBadge + margemBadge + '</div>'
+      + '<div class="flex-1"><h3 class="text-lg font-headline font-bold text-on-surface">' + escHtml(r.nome) + '</h3>'
+      + '<p class="text-xs text-on-surface-variant font-medium mt-1">' + r.quantidade + ' ' + escHtml(r.unidade) + ' • Custo: ' + custo + '</p></div>'
+      + '<div class="flex justify-between items-center pt-3 border-t ' + sepCls + '">'
+      + '<span class="text-2xl font-headline font-extrabold ' + priceCls + '">' + preco + ' <span class="text-sm font-semibold text-on-surface-variant">/unid.</span></span>'
+      + '<a href="' + escHtml(r.linkAnalise) + '" class="flex items-center gap-1 ' + linkCls + ' text-sm font-bold hover:gap-2 transition-all duration-200">'
+      + linkLabel + ' <span class="material-symbols-outlined text-sm">arrow_forward</span></a>'
+      + '</div></div></div>';
+  }
+
+  function initDashboard() {
+    var grid = document.getElementById('recipe-grid');
+    if (!grid) return;
+
+    var token = localStorage.getItem('konditor_token');
+    if (!token) { window.location.href = 'login.html'; return; }
+
+    var API     = window.KONDITOR_API || '';
+    var headers = { 'Authorization': 'Bearer ' + token };
+    var totalEl      = document.getElementById('stat-total-receitas');
+    var margemEl     = document.getElementById('stat-margem-media');
+    var melhorNomeEl = document.getElementById('stat-melhor-nome');
+    var melhorPctEl  = document.getElementById('stat-melhor-margem-pct');
+
+    Promise.all([
+      fetch(API + '/dashboard/estatisticas', { headers: headers }).then(function (r) {
+        if (r.status === 401) { localStorage.removeItem('konditor_token'); window.location.href = 'login.html'; throw new Error('unauth'); }
+        if (!r.ok) throw new Error('stats');
+        return r.json();
+      }),
+      fetch(API + '/dashboard/receitas', { headers: headers }).then(function (r) {
+        if (r.status === 401) { localStorage.removeItem('konditor_token'); window.location.href = 'login.html'; throw new Error('unauth'); }
+        if (!r.ok) throw new Error('grid');
+        return r.json();
+      })
+    ]).then(function (results) {
+      var stats    = results[0];
+      var receitas = results[1];
+
+      if (totalEl)      totalEl.textContent      = stats.totalReceitas;
+      if (margemEl)     margemEl.textContent     = Number(stats.margemMedia).toFixed(1) + '%';
+      if (melhorNomeEl) melhorNomeEl.textContent = stats.melhorMargem ? stats.melhorMargem.nome : '—';
+      if (melhorPctEl)  melhorPctEl.textContent  = stats.melhorMargem ? stats.melhorMargem.margem + '% de margem' : '';
+
+      if (!receitas || receitas.length === 0) {
+        grid.innerHTML = '<p class="col-span-3 text-center text-on-surface-variant py-16">Nenhuma receita cadastrada ainda. '
+          + '<a href="criar-receita.html" class="text-primary font-bold hover:underline">Criar primeira receita</a></p>';
+        return;
+      }
+
+      /* Build category filter chips from returned data */
+      var filterGroup = document.getElementById('filter-chips-group');
+      if (filterGroup) {
+        var categorias = [];
+        receitas.forEach(function (r) {
+          if (r.categoria && categorias.indexOf(r.categoria) === -1) categorias.push(r.categoria);
+        });
+        var INACTIVE_CLS = 'whitespace-nowrap px-5 py-2 rounded-full font-headline font-bold text-sm transition-all duration-200 active:scale-95 bg-surface-container-lowest border border-slate-200 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:bg-primary-container/10';
+        /* remove old dynamically added chips (keep 'Todas') */
+        filterGroup.querySelectorAll('[data-dynamic-chip]').forEach(function (el) { el.remove(); });
+        categorias.forEach(function (cat) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.setAttribute('data-filter-chip', '');
+          btn.setAttribute('data-dynamic-chip', '');
+          btn.setAttribute('aria-pressed', 'false');
+          btn.className = INACTIVE_CLS;
+          btn.textContent = cat;
+          filterGroup.appendChild(btn);
+        });
+        /* re-init chips after rebuilding */
+        initFilterChips();
+      }
+
+      grid.innerHTML = receitas.map(buildRecipeCard).join('');
+
+      var activeChip = document.querySelector('[data-filter-chip][aria-pressed="true"]');
+      if (activeChip) filterRecipeCards(activeChip.textContent.trim());
+    }).catch(function (err) {
+      if (err.message === 'unauth') return;
+      grid.innerHTML = '<p class="col-span-3 text-center text-on-surface-variant py-16">Erro ao carregar receitas. Tente recarregar a página.</p>';
+      if (totalEl)      totalEl.textContent      = '—';
+      if (margemEl)     margemEl.textContent     = '—';
+      if (melhorNomeEl) melhorNomeEl.textContent = '—';
+      if (melhorPctEl)  melhorPctEl.textContent  = '';
+    });
   }
 
   /* ─────────────────────────────────────────────
@@ -464,9 +668,38 @@
   }
 
   /* ─────────────────────────────────────────────
+     Logout — POST /auth/logout → limpa token → login
+  ───────────────────────────────────────────── */
+  function initLogout() {
+    document.querySelectorAll('[data-logout]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var token = localStorage.getItem('konditor_token');
+
+        function clearAndRedirect() {
+          localStorage.removeItem('konditor_token');
+          localStorage.removeItem('konditor_user');
+          localStorage.removeItem('konditor_workspace');
+          sessionStorage.removeItem('konditor_id_token_temp');
+          window.location.href = 'login.html';
+        }
+
+        if (!token) { clearAndRedirect(); return; }
+
+        fetch((window.KONDITOR_API || '') + '/auth/logout', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        })
+          .then(function () { clearAndRedirect(); })
+          .catch(function () { clearAndRedirect(); });
+      });
+    });
+  }
+
+  /* ─────────────────────────────────────────────
      Init
   ───────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', function () {
+    initSidebarHtml();
     initSidebar();
     initMobileNav();
     initRangeInputs();
@@ -475,5 +708,7 @@
     initTermsScrollSpy();
     initGoogleAuth();
     initOnboarding();
+    initDashboard();
+    initLogout();
   });
 })();

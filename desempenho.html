@@ -20,74 +20,7 @@
   <!-- Mobile sidebar overlay -->
   <div id="sidebar-overlay" class="fixed inset-0 z-30 bg-black/40 opacity-0 pointer-events-none lg:hidden" aria-hidden="true"></div>
 
-  <aside id="app-sidebar" class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-lowest flex flex-col p-6 gap-2 -translate-x-full lg:translate-x-0" aria-label="Menu principal">
-    <div class="mb-8 flex items-center gap-3 relative">
-      <div class="w-10 h-10 rounded-xl berry-gradient flex items-center justify-center text-white shadow-lg">
-        <span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings:'FILL' 1;">bakery_dining</span>
-      </div>
-      <div>
-        <p class="text-xl font-extrabold text-primary font-headline tracking-tight">Konditor</p>
-        <p class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-bold">Artisanal Intelligence</p>
-      </div>
-      <button id="sidebar-close-btn" class="lg:hidden absolute right-0 top-0 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-200 transition-colors" aria-label="Fechar menu">
-        <span class="material-symbols-outlined text-xl">close</span>
-      </button>
-    </div>
-    <nav class="flex-1 flex flex-col gap-1">
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="receitas.html">
-        <span class="material-symbols-outlined">menu_book</span> Receitas
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="ingredientes.html">
-        <span class="material-symbols-outlined">liquor</span> Ingredientes
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="custos.html">
-        <span class="material-symbols-outlined">payments</span> Custos
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="precos.html">
-        <span class="material-symbols-outlined">sell</span> Precificação
-      </a>
-      <a aria-current="page" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-primary bg-primary-container/20 border-r-4 border-primary font-headline text-sm" href="desempenho.html">
-        <span class="material-symbols-outlined">storefront</span> Desempenho
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="lucro.html">
-        <span class="material-symbols-outlined">monitoring</span> Visão de Lucro
-      </a>
-    </nav>
-    <div class="mt-auto pt-4 border-t border-outline-variant flex flex-col gap-1">
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-slate-900 hover:translate-x-1 transition-all text-sm" href="#">
-        <span class="material-symbols-outlined">help</span> Ajuda
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-slate-900 hover:translate-x-1 transition-all text-sm" href="login.html">
-        <span class="material-symbols-outlined">logout</span> Sair
-      </a>
-      <div class="mt-3 p-4 rounded-2xl bg-surface-container">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">C</div>
-          <div>
-            <p class="text-xs font-bold text-on-surface">Chef Julian</p>
-            <p class="text-[10px] text-on-surface-variant">Conta Premium</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Top Header -->
-  <header class="flex justify-between items-center px-4 md:px-8 lg:ml-64 bg-white/80 backdrop-blur-xl lg:w-[calc(100%-16rem)] w-full h-16 sticky top-0 z-40 shadow-[0_20px_40px_rgba(189,0,80,0.04)]">
-    <button id="sidebar-open-btn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors" aria-label="Abrir menu"><span class="material-symbols-outlined">menu</span></button>
-    <div class="relative">
-      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-      <input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Buscar produtos..." type="text" />
-    </div>
-    <div class="flex items-center gap-4">
-      <button type="button" aria-label="Notifica&#231;&#245;es" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined" aria-hidden="true">notifications</span>
-      </button>
-      <button type="button" aria-label="Configura&#231;&#245;es" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined" aria-hidden="true">settings</span>
-      </button>
-      <div class="h-8 w-px bg-outline-variant/30 mx-2"></div>
-      <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container border-2 border-primary-container text-sm">C</div>
-    </div>
-  </header>
+  <aside id="app-sidebar" class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-lowest flex flex-col p-6 gap-2 -translate-x-full lg:translate-x-0" aria-label="Menu principal"></aside>
 
   <!-- Main Content -->
   <main id="main-content" class="lg:ml-64 p-12">

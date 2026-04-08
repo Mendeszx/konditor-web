@@ -20,68 +20,7 @@
   <!-- Mobile sidebar overlay -->
   <div id="sidebar-overlay" class="fixed inset-0 z-30 bg-black/40 opacity-0 pointer-events-none lg:hidden" aria-hidden="true"></div>
 
-  <aside id="app-sidebar" class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-lowest flex flex-col p-6 gap-2 -translate-x-full lg:translate-x-0" aria-label="Menu principal">
-    <div class="mb-8 flex items-center gap-3 relative">
-      <div class="w-10 h-10 rounded-xl berry-gradient flex items-center justify-center text-white shadow-lg">
-        <span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings:'FILL' 1;">bakery_dining</span>
-      </div>
-      <div>
-        <p class="text-xl font-extrabold text-primary font-headline tracking-tight">Konditor</p>
-        <p class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-bold">Artisanal Intelligence</p>
-      </div>
-      <button id="sidebar-close-btn" class="lg:hidden absolute right-0 top-0 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-200 transition-colors" aria-label="Fechar menu">
-        <span class="material-symbols-outlined text-xl">close</span>
-      </button>
-    </div>
-    <nav class="flex-1 flex flex-col gap-1">
-      <a aria-current="page" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-primary bg-primary-container/20 border-r-4 border-primary font-headline text-sm" href="receitas.html">
-        <span class="material-symbols-outlined">menu_book</span> Receitas
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="ingredientes.html">
-        <span class="material-symbols-outlined">liquor</span> Ingredientes
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="custos.html">
-        <span class="material-symbols-outlined">payments</span> Custos
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="precos.html">
-        <span class="material-symbols-outlined">sell</span> Precificação
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="desempenho.html">
-        <span class="material-symbols-outlined">storefront</span> Desempenho
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200" href="lucro.html">
-        <span class="material-symbols-outlined">monitoring</span> Visão de Lucro
-      </a>
-    </nav>
-    <div class="mt-auto pt-4 border-t border-outline-variant">
-      <div class="p-4 rounded-2xl bg-surface-container">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">C</div>
-          <div>
-            <p class="text-xs font-bold text-on-surface">Chef Julian</p>
-            <p class="text-[10px] text-on-surface-variant">Conta Premium</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Top Header -->
-  <header class="flex justify-between items-center px-4 md:px-8 lg:ml-64 bg-white/80 backdrop-blur-xl lg:w-[calc(100%-16rem)] w-full h-16 sticky top-0 z-40 shadow-[0_20px_40px_rgba(189,0,80,0.04)]">
-    <button id="sidebar-open-btn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors" aria-label="Abrir menu"><span class="material-symbols-outlined">menu</span></button>
-    <div class="relative">
-      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-      <input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Buscar receitas ou componentes..." type="text" />
-    </div>
-    <div class="flex items-center gap-4">
-      <button type="button" aria-label="Notifica&#231;&#245;es" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined" aria-hidden="true">notifications</span>
-      </button>
-      <button type="button" aria-label="Configura&#231;&#245;es" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined" aria-hidden="true">settings</span>
-      </button>
-      <div class="h-8 w-px bg-outline-variant/30 mx-2"></div>
-      <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container border-2 border-primary-container text-sm">C</div>
-    </div>
-  </header>
+  <aside id="app-sidebar" class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-lowest flex flex-col p-6 gap-2 -translate-x-full lg:translate-x-0" aria-label="Menu principal"></aside>
 
   <!-- Main Content -->
   <main id="main-content" class="lg:ml-64 p-12 min-h-[calc(100vh-64px)]">
@@ -246,18 +185,7 @@
               <h3 class="text-sm font-bold font-headline mb-4 uppercase tracking-widest text-outline">Notas do Processo</h3>
               <textarea class="w-full h-40 bg-transparent border-none focus:ring-0 resize-none font-body placeholder:text-outline-variant/60 text-sm leading-relaxed" placeholder="Temperar o chocolate a 31°C antes de incorporar o purê..."></textarea>
             </div>
-            <div class="relative rounded-3xl overflow-hidden group cursor-pointer">
-              <img alt="Referência Visual da Receita" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                src="https://images.unsplash.com/photo-1587668178277-295251f900ce?w=500&q=80" />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
-                <p class="text-white font-headline font-bold">Referência Visual</p>
-                <p class="text-white/70 text-xs">Carregue sua foto de apresentação final</p>
-                <div class="mt-3 inline-flex items-center gap-2 bg-white/20 backdrop-blur rounded-full px-4 py-2 w-fit">
-                  <span class="material-symbols-outlined text-white text-sm">upload</span>
-                  <span class="text-white text-xs font-bold">Carregar Foto</span>
-                </div>
-              </div>
-            </div>
+            <!-- Opção de carregar foto removida -->
           </div>
         </div>
 
@@ -313,19 +241,7 @@
             </button>
           </div>
 
-          <!-- Ingredient Alert Card -->
-          <div class="bg-surface-container-lowest rounded-3xl p-6 border border-error/10">
-            <div class="flex items-center gap-3 mb-4">
-              <span class="material-symbols-outlined text-error">warning</span>
-              <h4 class="font-bold text-sm">Alerta de Ingrediente</h4>
-            </div>
-            <p class="text-xs text-on-surface-variant leading-relaxed">
-              <strong class="text-on-surface">Purê de Framboesa</strong> apresenta aumento de 8% no custo. Considere ajustar o preço final.
-            </p>
-            <a href="ingredientes.html" class="mt-3 inline-flex items-center gap-1 text-primary text-xs font-bold hover:underline">
-              Ver Ingredientes <span class="material-symbols-outlined text-xs">arrow_forward</span>
-            </a>
-          </div>
+          <!-- Alerta de Ingrediente removido -->
         </aside>
       </div>
     </div>
