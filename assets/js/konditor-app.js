@@ -6,6 +6,121 @@
   'use strict';
 
   /* ─────────────────────────────────────────────
+     Token Management — in-memory access token + HttpOnly refresh cookie
+  ───────────────────────────────────────────── */
+  var _accessToken   = null;
+  var _refreshTimer  = null;
+  var _pendingRefresh = null;   // serializes concurrent renovarToken() calls
+  var _SESSION_KEY   = 'konditor_at';
+
+  /* Decode JWT exp claim without a library (no signature verification needed here) */
+  function tokenExpiresInSeconds(token) {
+    try {
+      var payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return payload.exp ? payload.exp - Math.floor(Date.now() / 1000) : -1;
+    } catch (e) { return -1; }
+  }
+
+  function isTokenExpired(token) {
+    return tokenExpiresInSeconds(token) <= 5; // treat tokens with ≤5 s left as expired
+  }
+
+  function getAccessToken() {
+    if (_accessToken) {
+      if (isTokenExpired(_accessToken)) { setAccessToken(null); return null; }
+      return _accessToken;
+    }
+    /* Restore from sessionStorage after same-tab navigation */
+    try {
+      var stored = sessionStorage.getItem(_SESSION_KEY) || null;
+      if (stored && isTokenExpired(stored)) { sessionStorage.removeItem(_SESSION_KEY); stored = null; }
+      _accessToken = stored;
+    } catch (e) {}
+    return _accessToken;
+  }
+
+  function setAccessToken(t) {
+    _accessToken = t;
+    try {
+      if (t) { sessionStorage.setItem(_SESSION_KEY, t); }
+      else    { sessionStorage.removeItem(_SESSION_KEY); }
+    } catch (e) {}
+  }
+
+  function scheduleRefresh(expiresInSeconds) {
+    clearTimeout(_refreshTimer);
+    var delay = Math.max(10000, (expiresInSeconds - 60) * 1000);
+    _refreshTimer = setTimeout(renovarToken, delay);
+  }
+
+  function renovarToken() {
+    /* Return the in-flight promise if one already exists — prevents duplicate requests */
+    if (_pendingRefresh) return _pendingRefresh;
+
+    _pendingRefresh = fetch((window.KONDITOR_API || '') + '/auth/refresh', {
+      method: 'POST',
+      credentials: 'include'
+    })
+      .then(function (r) {
+        if (!r.ok) {
+          clearTimeout(_refreshTimer);
+          setAccessToken(null);
+          localStorage.removeItem('konditor_user');
+          localStorage.removeItem('konditor_workspace');
+          window.location.href = 'login.html';
+          return null;
+        }
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data) return null;
+        setAccessToken(data.accessToken);
+        if (data.expiresIn) scheduleRefresh(data.expiresIn);
+        return data.accessToken;
+      })
+      .catch(function () {
+        window.location.href = 'login.html';
+        return null;
+      })
+      .finally(function () { _pendingRefresh = null; });
+
+    return _pendingRefresh;
+  }
+
+  /* Ensures a valid token exists — checks expiry, then uses refresh cookie */
+  function initSession() {
+    var tok = getAccessToken(); // returns null if expired
+    if (tok) {
+      /* Token is valid — (re-)schedule proactive refresh if not already armed */
+      if (!_refreshTimer) {
+        var secsLeft = tokenExpiresInSeconds(tok);
+        if (secsLeft > 0) scheduleRefresh(secsLeft);
+      }
+      return Promise.resolve(tok);
+    }
+    return renovarToken();
+  }
+
+  /* Drop-in fetch replacement: adds Bearer token + credentials, auto-retries on 401 */
+  function apiFetch(url, options) {
+    options = options || {};
+    var tok  = getAccessToken();
+    var hdrs = Object.assign({}, options.headers || {});
+    if (tok) hdrs['Authorization'] = 'Bearer ' + tok;
+    return fetch(url, Object.assign({}, options, { credentials: 'include', headers: hdrs }))
+      .then(function (res) {
+        if (res.status !== 401) return res;
+        /* Token rejected — refresh once, then retry */
+        setAccessToken(null); // clear stale token before refreshing
+        return renovarToken().then(function (newTok) {
+          if (!newTok) return res; // renovarToken already redirected
+          var retryHdrs = Object.assign({}, options.headers || {}, { 'Authorization': 'Bearer ' + newTok });
+          return fetch(url, Object.assign({}, options, { credentials: 'include', headers: retryHdrs }));
+        });
+      });
+  }
+
+  /* ─────────────────────────────────────────────
      Mobile Sidebar (app pages)
   ───────────────────────────────────────────── */
   function initSidebar() {
@@ -310,55 +425,69 @@
       + '</div></div></div>';
   }
 
+  function buildDraftCard(r) {
+    var editLink = 'criar-receita.html' + (r.id ? '?id=' + encodeURIComponent(r.id) : '');
+    var nome     = r.nome ? escHtml(r.nome) : 'Sem nome';
+    var catHtml  = r.categoria
+      ? '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">' + escHtml(r.categoria) + '</span>'
+      : '<span></span>';
+    var tsRaw  = r.atualizadoEm || r.criadoEm;
+    var dataHtml = tsRaw
+      ? '<p class="text-xs text-on-surface-variant font-medium mt-1">Editado em ' + new Date(tsRaw).toLocaleDateString('pt-BR') + '</p>'
+      : '';
+    return '<div class="group bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-amber-200 hover:border-amber-300 hover:-translate-y-0.5">'
+      + '<div class="p-6 flex flex-col gap-4 h-full">'
+      + '<div class="flex items-center justify-between">'
+      + catHtml
+      + '<span class="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">'
+      + '<span class="material-symbols-outlined" style="font-size:0.85rem">edit_note</span> Rascunho</span>'
+      + '</div>'
+      + '<div class="flex-1"><h3 class="text-lg font-headline font-bold text-on-surface">' + nome + '</h3>' + dataHtml + '</div>'
+      + '<div class="flex justify-between items-center pt-3 border-t border-amber-100">'
+      + '<span class="text-xs text-amber-700 font-semibold">N\u00e3o publicado</span>'
+      + '<a href="' + editLink + '" class="flex items-center gap-1 text-amber-700 text-sm font-bold hover:gap-2 transition-all duration-200">'
+      + 'Continuar <span class="material-symbols-outlined text-sm">arrow_forward</span></a>'
+      + '</div></div></div>';
+  }
+
   function initDashboard() {
     var grid = document.getElementById('recipe-grid');
     if (!grid) return;
 
-    var token = localStorage.getItem('konditor_token');
-    if (!token) { window.location.href = 'login.html'; return; }
-
-    var API     = window.KONDITOR_API || '';
-    var headers = { 'Authorization': 'Bearer ' + token };
+    var API          = window.KONDITOR_API || '';
     var totalEl      = document.getElementById('stat-total-receitas');
     var margemEl     = document.getElementById('stat-margem-media');
     var melhorNomeEl = document.getElementById('stat-melhor-nome');
     var melhorPctEl  = document.getElementById('stat-melhor-margem-pct');
+    var filterGroup  = document.getElementById('filter-chips-group');
+    var btnRascunhos = document.getElementById('btn-ver-rascunhos');
 
-    Promise.all([
-      fetch(API + '/dashboard/estatisticas', { headers: headers }).then(function (r) {
-        if (r.status === 401) { localStorage.removeItem('konditor_token'); window.location.href = 'login.html'; throw new Error('unauth'); }
-        if (!r.ok) throw new Error('stats');
-        return r.json();
-      }),
-      fetch(API + '/dashboard/receitas', { headers: headers }).then(function (r) {
-        if (r.status === 401) { localStorage.removeItem('konditor_token'); window.location.href = 'login.html'; throw new Error('unauth'); }
-        if (!r.ok) throw new Error('grid');
-        return r.json();
-      })
-    ]).then(function (results) {
-      var stats    = results[0];
-      var receitas = results[1];
+    var modoRascunhos  = false;
+    var publishedCache = null; // [stats, receitas] — avoids refetch on toggle back
+
+    var INACTIVE_CLS = 'whitespace-nowrap px-5 py-2 rounded-full font-headline font-bold text-sm transition-all duration-200 active:scale-95 bg-surface-container-lowest border border-slate-200 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:bg-primary-container/10';
+
+    /* ── Render published recipes ── */
+    function renderPublicadas(stats, receitas) {
+      if (filterGroup) filterGroup.classList.remove('hidden');
 
       if (totalEl)      totalEl.textContent      = stats.totalReceitas;
       if (margemEl)     margemEl.textContent     = Number(stats.margemMedia).toFixed(1) + '%';
-      if (melhorNomeEl) melhorNomeEl.textContent = stats.melhorMargem ? stats.melhorMargem.nome : '—';
+      if (melhorNomeEl) melhorNomeEl.textContent = stats.melhorMargem ? stats.melhorMargem.nome : '\u2014';
       if (melhorPctEl)  melhorPctEl.textContent  = stats.melhorMargem ? stats.melhorMargem.margem + '% de margem' : '';
 
       if (!receitas || receitas.length === 0) {
-        grid.innerHTML = '<p class="col-span-3 text-center text-on-surface-variant py-16">Nenhuma receita cadastrada ainda. '
+        grid.innerHTML = '<p class="col-span-3 text-center text-on-surface-variant py-16">Nenhuma receita publicada ainda. '
           + '<a href="criar-receita.html" class="text-primary font-bold hover:underline">Criar primeira receita</a></p>';
         return;
       }
 
-      /* Build category filter chips from returned data */
-      var filterGroup = document.getElementById('filter-chips-group');
+      /* Build category filter chips */
       if (filterGroup) {
         var categorias = [];
         receitas.forEach(function (r) {
           if (r.categoria && categorias.indexOf(r.categoria) === -1) categorias.push(r.categoria);
         });
-        var INACTIVE_CLS = 'whitespace-nowrap px-5 py-2 rounded-full font-headline font-bold text-sm transition-all duration-200 active:scale-95 bg-surface-container-lowest border border-slate-200 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:bg-primary-container/10';
-        /* remove old dynamically added chips (keep 'Todas') */
         filterGroup.querySelectorAll('[data-dynamic-chip]').forEach(function (el) { el.remove(); });
         categorias.forEach(function (cat) {
           var btn = document.createElement('button');
@@ -370,22 +499,70 @@
           btn.textContent = cat;
           filterGroup.appendChild(btn);
         });
-        /* re-init chips after rebuilding */
         initFilterChips();
       }
 
       grid.innerHTML = receitas.map(buildRecipeCard).join('');
-
       var activeChip = document.querySelector('[data-filter-chip][aria-pressed="true"]');
       if (activeChip) filterRecipeCards(activeChip.textContent.trim());
-    }).catch(function (err) {
-      if (err.message === 'unauth') return;
-      grid.innerHTML = '<p class="col-span-3 text-center text-on-surface-variant py-16">Erro ao carregar receitas. Tente recarregar a página.</p>';
-      if (totalEl)      totalEl.textContent      = '—';
-      if (margemEl)     margemEl.textContent     = '—';
-      if (melhorNomeEl) melhorNomeEl.textContent = '—';
-      if (melhorPctEl)  melhorPctEl.textContent  = '';
-    });
+    }
+
+    /* ── Render drafts ── */
+    function renderRascunhos(rascunhos) {
+      if (filterGroup) filterGroup.classList.add('hidden');
+
+      if (!rascunhos || rascunhos.length === 0) {
+        grid.innerHTML = '<p class="col-span-3 text-center text-on-surface-variant py-16">'
+          + 'Nenhum rascunho salvo. <a href="criar-receita.html" class="text-primary font-bold hover:underline">Criar nova receita</a></p>';
+        return;
+      }
+      grid.innerHTML = rascunhos.map(buildDraftCard).join('');
+    }
+
+    /* ── Rascunhos toggle ── */
+    if (btnRascunhos) {
+      btnRascunhos.addEventListener('click', function () {
+        modoRascunhos = !modoRascunhos;
+        if (modoRascunhos) {
+          btnRascunhos.classList.add('bg-amber-100', 'text-amber-700', 'border-amber-300');
+          btnRascunhos.classList.remove('bg-surface-container-highest', 'text-on-surface', 'border-transparent');
+          grid.innerHTML = '<div class="col-span-3 flex justify-center py-12">'
+            + '<span class="material-symbols-outlined text-outline-variant" style="animation:spin .9s linear infinite">progress_activity</span></div>';
+          apiFetch(API + '/dashboard/receitas?status=rascunho')
+            .then(function (r) { return r.ok ? r.json() : []; })
+            .then(function (data) { renderRascunhos(data); })
+            .catch(function () { renderRascunhos([]); });
+        } else {
+          btnRascunhos.classList.remove('bg-amber-100', 'text-amber-700', 'border-amber-300');
+          btnRascunhos.classList.add('bg-surface-container-highest', 'text-on-surface', 'border-transparent');
+          if (publishedCache) renderPublicadas(publishedCache[0], publishedCache[1]);
+        }
+      });
+    }
+
+    initSession().then(function (tok) {
+      if (!tok) return;
+
+      Promise.all([
+        apiFetch(API + '/dashboard/estatisticas').then(function (r) {
+          if (!r.ok) throw new Error('stats');
+          return r.json();
+        }),
+        apiFetch(API + '/dashboard/receitas').then(function (r) {
+          if (!r.ok) throw new Error('grid');
+          return r.json();
+        })
+      ]).then(function (results) {
+        publishedCache = results;
+        renderPublicadas(results[0], results[1]);
+      }).catch(function () {
+        grid.innerHTML = '<p class="col-span-3 text-center text-on-surface-variant py-16">Erro ao carregar receitas. Tente recarregar a p\u00e1gina.</p>';
+        if (totalEl)      totalEl.textContent      = '\u2014';
+        if (margemEl)     margemEl.textContent     = '\u2014';
+        if (melhorNomeEl) melhorNomeEl.textContent = '\u2014';
+        if (melhorPctEl)  melhorPctEl.textContent  = '';
+      });
+    }); // initSession
   }
 
   /* ─────────────────────────────────────────────
@@ -469,6 +646,7 @@
 
       fetch((window.KONDITOR_API || '') + '/auth/google', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken: idToken })
       })
@@ -483,7 +661,8 @@
           }
 
           var data = res.data;
-          localStorage.setItem('konditor_token', data.accessToken);
+          setAccessToken(data.accessToken);
+          if (data.expiresIn) scheduleRefresh(data.expiresIn);
           localStorage.setItem('konditor_user', JSON.stringify(data.usuario));
 
           if (data.workspace) {
@@ -568,7 +747,7 @@
       }
       if (errEl) errEl.classList.add('hidden');
 
-      var accessToken = localStorage.getItem('konditor_token');
+      var accessToken = getAccessToken();
       if (!accessToken) {
         alert('Conecte sua conta Google no Passo 1 antes de continuar.');
         return;
@@ -580,6 +759,7 @@
 
       fetch((window.KONDITOR_API || '') + '/onboarding', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + accessToken
@@ -603,13 +783,15 @@
               if (idTokenRetry) {
                 fetch((window.KONDITOR_API || '') + '/auth/google', {
                   method: 'POST',
+                  credentials: 'include',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ idToken: idTokenRetry })
                 })
                   .then(function (r) { return r.json(); })
                   .then(function (data) {
                     sessionStorage.removeItem('konditor_id_token_temp');
-                    localStorage.setItem('konditor_token', data.accessToken);
+                    setAccessToken(data.accessToken);
+                    if (data.expiresIn) scheduleRefresh(data.expiresIn);
                     if (data.usuario) localStorage.setItem('konditor_user', JSON.stringify(data.usuario));
                     if (data.workspace) localStorage.setItem('konditor_workspace', JSON.stringify(data.workspace));
                     window.location.href = 'receitas.html';
@@ -642,20 +824,21 @@
 
           fetch((window.KONDITOR_API || '') + '/auth/google', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ idToken: idToken })
           })
             .then(function (r) { return r.json(); })
             .then(function (data) {
               sessionStorage.removeItem('konditor_id_token_temp');
-              localStorage.setItem('konditor_token', data.accessToken);
+              setAccessToken(data.accessToken);
+              if (data.expiresIn) scheduleRefresh(data.expiresIn);
               if (data.usuario) localStorage.setItem('konditor_user', JSON.stringify(data.usuario));
               if (data.workspace) localStorage.setItem('konditor_workspace', JSON.stringify(data.workspace));
               window.location.href = 'receitas.html';
             })
             .catch(function () {
               sessionStorage.removeItem('konditor_id_token_temp');
-              localStorage.removeItem('konditor_token');
               window.location.href = 'login.html';
             });
         })
@@ -673,10 +856,11 @@
   function initLogout() {
     document.querySelectorAll('[data-logout]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        var token = localStorage.getItem('konditor_token');
+        var token = getAccessToken();
 
         function clearAndRedirect() {
-          localStorage.removeItem('konditor_token');
+          setAccessToken(null);
+          clearTimeout(_refreshTimer);
           localStorage.removeItem('konditor_user');
           localStorage.removeItem('konditor_workspace');
           sessionStorage.removeItem('konditor_id_token_temp');
@@ -687,12 +871,432 @@
 
         fetch((window.KONDITOR_API || '') + '/auth/logout', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Authorization': 'Bearer ' + token }
         })
           .then(function () { clearAndRedirect(); })
           .catch(function () { clearAndRedirect(); });
       });
     });
+  }
+
+  /* ─────────────────────────────────────────────
+     Criar Receita — criar-receita.html
+  ───────────────────────────────────────────── */
+  function initCriarReceita() {
+    var container = document.getElementById('ingredientes-container');
+    if (!container) return;
+
+    var API = window.KONDITOR_API || '';
+    initSession().then(function (tok) { if (!tok) window.location.href = 'login.html'; });
+
+    /* ── State ── */
+    var state = {
+      receitaId: null,
+      ingredientes: [],   // { ingredienteId, unidadeId, nome, unidadeSimbolo, quantidade }
+      precoSugerido: null,
+      calcTimer: null,
+      searchTimer: null,
+      custosFixosTipo: 'percentual'  // 'percentual' | 'fixo'
+    };
+
+    /* ── DOM refs ── */
+    var btnSalvar       = document.getElementById('btn-salvar-rascunho');
+    var btnPublicar     = document.getElementById('btn-publicar');
+    var btnAplicar      = document.getElementById('btn-aplicar-preco');
+    var nomInput        = document.getElementById('input-nome');
+    var rendInput       = document.getElementById('input-rendimento');
+    var tempoInput      = document.getElementById('input-tempo');
+    var notasInput      = document.getElementById('input-notas');
+    var elCustoIngr     = document.getElementById('val-custo-ingredientes');
+    var elMaoObra       = document.getElementById('val-mao-de-obra');
+    var elCustFixos     = document.getElementById('val-custos-fixos');
+    var elCustTotal     = document.getElementById('val-custo-total');
+    var elPrecoSug      = document.getElementById('val-preco-sugerido');
+    var elMargem        = document.getElementById('val-margem');
+    var elPrecoFinal    = document.getElementById('input-preco-final');
+    var inpValorHora    = document.getElementById('input-valor-hora');
+    var inpCustFixos    = document.getElementById('input-custos-fixos');
+    var inpMargemLucro  = document.getElementById('input-margem');
+    var searchInput     = document.getElementById('ingrediente-search-input');
+    var searchDropdown  = document.getElementById('ingrediente-search-dropdown');
+    var emptyHint       = document.getElementById('ingredientes-empty-hint');
+    var pctMaoDisplay   = document.getElementById('val-pct-mao-obra-display');
+    var pctFixDisplay   = document.getElementById('val-pct-custos-fixos-display');
+    var btnCustosPct    = document.getElementById('btn-custos-pct');
+    var btnCustosFixo   = document.getElementById('btn-custos-fixo');
+    var custosFixosUnit = document.getElementById('custos-fixos-unit');
+
+    /* ── Helpers ── */
+    function fmtBRL(val) {
+      return Number(val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    function pctVal(el, def) {
+      var v = el ? parseFloat(el.value) : NaN;
+      return isNaN(v) || v < 0 ? def : v;
+    }
+
+    /* ── Toast ── */
+    function showToast(msg, tipo) {
+      var toast = document.getElementById('criar-toast');
+      var icon  = document.getElementById('criar-toast-icon');
+      var msgEl = document.getElementById('criar-toast-msg');
+      if (!toast) return;
+      toast.className = 'fixed top-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl font-headline font-bold text-sm '
+        + (tipo === 'erro' ? 'bg-error text-white' : 'bg-secondary text-white');
+      if (icon) icon.textContent = tipo === 'erro' ? 'error' : 'check_circle';
+      if (msgEl) msgEl.textContent = msg;
+      clearTimeout(toast._t);
+      toast._t = setTimeout(function () { toast.className = 'hidden'; }, 4000);
+    }
+
+    /* ── Button loading ── */
+    function setLoading(btn, loading) {
+      if (!btn) return;
+      if (loading) {
+        btn.dataset.origText = btn.textContent.trim();
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1rem;animation:spin .9s linear infinite;vertical-align:middle;">progress_activity</span> Aguarde\u2026';
+      } else {
+        btn.disabled = false;
+        btn.textContent = btn.dataset.origText || btn.textContent;
+      }
+    }
+
+    /* ── Tooltips ── */
+    var tooltipBox = document.getElementById('tooltip-box');
+    document.querySelectorAll('.tooltip-trigger').forEach(function (el) {
+      el.addEventListener('mouseenter', function (e) {
+        if (!tooltipBox) return;
+        tooltipBox.textContent = el.dataset.tooltip || '';
+        tooltipBox.classList.remove('hidden');
+        var r = el.getBoundingClientRect();
+        var top = r.top + window.scrollY - tooltipBox.offsetHeight - 8;
+        var left = Math.min(r.left + window.scrollX, window.innerWidth - tooltipBox.offsetWidth - 16);
+        tooltipBox.style.top  = Math.max(8, top) + 'px';
+        tooltipBox.style.left = Math.max(8, left) + 'px';
+      });
+      el.addEventListener('mouseleave', function () {
+        if (tooltipBox) tooltipBox.classList.add('hidden');
+      });
+    });
+
+    /* ── Render ingredient list ── */
+    function renderIngredientes() {
+      container.innerHTML = '';
+      if (!state.ingredientes.length) {
+        if (emptyHint) emptyHint.classList.remove('hidden');
+        return;
+      }
+      if (emptyHint) emptyHint.classList.add('hidden');
+
+      state.ingredientes.forEach(function (ing, idx) {
+        var row = document.createElement('div');
+        row.className = 'ingredient-row flex items-center gap-3 mb-3 group transition-all';
+        row.dataset.index = String(idx);
+
+        row.innerHTML =
+          '<div class="flex-grow grid grid-cols-12 gap-3 p-3 rounded-2xl bg-surface-container-low group-hover:bg-white group-hover:shadow-md transition-all border-l-4 border-primary">'
+          + '<div class="col-span-5 flex items-center">'
+          + '<span class="font-medium text-sm text-on-surface truncate" title="' + escHtml(ing.nome) + '">' + escHtml(ing.nome) + '</span>'
+          + '</div>'
+          + '<div class="col-span-3 flex items-center justify-end">'
+          + '<input type="number" min="0.001" step="any" class="ingredient-qty-input w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-xl text-right font-bold py-1.5 px-3 text-sm transition-all shadow-sm" value="' + escHtml(String(ing.quantidade || '')) + '" placeholder="Qtd." />'
+          + '</div>'
+          + '<div class="col-span-4 flex items-center">'
+          + '<span class="ml-2 text-sm font-bold text-outline uppercase">' + escHtml(ing.unidadeSimbolo) + '</span>'
+          + '</div>'
+          + '</div>'
+          + '<button type="button" aria-label="Remover ingrediente" class="remove-row-btn w-9 h-9 flex items-center justify-center rounded-full text-outline-variant hover:text-error hover:bg-error/10 transition-all shrink-0">'
+          + '<span class="material-symbols-outlined text-base">delete</span>'
+          + '</button>';
+
+        container.appendChild(row);
+
+        var qtyInput  = row.querySelector('.ingredient-qty-input');
+        var removeBtn = row.querySelector('.remove-row-btn');
+
+        qtyInput.addEventListener('input', function () {
+          state.ingredientes[idx].quantidade = qtyInput.value;
+          scheduleCalculo();
+        });
+
+        removeBtn.addEventListener('click', function () {
+          state.ingredientes.splice(idx, 1);
+          renderIngredientes();
+          scheduleCalculo();
+        });
+      });
+    }
+
+    /* ── Search bar ── */
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        var q = searchInput.value.trim();
+        clearTimeout(state.searchTimer);
+        if (q.length < 2) { if (searchDropdown) searchDropdown.classList.add('hidden'); return; }
+        state.searchTimer = setTimeout(function () {
+          apiFetch(API + '/ingredientes?query=' + encodeURIComponent(q))
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+              if (!searchDropdown) return;
+              if (!data || !data.length) { searchDropdown.classList.add('hidden'); return; }
+              searchDropdown.innerHTML = data.map(function (item) {
+                var alreadyAdded = state.ingredientes.some(function (i) { return i.ingredienteId === item.id; });
+                return '<button type="button" class="w-full text-left px-4 py-3 hover:bg-primary-container/10 transition-colors flex items-center justify-between gap-3 border-b border-outline-variant/10 last:border-0'
+                  + (alreadyAdded ? ' opacity-50 pointer-events-none' : '') + '"'
+                  + ' data-id="' + escHtml(item.id) + '"'
+                  + ' data-unidade-id="' + escHtml(item.unidadeId) + '"'
+                  + ' data-unidade="' + escHtml(item.unidadeSimbolo) + '"'
+                  + ' data-nome="' + escHtml(item.nome) + '">'
+                  + '<span class="font-medium text-sm">' + escHtml(item.nome)
+                  + (item.marca ? ' <span class="text-[10px] text-outline-variant">' + escHtml(item.marca) + '</span>' : '')
+                  + '</span>'
+                  + '<span class="text-[10px] font-bold uppercase bg-surface-container text-outline rounded-full px-2 py-0.5 shrink-0">' + escHtml(item.unidadeSimbolo) + '</span>'
+                  + '</button>';
+              }).join('');
+              searchDropdown.classList.remove('hidden');
+            })
+            .catch(function () {});
+        }, 300);
+      });
+
+      searchInput.addEventListener('blur', function () {
+        setTimeout(function () { if (searchDropdown) searchDropdown.classList.add('hidden'); }, 200);
+      });
+
+      if (searchDropdown) {
+        searchDropdown.addEventListener('mousedown', function (e) {
+          e.preventDefault();
+          var btn = e.target.closest('button[data-id]');
+          if (!btn) return;
+          state.ingredientes.push({
+            ingredienteId:  btn.dataset.id,
+            unidadeId:      btn.dataset.unidadeId,
+            nome:           btn.dataset.nome,
+            unidadeSimbolo: btn.dataset.unidade,
+            quantidade:     ''
+          });
+          renderIngredientes();
+          searchDropdown.classList.add('hidden');
+          searchInput.value = '';
+          /* Focus the qty field of the just-added row */
+          var rows = container.querySelectorAll('.ingredient-row');
+          var last = rows[rows.length - 1];
+          if (last) { var qi = last.querySelector('.ingredient-qty-input'); if (qi) { qi.focus(); qi.select(); } }
+          scheduleCalculo();
+        });
+      }
+    }
+
+    /* ── Watch parameter inputs for recalc ── */
+    /* Custos fixos tipo toggle */
+    function setCustosFixosTipo(tipo) {
+      state.custosFixosTipo = tipo;
+      var isPct = tipo === 'percentual';
+      var ACTIVE   = ['bg-primary', 'text-on-primary'];
+      var INACTIVE = ['bg-transparent', 'text-outline-variant'];
+      if (btnCustosPct) {
+        (isPct ? ACTIVE : INACTIVE).forEach(function (c) { btnCustosPct.classList.add(c); });
+        (isPct ? INACTIVE : ACTIVE).forEach(function (c) { btnCustosPct.classList.remove(c); });
+      }
+      if (btnCustosFixo) {
+        (!isPct ? ACTIVE : INACTIVE).forEach(function (c) { btnCustosFixo.classList.add(c); });
+        (!isPct ? INACTIVE : ACTIVE).forEach(function (c) { btnCustosFixo.classList.remove(c); });
+      }
+      if (custosFixosUnit) custosFixosUnit.textContent = isPct ? '%' : 'R$';
+      /* Update inpCustFixos step hint */
+      if (inpCustFixos) inpCustFixos.step = isPct ? '1' : '0.01';
+      /* Update badge */
+      if (pctFixDisplay && inpCustFixos) {
+        pctFixDisplay.textContent = isPct
+          ? (parseFloat(inpCustFixos.value) || 0) + '%'
+          : 'R$' + (parseFloat(inpCustFixos.value) || 0).toFixed(2);
+      }
+      scheduleCalculo();
+    }
+    if (btnCustosPct)  btnCustosPct.addEventListener('click',  function () { setCustosFixosTipo('percentual'); });
+    if (btnCustosFixo) btnCustosFixo.addEventListener('click', function () { setCustosFixosTipo('fixo'); });
+
+    [inpValorHora, inpCustFixos, inpMargemLucro, rendInput, tempoInput].forEach(function (el) {
+      if (el) el.addEventListener('input', function () {
+        /* Update display badges */
+        if (inpValorHora && pctMaoDisplay) pctMaoDisplay.textContent = 'R$' + (parseFloat(inpValorHora.value) || 0).toFixed(2) + '/h';
+        if (inpCustFixos && pctFixDisplay) {
+          pctFixDisplay.textContent = state.custosFixosTipo === 'percentual'
+            ? (parseFloat(inpCustFixos.value) || 0) + '%'
+            : 'R$' + (parseFloat(inpCustFixos.value) || 0).toFixed(2);
+        }
+        scheduleCalculo();
+      });
+    });
+
+    /* ── Debounced calculation ── */
+    function scheduleCalculo() {
+      clearTimeout(state.calcTimer);
+      state.calcTimer = setTimeout(calcularCustos, 400);
+    }
+
+    function calcularCustos() {
+      var validos = state.ingredientes.filter(function (ing) {
+        return ing.ingredienteId && ing.unidadeId && ing.quantidade && Number(ing.quantidade) > 0;
+      });
+      if (!validos.length) return;
+
+      var rendQtd      = parseFloat(rendInput ? rendInput.value : '') || 1;
+      var valorHora    = parseFloat(inpValorHora ? inpValorHora.value : '') || 0;
+      var custFixosVal = parseFloat(inpCustFixos ? inpCustFixos.value : '') || 0;
+      var margem       = pctVal(inpMargemLucro, 30);
+      var tempoMin     = parseTempoMinutos();
+
+      apiFetch(API + '/receitas/calcular', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ingredientes: validos.map(function (ing) {
+            return { ingredienteId: ing.ingredienteId, quantidade: Number(ing.quantidade), unidadeId: ing.unidadeId };
+          }),
+          rendimentoQuantidade:  rendQtd,
+          maoDeObraValorHora:    valorHora,
+          tempoPreparoMinutos:   tempoMin,
+          custosFixosValor:      custFixosVal,
+          custosFixosTipo:       state.custosFixosTipo,
+          margemDesejada:        margem
+        })
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) { if (data) atualizarPainel(data); })
+        .catch(function () {});
+    }
+
+    function atualizarPainel(data) {
+      state.precoSugerido = data.precoSugeridoPorUnidade;
+      if (elCustoIngr) elCustoIngr.textContent = fmtBRL(data.custoIngredientes);
+      if (elMaoObra)   elMaoObra.textContent   = fmtBRL(data.custoMaoDeObra);
+      if (elCustFixos) elCustFixos.textContent = fmtBRL(data.custosFixos);
+      if (elCustTotal) elCustTotal.textContent = fmtBRL(data.custoTotal);
+      if (elPrecoSug)  elPrecoSug.textContent  = fmtBRL(data.precoSugeridoPorUnidade);
+      var margem = Math.round(data.margemUtilizada || data.margem || 0);
+      if (elMargem) elMargem.textContent = margem + '%';
+      /* Mão de obra badge: show effective valor/hora */
+      if (pctMaoDisplay && inpValorHora) pctMaoDisplay.textContent = 'R$' + (parseFloat(inpValorHora.value) || 0).toFixed(2) + '/h';
+      /* Custos fixos badge: show % or R$ depending on tipo */
+      if (pctFixDisplay && inpCustFixos) {
+        pctFixDisplay.textContent = state.custosFixosTipo === 'percentual'
+          ? (parseFloat(inpCustFixos.value) || 0) + '%'
+          : 'R$' + (parseFloat(inpCustFixos.value) || 0).toFixed(2);
+      }
+      var bar = document.getElementById('margem-bar');
+      if (bar) bar.style.width = Math.min(100, margem) + '%';
+    }
+
+    /* ── Apply suggested price ── */
+    if (btnAplicar) {
+      btnAplicar.addEventListener('click', function () {
+        if (state.precoSugerido !== null && elPrecoFinal) {
+          elPrecoFinal.value = Number(state.precoSugerido).toFixed(2);
+        }
+      });
+    }
+
+    /* ── Build payload ── */
+    function parseTempoMinutos() {
+      if (!tempoInput || !tempoInput.value.trim()) return 0;
+      var str = tempoInput.value.trim();
+      var hM = str.match(/(\d+)\s*h/);
+      var mM = str.match(/(\d+)\s*min/);
+      if (hM || mM) return (hM ? parseInt(hM[1]) * 60 : 0) + (mM ? parseInt(mM[1]) : 0);
+      return parseInt(str) || 0;
+    }
+
+    function buildPayload(status) {
+      var rendQtd      = parseFloat(rendInput ? rendInput.value : '') || 1;
+      var valorHora    = parseFloat(inpValorHora ? inpValorHora.value : '') || 0;
+      var custFixosVal = parseFloat(inpCustFixos ? inpCustFixos.value : '') || 0;
+      var margem       = pctVal(inpMargemLucro, 30);
+      var precoFin     = elPrecoFinal ? parseFloat(elPrecoFinal.value) : NaN;
+      return {
+        nome:                 nomInput ? nomInput.value.trim() : '',
+        rendimentoQuantidade: rendQtd,
+        tempoPreparoMinutos:  parseTempoMinutos(),
+        ingredientes: state.ingredientes
+          .filter(function (ing) { return ing.ingredienteId && ing.unidadeId && ing.quantidade; })
+          .map(function (ing) {
+            return { ingredienteId: ing.ingredienteId, quantidade: Number(ing.quantidade), unidadeId: ing.unidadeId };
+          }),
+        notas:                notasInput ? notasInput.value.trim() : '',
+        precoFinal:           isNaN(precoFin) || precoFin <= 0 ? 0 : precoFin,
+        maoDeObraValorHora:   valorHora,
+        custosFixosValor:     custFixosVal,
+        custosFixosTipo:      state.custosFixosTipo,
+        margemDesejada:       margem,
+        status:               status
+      };
+    }
+
+    function validarForm() {
+      var nome = nomInput ? nomInput.value.trim() : '';
+      if (!nome) {
+        showToast('O nome da receita \u00e9 obrigat\u00f3rio.', 'erro');
+        if (nomInput) nomInput.focus();
+        return false;
+      }
+      if (!state.ingredientes.length) {
+        showToast('Adicione pelo menos um ingrediente.', 'erro');
+        if (searchInput) searchInput.focus();
+        return false;
+      }
+      var semQtd = state.ingredientes.some(function (i) { return !i.quantidade || Number(i.quantidade) <= 0; });
+      if (semQtd) {
+        showToast('Preencha a quantidade de todos os ingredientes.', 'erro');
+        return false;
+      }
+      return true;
+    }
+
+    /* ── Salvar Rascunho ── */
+    if (btnSalvar) {
+      btnSalvar.addEventListener('click', function () {
+        if (!validarForm()) return;
+        setLoading(btnSalvar, true);
+        var payload = buildPayload('rascunho');
+        var req = state.receitaId
+          ? apiFetch(API + '/receitas/' + state.receitaId, { method: 'PUT',  headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+          : apiFetch(API + '/receitas',                    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        req
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, data: d }; }); })
+          .then(function (res) {
+            setLoading(btnSalvar, false);
+            if (!res.ok) { showToast((res.data && res.data.detail) || 'Erro ao salvar.', 'erro'); return; }
+            state.receitaId = res.data.id;
+            showToast('Rascunho salvo!', 'sucesso');
+          })
+          .catch(function () { setLoading(btnSalvar, false); showToast('Falha de conex\u00e3o.', 'erro'); });
+      });
+    }
+
+    /* ── Publicar ── */
+    if (btnPublicar) {
+      btnPublicar.addEventListener('click', function () {
+        if (!validarForm()) return;
+        setLoading(btnPublicar, true);
+        var req = state.receitaId
+          ? apiFetch(API + '/receitas/' + state.receitaId + '/publicar', { method: 'POST' })
+          : apiFetch(API + '/receitas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildPayload('publicada')) });
+        req
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, data: d }; }); })
+          .then(function (res) {
+            setLoading(btnPublicar, false);
+            if (!res.ok) { showToast((res.data && res.data.detail) || 'Erro ao publicar.', 'erro'); return; }
+            showToast('Receita publicada!', 'sucesso');
+            setTimeout(function () { window.location.href = 'receitas.html'; }, 1500);
+          })
+          .catch(function () { setLoading(btnPublicar, false); showToast('Falha de conex\u00e3o.', 'erro'); });
+      });
+    }
+
+    /* ── Initial render ── */
+    renderIngredientes();
   }
 
   /* ─────────────────────────────────────────────
@@ -709,6 +1313,7 @@
     initGoogleAuth();
     initOnboarding();
     initDashboard();
+    initCriarReceita();
     initLogout();
   });
 })();

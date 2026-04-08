@@ -15,6 +15,12 @@
   <script src="assets/js/konditor-config.js"></script>
 </head>
 <body class="bg-background font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+  <!-- Toast notification -->
+  <div id="criar-toast" role="alert" aria-live="assertive" class="hidden fixed top-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl font-headline font-bold text-sm">
+    <span id="criar-toast-icon" class="material-symbols-outlined text-xl"></span>
+    <span id="criar-toast-msg"></span>
+  </div>
+
   <a href="#main-content" class="skip-link">Ir para o conteudo principal</a>
 
   <!-- Mobile sidebar overlay -->
@@ -38,12 +44,12 @@
           </p>
         </div>
         <div class="flex gap-4">
-          <button class="px-6 py-3 rounded-full bg-surface-container-highest text-on-surface font-headline font-bold text-sm hover:opacity-80 transition-opacity active:scale-95">
+          <button id="btn-salvar-rascunho" class="px-6 py-3 rounded-full bg-surface-container-highest text-on-surface font-headline font-bold text-sm hover:opacity-80 transition-opacity active:scale-95">
             Salvar Rascunho
           </button>
-          <a href="receitas.html" class="px-8 py-3 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-xl shadow-primary/20 hover:scale-105 transition-transform active:scale-95">
+          <button id="btn-publicar" class="px-8 py-3 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-xl shadow-primary/20 hover:scale-105 transition-transform active:scale-95">
             Publicar Receita
-          </a>
+          </button>
         </div>
       </section>
 
@@ -56,136 +62,75 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
               <div class="space-y-2">
                 <label for="input-nome" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Nome da Receita</label>
-                <input id="input-nome" class="w-full bg-surface-container-low border-none border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant" placeholder="ex: Ganache de Framboesa Valrhona" type="text" />
+                <input id="input-nome" class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg" placeholder="ex: Ganache de Framboesa Valrhona" type="text" />
               </div>
               <div class="space-y-2">
-                <label for="input-rendimento" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Rendimento</label>
-                <input id="input-rendimento" class="w-full bg-surface-container-low border-none border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant" placeholder="ex: 24 Mini Tortas" type="text" />
+                <label for="input-rendimento" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Rendimento (qtd.)</label>
+                <input id="input-rendimento" class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg" placeholder="ex: 24" type="number" min="1" step="1" />
               </div>
             </div>
             <div class="grid grid-cols-2 gap-8 mt-8">
               <div class="space-y-2">
                 <label for="input-categoria" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Categoria</label>
-                <select id="input-categoria" class="w-full bg-surface-container-low border-none border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-2xl py-4 px-6 text-lg font-headline transition-all text-on-surface">
-                  <option>Tortas</option>
-                  <option>Bolos</option>
-                  <option>Macarons</option>
-                  <option>Doces</option>
-                  <option>Chocolates</option>
-                </select>
+                <input id="input-categoria" list="categorias-list" type="text" autocomplete="off"
+                  class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                  placeholder="ex: Tortas, Bolos, Macarons..." />
+                <datalist id="categorias-list">
+                  <option value="Tortas" />
+                  <option value="Bolos" />
+                  <option value="Macarons" />
+                  <option value="Doces" />
+                  <option value="Chocolates" />
+                  <option value="Biscoitos" />
+                  <option value="Pães" />
+                  <option value="Sobremesas" />
+                </datalist>
               </div>
               <div class="space-y-2">
                 <label for="input-tempo" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Tempo de Preparo</label>
-                <input id="input-tempo" class="w-full bg-surface-container-low border-none border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant" placeholder="ex: 3h 30min" type="text" />
+                <input id="input-tempo" class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg" placeholder="ex: 3h 30min" type="text" />
               </div>
             </div>
           </div>
 
           <!-- Ingredients List -->
           <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
-            <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center justify-between mb-6">
               <h3 class="text-xl font-bold font-headline">Componentes da Receita</h3>
-              <button type="button" class="flex items-center gap-2 text-primary text-sm font-bold hover:bg-primary-container/10 px-4 py-2 rounded-full transition-all">
-                <span class="material-symbols-outlined text-xl">add_circle</span>
-                Adicionar Ingrediente
-              </button>
+              <a href="ingredientes.html" class="flex items-center gap-1 text-xs text-primary font-bold hover:underline">
+                <span class="material-symbols-outlined text-sm">open_in_new</span> Cadastrar ingrediente
+              </a>
             </div>
 
-            <!-- Header Row -->
-            <div class="grid grid-cols-12 gap-4 px-4 mb-2">
-              <div class="col-span-6 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Ingrediente</div>
-              <div class="col-span-3 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant text-right">Quantidade</div>
-              <div class="col-span-3 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Unidade</div>
-            </div>
-
-            <!-- Ingredient Row 1 -->
-            <div class="flex items-center gap-4 mb-4 group transition-all">
-              <div class="flex-grow grid grid-cols-12 gap-4 p-4 rounded-2xl bg-surface-container-low group-hover:bg-white group-hover:shadow-md transition-all">
-                <div class="col-span-6">
-                  <input class="w-full bg-transparent border-none focus:ring-0 font-medium py-1" type="text" value="Creme de Leite 35%" />
-                </div>
-                <div class="col-span-3">
-                  <input class="w-full bg-transparent border-none focus:ring-0 text-right font-medium py-1" type="text" value="500" />
-                </div>
-                <div class="col-span-3">
-                  <select class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-outline uppercase py-1">
-                    <option>ml</option><option>g</option><option>oz</option><option>un</option>
-                  </select>
-                </div>
+            <!-- Search bar -->
+            <div class="relative mb-4" id="ingrediente-search-wrap">
+              <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">search</span>
+              <input id="ingrediente-search-input" type="text" autocomplete="off"
+                class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-3 pl-12 pr-4 font-medium transition-all shadow-sm focus:shadow-lg placeholder:text-outline-variant"
+                placeholder="Buscar ingrediente cadastrado..." />
+              <div id="ingrediente-search-dropdown"
+                class="hidden absolute z-50 top-full left-0 right-0 mt-1 bg-white rounded-2xl shadow-2xl border border-outline-variant/20 max-h-56 overflow-y-auto">
               </div>
-              <button type="button" aria-label="Remover ingrediente" class="w-10 h-10 flex items-center justify-center rounded-full text-outline-variant hover:text-error hover:bg-error/10 transition-all">
-                <span class="material-symbols-outlined">delete</span>
-              </button>
             </div>
 
-            <!-- Ingredient Row 2 -->
-            <div class="flex items-center gap-4 mb-4 group transition-all">
-              <div class="flex-grow grid grid-cols-12 gap-4 p-4 rounded-2xl bg-surface-container-low group-hover:bg-white group-hover:shadow-md transition-all border-l-4 border-primary">
-                <div class="col-span-6">
-                  <input class="w-full bg-transparent border-none focus:ring-0 font-medium py-1" type="text" value="Purê de Framboesa" />
-                </div>
-                <div class="col-span-3">
-                  <input class="w-full bg-transparent border-none focus:ring-0 text-right font-medium py-1" type="text" value="125" />
-                </div>
-                <div class="col-span-3">
-                  <select class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-outline uppercase py-1">
-                    <option>g</option><option>ml</option><option>un</option>
-                  </select>
-                </div>
-              </div>
-              <button type="button" aria-label="Remover ingrediente" class="w-10 h-10 flex items-center justify-center rounded-full text-outline-variant hover:text-error hover:bg-error/10 transition-all">
-                <span class="material-symbols-outlined">delete</span>
-              </button>
+            <!-- Column headers -->
+            <div class="grid grid-cols-12 gap-3 px-3 mb-2 mr-14">
+              <div class="col-span-5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Ingrediente</div>
+              <div class="col-span-3 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant text-right">Qtd.</div>
+              <div class="col-span-4 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Unidade</div>
             </div>
 
-            <!-- Ingredient Row 3 -->
-            <div class="flex items-center gap-4 mb-4 group transition-all">
-              <div class="flex-grow grid grid-cols-12 gap-4 p-4 rounded-2xl bg-surface-container-low group-hover:bg-white group-hover:shadow-md transition-all">
-                <div class="col-span-6">
-                  <input class="w-full bg-transparent border-none focus:ring-0 font-medium py-1" type="text" value="Chocolate Branco Valrhona" />
-                </div>
-                <div class="col-span-3">
-                  <input class="w-full bg-transparent border-none focus:ring-0 text-right font-medium py-1" type="text" value="200" />
-                </div>
-                <div class="col-span-3">
-                  <select class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-outline uppercase py-1">
-                    <option>g</option><option>ml</option><option>un</option>
-                  </select>
-                </div>
-              </div>
-              <button type="button" aria-label="Remover ingrediente" class="w-10 h-10 flex items-center justify-center rounded-full text-outline-variant hover:text-error hover:bg-error/10 transition-all">
-                <span class="material-symbols-outlined">delete</span>
-              </button>
-            </div>
+            <div id="ingredientes-container"></div>
 
-            <!-- Empty Row -->
-            <div class="flex items-center gap-4 mb-4 group transition-all">
-              <div class="flex-grow grid grid-cols-12 gap-4 p-4 rounded-2xl bg-surface-container-low group-hover:bg-white group-hover:shadow-md transition-all border-2 border-dashed border-outline-variant/30">
-                <div class="col-span-6">
-                  <input class="w-full bg-transparent border-none focus:ring-0 font-medium py-1 italic text-outline-variant" placeholder="Comece a digitar o ingrediente..." type="text" />
-                </div>
-                <div class="col-span-3">
-                  <input class="w-full bg-transparent border-none focus:ring-0 text-right py-1" placeholder="Qtd." type="text" />
-                </div>
-                <div class="col-span-3">
-                  <select class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-outline uppercase py-1">
-                    <option>Unid.</option><option>g</option><option>ml</option>
-                  </select>
-                </div>
-              </div>
-              <button type="button" aria-label="Remover ingrediente" class="w-10 h-10 flex items-center justify-center rounded-full text-outline-variant hover:text-error hover:bg-error/10 transition-all opacity-0 group-hover:opacity-100">
-                <span class="material-symbols-outlined">delete</span>
-              </button>
-            </div>
+            <p id="ingredientes-empty-hint" class="text-sm text-on-surface-variant text-center py-6 hidden">
+              Nenhum ingrediente adicionado. Use a busca acima para selecionar.
+            </p>
           </div>
 
-          <!-- Notes & Visual Reference -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <div class="bg-surface-container-low rounded-3xl p-8 border border-outline-variant/10">
-              <h3 class="text-sm font-bold font-headline mb-4 uppercase tracking-widest text-outline">Notas do Processo</h3>
-              <textarea class="w-full h-40 bg-transparent border-none focus:ring-0 resize-none font-body placeholder:text-outline-variant/60 text-sm leading-relaxed" placeholder="Temperar o chocolate a 31°C antes de incorporar o purê..."></textarea>
-            </div>
-            <!-- Opção de carregar foto removida -->
+          <!-- Notes Board Expanded -->
+          <div class="bg-surface-container-lowest rounded-3xl p-8 border-2 border-outline-variant/40 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+            <h3 class="text-xl font-bold font-headline mb-4 uppercase tracking-widest text-outline">Notas do Processo</h3>
+            <textarea id="input-notas" class="w-full h-60 bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl resize-none font-body placeholder:text-outline-variant/60 text-base leading-relaxed p-4 shadow-sm focus:shadow-lg transition-all" placeholder="Temperar o chocolate a 31°C antes de incorporar o purê..."></textarea>
           </div>
         </div>
 
@@ -203,45 +148,112 @@
               </div>
             </div>
 
+            <!-- Editable cost parameters -->
+            <div class="space-y-3 mb-6">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-outline mb-3">Parâmetros do Cálculo</p>
+
+              <!-- Mão de obra -->
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1 flex-1 min-w-0">
+                  <span class="text-sm text-on-surface-variant truncate">Mão de Obra</span>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Informe quanto você cobra por hora de trabalho. O valor é multiplicado pelo tempo de preparo da receita para calcular o custo de mão de obra.">help</span>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <span class="text-xs font-bold text-outline">R$</span>
+                  <input id="input-valor-hora" type="number" min="0" step="0.01" value="25"
+                    class="w-20 text-center bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-1.5 px-2 font-bold text-sm transition-all shadow-sm" />
+                  <span class="text-xs font-bold text-outline">/h</span>
+                </div>
+              </div>
+
+              <!-- Custos fixos -->
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1 flex-1 min-w-0">
+                  <span class="text-sm text-on-surface-variant truncate">Custos Fixos</span>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Rateio dos custos do ateliê: aluguel, energia, gás, embalagens. Use % para calcular sobre o custo de ingredientes, ou R$ para um valor fixo por receita.">help</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <div class="flex rounded-lg overflow-hidden border border-outline-variant/30 text-[11px] font-bold">
+                    <button type="button" id="btn-custos-pct"
+                      class="px-2 py-1 bg-primary text-on-primary transition-colors">%</button>
+                    <button type="button" id="btn-custos-fixo"
+                      class="px-2 py-1 bg-transparent text-outline-variant transition-colors">R$</button>
+                  </div>
+                  <input id="input-custos-fixos" type="number" min="0" step="any" value="15"
+                    class="w-16 text-center bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-1.5 px-2 font-bold text-sm transition-all shadow-sm" />
+                  <span id="custos-fixos-unit" class="text-sm font-bold text-outline">%</span>
+                </div>
+              </div>
+
+              <!-- Margem de lucro -->
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1 flex-1 min-w-0">
+                  <span class="text-sm text-on-surface-variant truncate">Margem de Lucro</span>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Percentual de lucro desejado sobre o custo total. Ex: 30% significa que o preço de venda será o custo total dividido por (1 − 0,30), garantindo 30% de lucro sobre o preço final.">help</span>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <input id="input-margem" type="number" min="1" max="99" step="1" value="30"
+                    class="w-16 text-center bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-1.5 px-2 font-bold text-sm transition-all shadow-sm" />
+                  <span class="text-sm font-bold text-outline">%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="h-px bg-outline-variant/20 mb-6"></div>
+
             <!-- Metrics -->
-            <div class="space-y-4 mb-8">
-              <div class="flex justify-between items-center p-4 bg-surface-container-low rounded-2xl">
+            <div class="space-y-3 mb-8">
+              <div class="flex justify-between items-center p-3 bg-surface-container-low rounded-2xl">
                 <span class="text-sm text-on-surface-variant">Custo de Ingredientes</span>
-                <span class="font-bold text-on-surface">R$ 28,40</span>
+                <span id="val-custo-ingredientes" class="font-bold text-on-surface">—</span>
               </div>
-              <div class="flex justify-between items-center p-4 bg-surface-container-low rounded-2xl">
-                <span class="text-sm text-on-surface-variant">Mão de Obra (est.)</span>
-                <span class="font-bold text-on-surface">R$ 10,20</span>
+              <div class="flex justify-between items-center p-3 bg-surface-container-low rounded-2xl">
+                <div class="flex items-center gap-1">
+                  <span class="text-sm text-on-surface-variant">Mão de Obra</span>
+                  <span id="val-pct-mao-obra-display" class="text-[10px] text-outline bg-surface-container rounded-full px-2 py-0.5">R$25/h</span>
+                </div>
+                <span id="val-mao-de-obra" class="font-bold text-on-surface">—</span>
               </div>
-              <div class="flex justify-between items-center p-4 bg-surface-container-low rounded-2xl">
-                <span class="text-sm text-on-surface-variant">Custos Fixos</span>
-                <span class="font-bold text-on-surface">R$ 4,00</span>
+              <div class="flex justify-between items-center p-3 bg-surface-container-low rounded-2xl">
+                <div class="flex items-center gap-1">
+                  <span class="text-sm text-on-surface-variant">Custos Fixos</span>
+                  <span id="val-pct-custos-fixos-display" class="text-[10px] text-outline bg-surface-container rounded-full px-2 py-0.5">15%</span>
+                </div>
+                <span id="val-custos-fixos" class="font-bold text-on-surface">—</span>
               </div>
               <div class="h-px bg-outline-variant/20"></div>
-              <div class="flex justify-between items-center p-4 bg-primary-container/20 rounded-2xl">
+              <div class="flex justify-between items-center p-3 bg-primary-container/20 rounded-2xl">
                 <span class="text-sm font-bold text-on-surface">Custo Total</span>
-                <span class="font-extrabold text-primary text-lg">R$ 42,60</span>
+                <span id="val-custo-total" class="font-extrabold text-primary text-lg">—</span>
               </div>
             </div>
 
             <!-- Price Suggestion -->
-            <div class="bg-surface-container-lowest rounded-2xl p-6 space-y-3">
+            <div class="bg-surface-container-lowest rounded-2xl p-5 space-y-3">
               <div class="flex justify-between items-center">
-                <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Preço Sugerido (65%)</span>
-                <span class="text-2xl font-extrabold font-headline text-secondary">R$ 10,18</span>
+                <div class="flex items-center gap-1">
+                  <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Preço Sugerido</span>
+                  <span id="val-margem" class="text-[10px] text-outline bg-surface-container rounded-full px-2 py-0.5">—</span>
+                </div>
+                <span id="val-preco-sugerido" class="text-2xl font-extrabold font-headline text-secondary">—</span>
               </div>
               <div class="w-full h-2 bg-surface-container-high rounded-full">
-                <div class="h-full bg-secondary rounded-full" style="width: 65%"></div>
+                <div id="margem-bar" class="h-full bg-secondary rounded-full" style="width: 0%"></div>
               </div>
-              <p class="text-xs text-on-surface-variant">por unidade • margem de 65%</p>
+              <p class="text-xs text-on-surface-variant">por unidade</p>
             </div>
 
-            <button type="button" class="mt-6 w-full h-12 berry-gradient text-on-primary font-headline font-bold rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+            <button id="btn-aplicar-preco" type="button" class="mt-5 w-full h-12 berry-gradient text-on-primary font-headline font-bold rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-transform">
               Aplicar Preço Sugerido
             </button>
+            <div class="mt-3 flex items-center gap-3">
+              <label for="input-preco-final" class="text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap shrink-0">Preço Final</label>
+              <input id="input-preco-final" type="number" step="0.01" min="0" placeholder="0,00" class="flex-1 bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-xl py-2 px-4 text-right font-bold text-on-surface transition-all shadow-sm" />
+            </div>
           </div>
 
-          <!-- Alerta de Ingrediente removido -->
+          <!-- Tooltip overlay (shared) -->
+          <div id="tooltip-box" class="hidden fixed z-[200] max-w-xs bg-on-surface text-surface text-xs rounded-xl px-4 py-3 shadow-2xl leading-relaxed pointer-events-none"></div>
         </aside>
       </div>
     </div>
