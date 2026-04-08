@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Cadastre novos ingredientes no seu estoque com custo, unidade e alertas configurados." />
+  <title>Konditor | Novo Ingrediente</title>
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/konditor.css" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="assets/js/konditor-config.js"></script>
+</head>
+<body class="bg-background font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+
+  <!-- Toast notification -->
+  <div id="ci-toast" role="alert" aria-live="assertive" class="hidden fixed top-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl font-headline font-bold text-sm">
+    <span id="ci-toast-icon" class="material-symbols-outlined text-xl"></span>
+    <span id="ci-toast-msg"></span>
+  </div>
+
+  <a href="#main-content" class="skip-link">Ir para o conteudo principal</a>
+
+  <!-- Mobile sidebar overlay -->
+  <div id="sidebar-overlay" class="fixed inset-0 z-30 bg-black/40 opacity-0 pointer-events-none lg:hidden" aria-hidden="true"></div>
+
+  <aside id="app-sidebar" class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-lowest flex flex-col p-6 gap-2 -translate-x-full lg:translate-x-0" aria-label="Menu principal"></aside>
+
+  <!-- Main Content -->
+  <main id="main-content" class="lg:ml-64 p-12 min-h-screen">
+    <div class="max-w-6xl mx-auto">
+
+      <!-- Hero Header -->
+      <section class="mb-12 flex items-end justify-between">
+        <div class="space-y-2">
+          <span class="text-xs font-bold tracking-[0.2em] text-primary uppercase font-label">Câmara Fria</span>
+          <h2 class="text-5xl font-extrabold font-headline text-on-surface tracking-tight leading-tight">
+            Novo <span class="text-primary italic">Ingrediente</span>
+          </h2>
+          <p class="text-on-surface-variant max-w-md font-body text-lg">
+            Cadastre a matéria-prima com custo, estoque e alertas. Receitas já refletem o novo preço automaticamente.
+          </p>
+        </div>
+        <div class="flex gap-4">
+          <a href="ingredientes.html" class="px-6 py-3 rounded-full bg-surface-container-highest text-on-surface font-headline font-bold text-sm hover:opacity-80 transition-opacity active:scale-95">
+            Cancelar
+          </a>
+          <button id="btn-salvar-ingrediente" type="button" class="px-8 py-3 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-xl shadow-primary/20 hover:scale-105 transition-transform active:scale-95">
+            Salvar Ingrediente
+          </button>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        <!-- Left Column: Form -->
+        <div class="col-span-full lg:col-span-8 space-y-8">
+
+          <!-- Informações Básicas -->
+          <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+            <h3 class="text-base font-bold font-headline uppercase tracking-widest text-outline mb-6">Informações Básicas</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              <!-- Nome -->
+              <div class="space-y-2 sm:col-span-2">
+                <div class="flex items-center gap-1 ml-2">
+                  <label for="ci-nome" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">
+                    Nome do Ingrediente <span class="text-primary">*</span>
+                  </label>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Nome que identifica o ingrediente no seu ateliê. Deve ser único dentro do workspace.">help</span>
+                </div>
+                <input id="ci-nome" type="text" autocomplete="off" required
+                  class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                  placeholder="ex: Chocolate Amargo 70%" />
+                <p id="ci-nome-error" class="hidden text-xs text-error ml-2 mt-1"></p>
+              </div>
+
+              <!-- Código -->
+              <div class="space-y-2">
+                <div class="flex items-center gap-1 ml-2">
+                  <label for="ci-codigo" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">
+                    Código Interno
+                  </label>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Referência interna para organização, como um SKU ou código de prateleira. Ex: CHC-001.">help</span>
+                </div>
+                <input id="ci-codigo" type="text" autocomplete="off"
+                  class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                  placeholder="ex: CHC-001" />
+              </div>
+
+              <!-- Marca -->
+              <div class="space-y-2">
+                <div class="flex items-center gap-1 ml-2">
+                  <label for="ci-marca" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">
+                    Marca / Fornecedor
+                  </label>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Marca ou fornecedor do ingrediente. Facilita identificação na hora de repor o estoque.">help</span>
+                </div>
+                <input id="ci-marca" type="text" autocomplete="off"
+                  class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                  placeholder="ex: Callebaut" />
+              </div>
+
+              <!-- Descrição -->
+              <div class="space-y-2 sm:col-span-2">
+                <div class="flex items-center gap-1 ml-2">
+                  <label for="ci-descricao" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">
+                    Descrição
+                  </label>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Descrição livre do ingrediente: uso, características ou informações relevantes para sua equipe.">help</span>
+                </div>
+                <input id="ci-descricao" type="text" autocomplete="off"
+                  class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                  placeholder="ex: Chocolate para ganache e recheios" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Classificação -->
+          <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+            <h3 class="text-base font-bold font-headline uppercase tracking-widest text-outline mb-6">Classificação</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              <!-- Categoria -->
+              <div class="space-y-2">
+                <div class="flex items-center gap-1 ml-2">
+                  <label for="ci-categoria" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">
+                    Categoria <span class="text-primary">*</span>
+                  </label>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Agrupe ingredientes por categoria para facilitar a filtragem na listagem de estoque.">help</span>
+                </div>
+                <div class="relative">
+                  <select id="ci-categoria" required
+                    class="w-full appearance-none bg-none bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 font-headline transition-all text-on-surface shadow-sm focus:shadow-lg pr-12">
+                    <option value="">Sem categoria</option>
+                  </select>
+                  <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">expand_more</span>
+                </div>
+                <p id="ci-categoria-error" class="hidden text-xs text-error ml-2 mt-1"></p>
+              </div>
+
+              <!-- Unidade de Medida -->
+              <div class="space-y-2">
+                <div class="flex items-center gap-1 ml-2">
+                  <label for="ci-unidade" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">
+                    Unidade de Medida <span class="text-primary">*</span>
+                  </label>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Unidade usada para medir e precificar este ingrediente. Exemplos: kg (peso), L (volume), un (contagem).">help</span>
+                </div>
+                <div class="relative">
+                  <select id="ci-unidade" required
+                    class="w-full appearance-none bg-none bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 font-headline transition-all text-on-surface shadow-sm focus:shadow-lg pr-12">
+                    <option value="">Carregando...</option>
+                  </select>
+                  <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">expand_more</span>
+                </div>
+                <p id="ci-unidade-error" class="hidden text-xs text-error ml-2 mt-1"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Precificação -->
+          <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+            <h3 class="text-base font-bold font-headline uppercase tracking-widest text-outline mb-6">Precificação</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+
+              <!-- Preço de Compra -->
+              <div class="space-y-2">
+                <div class="flex items-center gap-1 ml-2">
+                  <label for="ci-preco-compra" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">Preço de Compra</label>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Quanto você pagou pela embalagem. Ex: R$8,50 por uma lata de leite condensado de 395g.">help</span>
+                </div>
+                <div class="relative">
+                  <span class="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-outline text-sm pointer-events-none">R$</span>
+                  <input id="ci-preco-compra" type="number" min="0" step="0.01"
+                    class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 pl-14 pr-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                    placeholder="8,50" />
+                </div>
+                <p class="text-xs text-on-surface-variant ml-2">Quanto você pagou pela embalagem</p>
+              </div>
+
+              <!-- Qtd. na Embalagem -->
+              <div class="space-y-2">
+                <div class="flex items-center gap-1 ml-2">
+                  <label for="ci-qtd-embalagem" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">Qtd. na Embalagem</label>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Quantidade total da embalagem na unidade de medida selecionada. Ex: 395 (gramas) para uma lata de leite condensado.">help</span>
+                </div>
+                <div class="relative">
+                  <input id="ci-qtd-embalagem" type="number" min="0" step="any"
+                    class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 pr-16 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                    placeholder="395" />
+                  <span id="ci-unidade-sufixo" class="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-bold text-outline-variant pointer-events-none">—</span>
+                </div>
+                <p class="text-xs text-on-surface-variant ml-2">Quantidade que veio no pacote</p>
+              </div>
+
+              <!-- Divider -->
+              <div class="sm:col-span-2 flex items-center gap-4 -my-2">
+                <div class="h-px bg-outline-variant/20 flex-1"></div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-outline-variant whitespace-nowrap">ou insira o custo diretamente</span>
+                <div class="h-px bg-outline-variant/20 flex-1"></div>
+              </div>
+
+              <!-- Custo por Unidade -->
+              <div class="space-y-2 sm:col-span-2">
+                <div class="flex items-center gap-1 ml-2">
+                  <label for="ci-preco" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">
+                    Custo por Unidade <span class="text-primary">*</span>
+                  </label>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Custo de uma unidade deste ingrediente. Calculado automaticamente ao preencher o preço e a quantidade acima, ou insira diretamente se já souber.">help</span>
+                </div>
+                <div class="relative">
+                  <span class="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-outline text-sm pointer-events-none">R$</span>
+                  <input id="ci-preco" type="number" min="0" step="any" required
+                    class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 pl-14 pr-40 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                    placeholder="0,00" />
+                  <span id="ci-preco-calc-badge" class="hidden absolute right-4 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 bg-primary-container text-primary text-[10px] font-bold uppercase tracking-wider rounded-full px-3 py-1 pointer-events-none">
+                    <span class="material-symbols-outlined" style="font-size:0.85rem">calculate</span> calculado
+                  </span>
+                </div>
+                <p class="text-xs text-on-surface-variant ml-2">Custo de compra por unidade de medida selecionada (ex: por kg, por L)</p>
+                <p id="ci-preco-error" class="hidden text-xs text-error ml-2 mt-1"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Controle de Estoque -->
+          <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+            <div class="flex items-center gap-3 mb-6">
+              <h3 class="text-base font-bold font-headline uppercase tracking-widest text-outline">Controle de Estoque</h3>
+              <div class="flex items-center gap-1">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input id="ci-estoque-toggle" type="checkbox" class="sr-only peer" checked />
+                  <div class="w-10 h-5 bg-outline-variant/40 rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                </label>
+                <span class="text-xs text-on-surface-variant">Ativo</span>
+              </div>
+            </div>
+
+            <div id="ci-estoque-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              <!-- Quantidade em Estoque -->
+              <div class="space-y-2">
+                <div class="flex items-center gap-1 ml-2">
+                  <label for="ci-estoque-qtd" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">
+                    Quantidade em Estoque
+                  </label>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Quantidade atual disponível no seu estoque. Deixe em branco para não controlar estoque.">help</span>
+                </div>
+                <input id="ci-estoque-qtd" type="number" min="0" step="any"
+                  class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                  placeholder="ex: 5.5" />
+              </div>
+
+              <!-- Alerta Mínimo -->
+              <div class="space-y-2">
+                <div class="flex items-center gap-1 ml-2">
+                  <label for="ci-estoque-alerta" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">
+                    Alerta de Estoque Mínimo
+                  </label>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Quando a quantidade em estoque cair abaixo deste valor, o ingrediente será sinalizado como crítico.">help</span>
+                </div>
+                <input id="ci-estoque-alerta" type="number" min="0" step="any"
+                  class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                  placeholder="ex: 1.0" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Notas -->
+          <div class="bg-surface-container-lowest rounded-3xl p-8 border-2 border-outline-variant/40 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+            <div class="flex items-center gap-1 mb-4">
+              <h3 class="text-base font-bold font-headline uppercase tracking-widest text-outline">Notas e Observações</h3>
+              <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Informações extras sobre armazenamento, fornecedor, validade ou qualquer observação relevante.">help</span>
+            </div>
+            <textarea id="ci-notas"
+              class="w-full h-36 bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl resize-none font-body placeholder:text-outline-variant/60 text-base leading-relaxed p-4 shadow-sm focus:shadow-lg transition-all"
+              placeholder="ex: Armazenar em local fresco e seco. Validade de 12 meses após abertura..."></textarea>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Preview -->
+        <aside class="col-span-full lg:col-span-4 sticky top-24 space-y-6">
+
+          <!-- Preview Card -->
+          <div class="glass-panel rounded-[2.5rem] p-8 shadow-[0_40px_80px_rgba(189,0,80,0.08)] border border-white/40">
+            <div class="flex items-center gap-3 mb-8">
+              <div class="w-12 h-12 rounded-2xl bg-primary-container/30 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined">grocery</span>
+              </div>
+              <div>
+                <h3 class="font-headline font-extrabold text-xl tracking-tight">Pré-visualização</h3>
+                <p class="text-[10px] uppercase font-bold text-outline">Como aparece no estoque</p>
+              </div>
+            </div>
+
+            <!-- Card preview -->
+            <div id="ci-preview-card" class="rounded-2xl border-l-4 border-primary/20 bg-surface-container-low px-5 py-4 flex items-center gap-4 transition-all">
+              <div class="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center bg-primary/10 text-primary">
+                <span class="material-symbols-outlined" style="font-size:1.25rem">grocery</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <p id="ci-prev-nome" class="font-headline font-bold text-sm text-on-surface truncate">Nome do ingrediente</p>
+                </div>
+                <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                  <span id="ci-prev-codigo" class="hidden text-[10px] font-bold uppercase tracking-wider text-outline-variant"></span>
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="font-headline font-extrabold text-base text-primary">
+                  <span id="ci-prev-preco">—</span>
+                  <span id="ci-prev-unidade" class="text-[10px] font-normal text-outline-variant"></span>
+                </p>
+                <div class="flex items-center justify-end gap-1.5 mt-0.5">
+                  <span id="ci-prev-estoque" class="hidden text-xs text-on-surface-variant"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="h-px bg-outline-variant/20 my-6"></div>
+
+            <!-- Summary fields -->
+            <div class="space-y-3">
+              <div class="flex justify-between items-center p-3 bg-surface-container-low rounded-2xl">
+                <span class="text-sm text-on-surface-variant">Categoria</span>
+                <span id="ci-prev-cat" class="font-bold text-on-surface text-sm">—</span>
+              </div>
+              <div class="flex justify-between items-center p-3 bg-surface-container-low rounded-2xl">
+                <span class="text-sm text-on-surface-variant">Unidade</span>
+                <span id="ci-prev-und" class="font-bold text-on-surface text-sm">—</span>
+              </div>
+              <div class="flex justify-between items-center p-3 bg-surface-container-low rounded-2xl">
+                <span class="text-sm text-on-surface-variant">Estoque atual</span>
+                <span id="ci-prev-estoque-val" class="font-bold text-on-surface text-sm">—</span>
+              </div>
+              <div class="flex justify-between items-center p-3 bg-surface-container-low rounded-2xl">
+                <span class="text-sm text-on-surface-variant">Alerta mínimo</span>
+                <span id="ci-prev-alerta-val" class="font-bold text-on-surface text-sm">—</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick tips -->
+          <div class="bg-primary-container/20 rounded-3xl p-6">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="material-symbols-outlined text-primary text-xl">lightbulb</span>
+              <p class="text-xs font-bold uppercase tracking-wider text-primary">Dica Rápida</p>
+            </div>
+            <p class="text-sm text-on-surface-variant leading-relaxed">
+              Configure o <strong class="text-on-surface">Alerta Mínimo</strong> para que o sistema avise quando o estoque estiver crítico — e suas receitas sempre terão custo calculado com o preço mais atualizado.
+            </p>
+          </div>
+
+          <!-- Tooltip overlay -->
+          <div id="ci-tooltip-box" class="hidden fixed z-[200] max-w-xs bg-on-surface text-surface text-xs rounded-xl px-4 py-3 shadow-2xl leading-relaxed pointer-events-none"></div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <script src="assets/js/konditor-app.js" defer></script>
+</body>
+</html>

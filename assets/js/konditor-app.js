@@ -312,7 +312,8 @@
 
     /* Mapeamentos de página → link ativo */
     var PAGE_ACTIVE_MAP = {
-      'criar-receita.html': 'receitas.html'
+      'criar-receita.html':     'receitas.html',
+      'criar-ingrediente.html': 'ingredientes.html'
     };
     var filename   = window.location.pathname.split('/').pop() || 'receitas.html';
     var activePage = PAGE_ACTIVE_MAP[filename] || filename;
@@ -890,6 +891,60 @@
     var API = window.KONDITOR_API || '';
     initSession().then(function (tok) { if (!tok) window.location.href = 'login.html'; });
 
+    /* ── Load recipe categories + rendimento units ── */
+    initSession().then(function (tok) {
+      if (!tok) return;
+      /* Units for rendimento */
+      apiFetch(API + '/unidades')
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .then(function (unidades) {
+          var sel = document.getElementById('input-rendimento-unidade');
+          if (!sel || !Array.isArray(unidades) || !unidades.length) return;
+          var TIPO_LABELS = { weight: 'Peso', volume: 'Volume', unit: 'Contagem' };
+          var TIPO_ORDER  = ['weight', 'volume', 'unit'];
+          var grupos = {};
+          unidades.forEach(function (u) {
+            var t = u.tipo || 'unit';
+            if (!grupos[t]) grupos[t] = [];
+            grupos[t].push(u);
+          });
+          sel.innerHTML = '<option value="">Selecione...</option>';
+          TIPO_ORDER.forEach(function (tipo) {
+            if (!grupos[tipo] || !grupos[tipo].length) return;
+            var grp = document.createElement('optgroup');
+            grp.label = TIPO_LABELS[tipo] || tipo;
+            grupos[tipo].forEach(function (u) {
+              var opt = document.createElement('option');
+              opt.value       = u.id;
+              opt.textContent = u.nome + ' (' + u.simbolo + ')';
+              grp.appendChild(opt);
+            });
+            sel.appendChild(grp);
+          });
+        })
+        .catch(function () {});
+      var catSel = document.getElementById('input-categoria');
+      apiFetch(API + '/receitas/categorias')
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .then(function (categorias) {
+          if (!catSel) return;
+          catSel.innerHTML = '<option value="">Sem categoria</option>';
+          if (Array.isArray(categorias)) {
+            categorias.forEach(function (cat) {
+              var opt = document.createElement('option');
+              opt.value       = cat.id;
+              opt.textContent = cat.nome;
+              if (cat.cor) opt.dataset.cor = cat.cor;
+              catSel.appendChild(opt);
+            });
+          }
+        })
+        .catch(function () {
+          var catSel2 = document.getElementById('input-categoria');
+          if (catSel2) catSel2.innerHTML = '<option value="">Sem categoria</option>';
+        });
+    });
+
     /* ── State ── */
     var state = {
       receitaId: null,
@@ -905,7 +960,9 @@
     var btnPublicar     = document.getElementById('btn-publicar');
     var btnAplicar      = document.getElementById('btn-aplicar-preco');
     var nomInput        = document.getElementById('input-nome');
+    var catSelect       = document.getElementById('input-categoria');
     var rendInput       = document.getElementById('input-rendimento');
+    var rendUndSelect   = document.getElementById('input-rendimento-unidade');
     var tempoInput      = document.getElementById('input-tempo');
     var notasInput      = document.getElementById('input-notas');
     var elCustoIngr     = document.getElementById('val-custo-ingredientes');
@@ -971,8 +1028,8 @@
         tooltipBox.textContent = el.dataset.tooltip || '';
         tooltipBox.classList.remove('hidden');
         var r = el.getBoundingClientRect();
-        var top = r.top + window.scrollY - tooltipBox.offsetHeight - 8;
-        var left = Math.min(r.left + window.scrollX, window.innerWidth - tooltipBox.offsetWidth - 16);
+        var top = r.top - tooltipBox.offsetHeight - 8;
+        var left = Math.min(r.left, window.innerWidth - tooltipBox.offsetWidth - 16);
         tooltipBox.style.top  = Math.max(8, top) + 'px';
         tooltipBox.style.left = Math.max(8, left) + 'px';
       });
@@ -1217,7 +1274,9 @@
       var precoFin     = elPrecoFinal ? parseFloat(elPrecoFinal.value) : NaN;
       return {
         nome:                 nomInput ? nomInput.value.trim() : '',
-        rendimentoQuantidade: rendQtd,
+        categoriaId:          catSelect && catSelect.value ? catSelect.value : null,
+        rendimentoQuantidade:  rendQtd,
+        rendimentoUnidadeId:  rendUndSelect && rendUndSelect.value ? rendUndSelect.value : null,
         tempoPreparoMinutos:  parseTempoMinutos(),
         ingredientes: state.ingredientes
           .filter(function (ing) { return ing.ingredienteId && ing.unidadeId && ing.quantidade; })
@@ -1239,6 +1298,11 @@
       if (!nome) {
         showToast('O nome da receita \u00e9 obrigat\u00f3rio.', 'erro');
         if (nomInput) nomInput.focus();
+        return false;
+      }
+      if (!rendUndSelect || !rendUndSelect.value) {
+        showToast('Selecione a unidade de rendimento da receita.', 'erro');
+        if (rendUndSelect) rendUndSelect.focus();
         return false;
       }
       if (!state.ingredientes.length) {
@@ -1300,6 +1364,748 @@
   }
 
   /* ─────────────────────────────────────────────
+     Criar Ingrediente — criar-ingrediente.html
+     POST /ingredientes/estoque  → criar
+     PUT  /ingredientes/estoque/{id} → editar
+     GET  /ingredientes/categorias  → select de categorias
+     GET  /unidades                 → select de unidades
+  ───────────────────────────────────────────── */
+  function initCriarIngrediente() {
+    var formEl = document.getElementById('ci-nome');
+    if (!formEl) return;
+
+    var API = window.KONDITOR_API || '';
+    var ingredienteId = null;  // set when editing via ?id=
+
+    initSession().then(function (tok) { if (!tok) window.location.href = 'login.html'; });
+
+    /* ── DOM refs ── */
+    var nomeInput      = document.getElementById('ci-nome');
+    var codigoInput    = document.getElementById('ci-codigo');
+    var marcaInput     = document.getElementById('ci-marca');
+    var descInput      = document.getElementById('ci-descricao');
+    var catSelect      = document.getElementById('ci-categoria');
+    var undSelect      = document.getElementById('ci-unidade');
+    var precoInput     = document.getElementById('ci-preco');
+    var precoCompraInput  = document.getElementById('ci-preco-compra');
+    var qtdEmbalagemInput = document.getElementById('ci-qtd-embalagem');
+    var precoCalcBadge    = document.getElementById('ci-preco-calc-badge');
+    var unidadeSufixo     = document.getElementById('ci-unidade-sufixo');
+    var estoqueToggle  = document.getElementById('ci-estoque-toggle');
+    var estoqueFields  = document.getElementById('ci-estoque-fields');
+    var estoqueQtd     = document.getElementById('ci-estoque-qtd');
+    var estoqueAlerta  = document.getElementById('ci-estoque-alerta');
+    var notasInput     = document.getElementById('ci-notas');
+    var btnSalvar      = document.getElementById('btn-salvar-ingrediente');
+    var tooltipBox     = document.getElementById('ci-tooltip-box');
+
+    /* ── Preview refs ── */
+    var prevNome       = document.getElementById('ci-prev-nome');
+    var prevCodigo     = document.getElementById('ci-prev-codigo');
+    var prevPreco      = document.getElementById('ci-prev-preco');
+    var prevUnidade    = document.getElementById('ci-prev-unidade');
+    var prevEstoque    = document.getElementById('ci-prev-estoque');
+    var prevCat        = document.getElementById('ci-prev-cat');
+    var prevUnd        = document.getElementById('ci-prev-und');
+    var prevEstoqueVal = document.getElementById('ci-prev-estoque-val');
+    var prevAlertaVal  = document.getElementById('ci-prev-alerta-val');
+
+    /* ── Toast ── */
+    function showToast(msg, tipo) {
+      var toast = document.getElementById('ci-toast');
+      var icon  = document.getElementById('ci-toast-icon');
+      var msgEl = document.getElementById('ci-toast-msg');
+      if (!toast) return;
+      toast.className = 'fixed top-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl font-headline font-bold text-sm '
+        + (tipo === 'erro' ? 'bg-error text-white' : 'bg-secondary text-on-secondary');
+      if (icon) icon.textContent = tipo === 'erro' ? 'error' : 'check_circle';
+      if (msgEl) msgEl.textContent = msg;
+      clearTimeout(toast._t);
+      toast._t = setTimeout(function () { toast.className = 'hidden'; }, 4000);
+    }
+
+    /* ── Button loading ── */
+    function setLoading(btn, loading) {
+      if (!btn) return;
+      if (loading) {
+        btn.dataset.origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1rem;animation:spin .9s linear infinite;vertical-align:middle;">progress_activity</span> Aguarde\u2026';
+      } else {
+        btn.disabled = false;
+        if (btn.dataset.origHtml) { btn.innerHTML = btn.dataset.origHtml; delete btn.dataset.origHtml; }
+      }
+    }
+
+    /* ── Tooltips ── */
+    document.querySelectorAll('.tooltip-trigger').forEach(function (el) {
+      el.addEventListener('mouseenter', function () {
+        if (!tooltipBox) return;
+        tooltipBox.textContent = el.dataset.tooltip || '';
+        tooltipBox.classList.remove('hidden');
+        var r = el.getBoundingClientRect();
+        var top  = r.top - tooltipBox.offsetHeight - 8;
+        var left = Math.min(r.left, window.innerWidth - tooltipBox.offsetWidth - 16);
+        tooltipBox.style.top  = Math.max(8, top) + 'px';
+        tooltipBox.style.left = Math.max(8, left) + 'px';
+      });
+      el.addEventListener('mouseleave', function () {
+        if (tooltipBox) tooltipBox.classList.add('hidden');
+      });
+    });
+
+    /* ── Estoque toggle ── */
+    if (estoqueToggle) {
+      estoqueToggle.addEventListener('change', function () {
+        if (estoqueFields) {
+          estoqueFields.style.opacity  = estoqueToggle.checked ? '' : '0.4';
+          estoqueFields.style.pointerEvents = estoqueToggle.checked ? '' : 'none';
+        }
+        if (!estoqueToggle.checked) {
+          if (estoqueQtd)    estoqueQtd.value    = '';
+          if (estoqueAlerta) estoqueAlerta.value = '';
+        }
+        atualizarPreview();
+      });
+    }
+
+    /* ── Calculadora por embalagem ── */
+    function calcularCusto() {
+      if (!precoCompraInput || !qtdEmbalagemInput || !precoInput) return;
+      var preco = parseFloat(precoCompraInput.value);
+      var qtd   = parseFloat(qtdEmbalagemInput.value);
+      if (preco > 0 && qtd > 0) {
+        precoInput.value = parseFloat((preco / qtd).toFixed(6));
+        if (precoCalcBadge) precoCalcBadge.classList.remove('hidden');
+        atualizarPreview();
+      }
+    }
+    if (precoCompraInput)  precoCompraInput.addEventListener('input',  calcularCusto);
+    if (qtdEmbalagemInput) qtdEmbalagemInput.addEventListener('input', calcularCusto);
+    if (precoInput) {
+      precoInput.addEventListener('input', function () {
+        /* User typed directly → detach from calculated mode */
+        if (precoCompraInput)  precoCompraInput.value  = '';
+        if (qtdEmbalagemInput) qtdEmbalagemInput.value = '';
+        if (precoCalcBadge)    precoCalcBadge.classList.add('hidden');
+      });
+    }
+
+    /* ── Preview update ── */
+    function atualizarPreview() {
+      var nome    = nomeInput   ? nomeInput.value.trim()   : '';
+      var codigo  = codigoInput ? codigoInput.value.trim() : '';
+      var preco   = precoInput  ? parseFloat(precoInput.value) : NaN;
+      var qtd     = estoqueQtd  ? parseFloat(estoqueQtd.value) : NaN;
+      var alerta  = estoqueAlerta ? parseFloat(estoqueAlerta.value) : NaN;
+
+      /* Name */
+      if (prevNome) prevNome.textContent = nome || 'Nome do ingrediente';
+
+      /* Code */
+      if (prevCodigo) {
+        if (codigo) { prevCodigo.textContent = codigo; prevCodigo.classList.remove('hidden'); }
+        else           prevCodigo.classList.add('hidden');
+      }
+
+      /* Price */
+      if (prevPreco) {
+        prevPreco.textContent = isNaN(preco) || preco < 0
+          ? '\u2014'
+          : preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      }
+
+      /* Unit symbol */
+      if (prevUnidade && undSelect) {
+        var selOpt = undSelect.options[undSelect.selectedIndex];
+        var sym    = selOpt ? (selOpt.dataset.simbolo || selOpt.text) : '';
+        prevUnidade.textContent = sym ? '/' + sym : '';
+        if (prevUnd) prevUnd.textContent = sym || '\u2014';
+      }
+
+      /* Unit suffix on qtd-embalagem field */
+      if (unidadeSufixo && undSelect) {
+        var suffOpt = undSelect.options[undSelect.selectedIndex];
+        unidadeSufixo.textContent = suffOpt ? (suffOpt.dataset.simbolo || '\u2014') : '\u2014';
+      }
+
+      /* Category */
+      if (prevCat && catSelect) {
+        var catOpt = catSelect.options[catSelect.selectedIndex];
+        prevCat.textContent = (catOpt && catOpt.value) ? catOpt.text : '\u2014';
+      }
+
+      /* Stock */
+      var undSym = (undSelect && undSelect.options[undSelect.selectedIndex])
+        ? (undSelect.options[undSelect.selectedIndex].dataset.simbolo || '') : '';
+      var qtdStr = (!isNaN(qtd) && estoqueToggle && estoqueToggle.checked)
+        ? qtd.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) + (undSym ? '\u00a0' + undSym : '')
+        : '\u2014';
+      var alertaStr = (!isNaN(alerta) && estoqueToggle && estoqueToggle.checked)
+        ? alerta.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) + (undSym ? '\u00a0' + undSym : '')
+        : '\u2014';
+      if (prevEstoqueVal) prevEstoqueVal.textContent = qtdStr;
+      if (prevAlertaVal)  prevAlertaVal.textContent  = alertaStr;
+
+      /* Card estoque badge */
+      if (prevEstoque) {
+        if (!isNaN(qtd) && estoqueToggle && estoqueToggle.checked) {
+          prevEstoque.textContent = qtdStr;
+          prevEstoque.classList.remove('hidden');
+        } else {
+          prevEstoque.classList.add('hidden');
+        }
+      }
+    }
+
+    /* Wire live preview listeners */
+    [nomeInput, codigoInput, precoInput, estoqueQtd, estoqueAlerta].forEach(function (el) {
+      if (el) el.addEventListener('input', atualizarPreview);
+    });
+    if (catSelect)  catSelect.addEventListener('change',  atualizarPreview);
+    if (undSelect)  undSelect.addEventListener('change',  atualizarPreview);
+
+    /* ── Field error helpers ── */
+    function setFieldError(id, msg) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = msg;
+      if (msg) el.classList.remove('hidden'); else el.classList.add('hidden');
+    }
+    function clearErrors() {
+      ['ci-nome-error', 'ci-categoria-error', 'ci-unidade-error', 'ci-preco-error'].forEach(function (id) { setFieldError(id, ''); });
+    }
+
+    /* ── Validation ── */
+    function validarForm() {
+      clearErrors();
+      var ok = true;
+      var nome = nomeInput ? nomeInput.value.trim() : '';
+      if (!nome) {
+        setFieldError('ci-nome-error', 'O nome do ingrediente \u00e9 obrigat\u00f3rio.');
+        if (nomeInput) nomeInput.focus();
+        ok = false;
+      }
+      if (!undSelect || !undSelect.value) {
+        setFieldError('ci-unidade-error', 'Selecione uma unidade de medida.');
+        ok = false;
+      }
+      if (!catSelect || !catSelect.value) {
+        setFieldError('ci-categoria-error', 'Selecione uma categoria.');
+        ok = false;
+      }
+      var preco = precoInput ? parseFloat(precoInput.value) : NaN;
+      if (isNaN(preco) || preco < 0) {
+        setFieldError('ci-preco-error', 'Informe um custo v\u00e1lido (m\u00ednimo 0).');
+        if (precoInput) precoInput.focus();
+        ok = false;
+      }
+      return ok;
+    }
+
+    /* ── Build payload ── */
+    function buildPayload() {
+      var payload = {
+        nome:            nomeInput    ? nomeInput.value.trim()       : '',
+        unidadeId:       undSelect    ? undSelect.value              : '',
+        precoPorUnidade: precoInput   ? parseFloat(precoInput.value) : 0
+      };
+      var codigo  = codigoInput ? codigoInput.value.trim() : '';
+      var marca   = marcaInput  ? marcaInput.value.trim()  : '';
+      var desc    = descInput   ? descInput.value.trim()   : '';
+      var notas   = notasInput  ? notasInput.value.trim()  : '';
+      var catId   = catSelect   ? catSelect.value          : '';
+      if (codigo)  payload.codigo     = codigo;
+      if (marca)   payload.marca      = marca;
+      if (desc)    payload.descricao  = desc;
+      if (notas)   payload.notas      = notas;
+      if (catId)   payload.categoriaId = catId;
+      if (estoqueToggle && estoqueToggle.checked) {
+        var qtd    = estoqueQtd    ? parseFloat(estoqueQtd.value)    : NaN;
+        var alerta = estoqueAlerta ? parseFloat(estoqueAlerta.value) : NaN;
+        if (!isNaN(qtd))    payload.estoqueQuantidade   = qtd;
+        if (!isNaN(alerta)) payload.estoqueAlertaMinimo = alerta;
+      }
+      return payload;
+    }
+
+    /* ── Handle API errors ── */
+    function handleApiError(res) {
+      if (res.data && res.data.fieldErrors) {
+        var fe = res.data.fieldErrors;
+        if (fe.nome)            setFieldError('ci-nome-error',    fe.nome);
+        if (fe.unidadeId)       setFieldError('ci-unidade-error', fe.unidadeId);
+        if (fe.precoPorUnidade) setFieldError('ci-preco-error',   fe.precoPorUnidade);
+      }
+      var detail = (res.data && res.data.detail) || 'Erro ao salvar o ingrediente.';
+      showToast(detail, 'erro');
+    }
+
+    /* ── Save ── */
+    if (btnSalvar) {
+      btnSalvar.addEventListener('click', function () {
+        if (!validarForm()) return;
+        setLoading(btnSalvar, true);
+        var payload = buildPayload();
+        var req = ingredienteId
+          ? apiFetch(API + '/ingredientes/estoque/' + ingredienteId, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            })
+          : apiFetch(API + '/ingredientes/estoque', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+        req
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, data: d }; }); })
+          .then(function (res) {
+            setLoading(btnSalvar, false);
+            if (!res.ok) { handleApiError(res); return; }
+            showToast(ingredienteId ? 'Ingrediente atualizado!' : 'Ingrediente cadastrado!', 'sucesso');
+            setTimeout(function () { window.location.href = 'ingredientes.html'; }, 1500);
+          })
+          .catch(function () {
+            setLoading(btnSalvar, false);
+            showToast('Falha de conex\u00e3o. Verifique sua internet e tente novamente.', 'erro');
+          });
+      });
+    }
+
+    /* ── Load selects from API ── */
+    function carregarSelects() {
+      Promise.all([
+        apiFetch(API + '/ingredientes/categorias').then(function (r) { return r.ok ? r.json() : []; }),
+        apiFetch(API + '/unidades').then(function (r) { return r.ok ? r.json() : []; })
+      ]).then(function (results) {
+        var categorias = results[0];
+        var unidades   = results[1];
+
+        /* Populate categories */
+        if (catSelect && Array.isArray(categorias)) {
+          categorias.forEach(function (cat) {
+            var opt = document.createElement('option');
+            opt.value       = cat.id;
+            opt.textContent = cat.nome;
+            catSelect.appendChild(opt);
+          });
+        }
+
+        /* Populate units — grouped by type */
+        if (undSelect && Array.isArray(unidades) && unidades.length) {
+          undSelect.innerHTML = '<option value="">Selecione...</option>';
+          var TIPO_LABELS = { weight: 'Peso', volume: 'Volume', unit: 'Contagem' };
+          var TIPO_ORDER  = ['weight', 'volume', 'unit'];
+          var grupos = {};
+          unidades.forEach(function (und) {
+            var t = und.tipo || 'unit';
+            if (!grupos[t]) grupos[t] = [];
+            grupos[t].push(und);
+          });
+          TIPO_ORDER.forEach(function (tipo) {
+            if (!grupos[tipo] || !grupos[tipo].length) return;
+            var grp = document.createElement('optgroup');
+            grp.label = TIPO_LABELS[tipo] || tipo;
+            grupos[tipo].forEach(function (und) {
+              var opt = document.createElement('option');
+              opt.value           = und.id;
+              opt.textContent     = und.nome + ' (' + und.simbolo + ')';
+              opt.dataset.simbolo = und.simbolo;
+              grp.appendChild(opt);
+            });
+            undSelect.appendChild(grp);
+          });
+          /* Any remaining types not in TIPO_ORDER */
+          Object.keys(grupos).forEach(function (tipo) {
+            if (TIPO_ORDER.indexOf(tipo) !== -1) return;
+            var grp = document.createElement('optgroup');
+            grp.label = tipo;
+            grupos[tipo].forEach(function (und) {
+              var opt = document.createElement('option');
+              opt.value           = und.id;
+              opt.textContent     = und.nome + ' (' + und.simbolo + ')';
+              opt.dataset.simbolo = und.simbolo;
+              grp.appendChild(opt);
+            });
+            undSelect.appendChild(grp);
+          });
+        } else if (undSelect) {
+          undSelect.innerHTML = '<option value="">Nenhuma unidade disponível</option>';
+        }
+
+        /* If editing, load existing data */
+        var params = new URLSearchParams(window.location.search);
+        var editId = params.get('id');
+        if (editId) {
+          ingredienteId = editId;
+          apiFetch(API + '/ingredientes/estoque/' + encodeURIComponent(editId))
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+              if (!data) return;
+              if (nomeInput)    nomeInput.value    = data.nome      || '';
+              if (codigoInput)  codigoInput.value  = data.codigo    || '';
+              if (marcaInput)   marcaInput.value   = data.marca     || '';
+              if (descInput)    descInput.value    = data.descricao || '';
+              if (notasInput)   notasInput.value   = data.notas     || '';
+              if (precoInput)   precoInput.value   = data.precoPorUnidade != null ? data.precoPorUnidade : '';
+              if (catSelect && data.categoriaId)  catSelect.value  = data.categoriaId;
+              if (undSelect && data.unidadeId)    undSelect.value  = data.unidadeId;
+              var temEstoque = data.estoqueQuantidade != null || data.estoqueAlertaMinimo != null;
+              if (estoqueToggle) estoqueToggle.checked = temEstoque;
+              if (estoqueFields) {
+                estoqueFields.style.opacity      = temEstoque ? '' : '0.4';
+                estoqueFields.style.pointerEvents = temEstoque ? '' : 'none';
+              }
+              if (estoqueQtd    && data.estoqueQuantidade   != null) estoqueQtd.value    = data.estoqueQuantidade;
+              if (estoqueAlerta && data.estoqueAlertaMinimo != null) estoqueAlerta.value = data.estoqueAlertaMinimo;
+              /* Update page title for edit mode */
+              var h2 = document.querySelector('h2.font-headline');
+              if (h2) h2.innerHTML = 'Editar <span class="text-primary italic">Ingrediente</span>';
+              if (btnSalvar) btnSalvar.textContent = 'Atualizar Ingrediente';
+              atualizarPreview();
+            })
+            .catch(function () { showToast('Erro ao carregar ingrediente.', 'erro'); });
+        }
+
+        atualizarPreview();
+      }).catch(function () {
+        showToast('Erro ao carregar dados de configuração.', 'erro');
+      });
+    }
+
+    initSession().then(function (tok) {
+      if (!tok) { window.location.href = 'login.html'; return; }
+      carregarSelects();
+    });
+  }
+
+  /* ─────────────────────────────────────────────
+     Ingredientes — ingredientes.html
+     GET /ingredientes/categorias         → chips de filtro
+     GET /ingredientes/estoque/resumo     → painéis de resumo
+     GET /ingredientes/estoque/alertas-mercado → alerta de mercado
+     GET /ingredientes/estoque            → grid paginado
+  ───────────────────────────────────────────── */
+  function initIngredientes() {
+    var grid = document.getElementById('ingredientes-grid');
+    if (!grid) return;
+
+    var API = window.KONDITOR_API || '';
+
+    /* ── State ── */
+    var categoriaAtiva = null; // null = todo estoque
+    var paginaAtual    = 0;
+    var totalPaginas   = 1;
+    var carregando     = false;
+
+    /* ── DOM refs ── */
+    var alertaCount     = document.getElementById('alerta-count');
+    var alertaLista     = document.getElementById('alerta-lista');
+    var alertaTimestamp = document.getElementById('alerta-timestamp');
+    var statTotal       = document.getElementById('stat-total-ingredientes');
+    var statCritico     = document.getElementById('stat-estoque-critico');
+    var filterGroup     = document.getElementById('filter-chips-ingredientes');
+
+    /* ── Chip classes ── */
+    var CHIP_ACTIVE   = ['bg-primary', 'text-on-primary'];
+    var CHIP_INACTIVE = ['bg-surface-container', 'text-on-surface-variant', 'hover:bg-surface-container-high'];
+
+    /* ── Skeleton ── */
+    function mostrarSkeleton() {
+      grid.innerHTML = '<div class="col-span-full flex justify-center py-12">'
+        + '<span class="material-symbols-outlined text-outline-variant" style="animation:spin .9s linear infinite">progress_activity</span>'
+        + '</div>';
+    }
+
+    /* ── Build ingredient card (no photo) ── */
+    /* categorias lookup: id → cor, built once after renderCategorias runs */
+    var _catCorMap = {};
+
+    function buildIngredienteCard(item) {
+      var isCritico = item.estoqueCritico;
+      var priceCls  = isCritico ? 'text-error' : 'text-secondary';
+
+      /* Left accent color */
+      var accentCls = isCritico ? 'border-error' : 'border-primary/20';
+      var wrapCls   = isCritico
+        ? 'bg-error/[0.03] hover:bg-error/[0.06]'
+        : 'bg-surface-container-lowest hover:bg-surface-container-low';
+
+      /* Category pill — tinted with cor from API if available */
+      var catPill = '';
+      if (item.categoria) {
+        var catCor  = item.categoriaId ? (_catCorMap[item.categoriaId] || null) : null;
+        var catStyle = catCor ? ' style="background:' + escHtml(catCor) + '22;color:' + escHtml(catCor) + '"' : '';
+        var catBase  = catCor ? '' : 'bg-surface-container text-outline';
+        catPill = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold ' + catBase + '"' + catStyle + '>' + escHtml(item.categoria) + '</span>';
+      }
+
+      /* Code */
+      var codeHtml = item.codigo
+        ? '<span class="text-[10px] font-bold uppercase tracking-wider text-outline-variant">' + escHtml(item.codigo) + '</span>'
+        : '';
+
+      /* Critical badge */
+      var critBadge = isCritico
+        ? '<span class="flex items-center gap-0.5 text-[10px] font-bold text-error"><span class="material-symbols-outlined" style="font-size:0.85rem">warning</span>Cr\u00edtico</span>'
+        : '';
+
+      /* Price */
+      var precoStr = (item.preco !== null && item.preco !== undefined)
+        ? Number(item.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        : '\u2014';
+      var unidadeStr = item.unidade ? '/' + escHtml(item.unidade) : '';
+
+      /* Variation pill */
+      var varPill = '';
+      if (item.variacaoPreco !== null && item.variacaoPreco !== undefined) {
+        var pct     = Number(item.variacaoPreco);
+        var varCls  = pct > 0 ? 'text-error bg-error/10' : (pct < 0 ? 'text-secondary bg-secondary/10' : 'text-outline bg-surface-container');
+        var varIcon = pct > 0 ? 'arrow_upward' : (pct < 0 ? 'arrow_downward' : 'remove');
+        var varTxt  = pct > 0 ? '+' + pct.toFixed(1) + '%' : (pct < 0 ? pct.toFixed(1) + '%' : 'est\u00e1vel');
+        varPill = '<span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold ' + varCls + '">'
+          + '<span class="material-symbols-outlined" style="font-size:0.75rem">' + varIcon + '</span>' + varTxt
+          + '</span>';
+      }
+
+      /* Stock */
+      var estoqueHtml = '';
+      if (item.estoque !== null && item.estoque !== undefined) {
+        var estoqueNum = Number(item.estoque);
+        var estoqueCls = isCritico ? 'text-error font-semibold' : 'text-on-surface-variant';
+        estoqueHtml = '<span class="text-xs ' + estoqueCls + '">'
+          + estoqueNum.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) + (item.unidade ? '\u00a0' + escHtml(item.unidade) : '')
+          + (isCritico ? '\u00a0\u26a0' : '') + '</span>';
+      }
+
+      /* Icon tinted with category color when not critical */
+      var catCor2    = (!isCritico && item.categoriaId) ? (_catCorMap[item.categoriaId] || null) : null;
+      var iconStyle  = catCor2 ? ' style="background:' + escHtml(catCor2) + '18;color:' + escHtml(catCor2) + '"' : '';
+      var iconBaseCl = isCritico ? 'bg-error/10 text-error' : (catCor2 ? '' : 'bg-secondary/10 text-secondary');
+
+      return '<div class="rounded-2xl border-l-4 ' + accentCls + ' ' + wrapCls + ' transition-colors duration-200 cursor-pointer px-5 py-4 flex items-center gap-4"'
+        + ' data-id="' + escHtml(item.id || '') + '"'
+        + ' data-categoria-id="' + escHtml(item.categoriaId || '') + '">'
+        /* Icon */
+        + '<div class="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ' + iconBaseCl + '"' + iconStyle + '>'
+        + '<span class="material-symbols-outlined" style="font-size:1.25rem">'
+        + (isCritico ? 'warning' : 'grocery') + '</span></div>'
+        /* Main info */
+        + '<div class="flex-1 min-w-0">'
+        + '<div class="flex items-center gap-2 flex-wrap">'
+        + '<p class="font-headline font-bold text-sm text-on-surface truncate">' + escHtml(item.nome) + '</p>'
+        + catPill + critBadge
+        + '</div>'
+        + '<div class="flex items-center gap-2 mt-0.5 flex-wrap">'
+        + codeHtml
+        + (codeHtml && item.descricao ? '<span class="text-outline-variant text-[10px]">·</span>' : '')
+        + (item.descricao ? '<span class="text-[10px] text-on-surface-variant truncate max-w-[200px]">' + escHtml(item.descricao) + '</span>' : '')
+        + '</div>'
+        + '</div>'
+        /* Right: price + stock */
+        + '<div class="text-right shrink-0">'
+        + '<p class="font-headline font-extrabold text-base ' + priceCls + '">' + precoStr + '<span class="text-[10px] font-normal text-outline-variant">' + unidadeStr + '</span></p>'
+        + '<div class="flex items-center justify-end gap-1.5 mt-0.5">' + estoqueHtml + varPill + '</div>'
+        + '</div>'
+        + '</div>';
+    }
+
+    /* ── Render grid ── */
+    function renderGrid(conteudo, append) {
+      var btnMais = document.getElementById('btn-carregar-mais');
+      if (btnMais) btnMais.closest('[data-load-more-wrap]').remove();
+
+      if (!append) grid.innerHTML = '';
+
+      if (!conteudo || !conteudo.length) {
+        if (!append) {
+          grid.innerHTML = '<p class="col-span-full text-center text-on-surface-variant py-16">Nenhum ingrediente encontrado.</p>';
+        }
+        return;
+      }
+
+      conteudo.forEach(function (item) {
+        var div = document.createElement('div');
+        div.innerHTML = buildIngredienteCard(item);
+        grid.appendChild(div.firstElementChild);
+      });
+
+      /* Load-more button */
+      if (paginaAtual + 1 < totalPaginas) {
+        var wrap = document.createElement('div');
+        wrap.className = 'col-span-full flex justify-center mt-4';
+        wrap.setAttribute('data-load-more-wrap', '');
+        wrap.innerHTML = '<button id="btn-carregar-mais" class="px-8 py-3 rounded-full bg-surface-container-highest text-on-surface font-headline font-bold text-sm hover:opacity-80 transition-opacity active:scale-95">Carregar Mais</button>';
+        grid.appendChild(wrap);
+        document.getElementById('btn-carregar-mais').addEventListener('click', function () {
+          carregarGrid(paginaAtual + 1, true);
+        });
+      }
+    }
+
+    /* ── Fetch grid — disables chips while loading ── */
+    function carregarGrid(pagina, append) {
+      if (carregando) return;
+      carregando = true;
+      /* Disable all chips while request is in flight */
+      if (filterGroup) filterGroup.querySelectorAll('[data-ingr-chip]').forEach(function (c) { c.disabled = true; });
+      if (!append) mostrarSkeleton();
+
+      var url = API + '/ingredientes/estoque?pagina=' + pagina + '&tamanho=20';
+      if (categoriaAtiva) url += '&categoriaId=' + encodeURIComponent(categoriaAtiva);
+
+      apiFetch(url)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          carregando = false;
+          if (filterGroup) filterGroup.querySelectorAll('[data-ingr-chip]').forEach(function (c) { c.disabled = false; });
+          if (!data) {
+            if (!append) grid.innerHTML = '<p class="col-span-full text-center text-on-surface-variant py-16">Erro ao carregar ingredientes.</p>';
+            return;
+          }
+          paginaAtual  = data.pagina;
+          totalPaginas = data.totalPaginas;
+          renderGrid(data.conteudo, append);
+        })
+        .catch(function () {
+          carregando = false;
+          if (filterGroup) filterGroup.querySelectorAll('[data-ingr-chip]').forEach(function (c) { c.disabled = false; });
+          if (!append) grid.innerHTML = '<p class="col-span-full text-center text-on-surface-variant py-16">Erro ao carregar ingredientes.</p>';
+        });
+    }
+
+    /* ── Render alerta de mercado ── */
+    function renderAlertaMercado(alertas) {
+      if (!alertaLista || !alertas || !alertas.length) return;
+      var total = alertas.length;
+      var top   = alertas.slice(0, 3);
+      if (alertaCount) alertaCount.textContent = total + ' Atualiza\u00e7\u00e3o' + (total !== 1 ? '\u00f5es' : '');
+      alertaLista.innerHTML = top.map(function (a) {
+        var isAlta  = a.tipo === 'alta';
+        var varCls  = isAlta ? 'text-error' : 'text-secondary';
+        var varStr  = isAlta
+          ? '+' + Number(a.variacaoPercent).toFixed(1) + '%'
+          : '\u2212' + Math.abs(Number(a.variacaoPercent)).toFixed(1) + '%';
+        /* precoAnterior → precoAtual */
+        var priceRange = '';
+        if (a.precoAnterior != null && a.precoAtual != null) {
+          var fmtAnt = Number(a.precoAnterior).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          var fmtAt  = Number(a.precoAtual).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          priceRange = '<span class="text-[10px] text-outline-variant block">' + fmtAnt + ' \u2192 ' + fmtAt + '</span>';
+        }
+        return '<li class="flex justify-between items-start gap-2 text-sm">'
+          + '<span class="text-on-surface-variant leading-snug">' + escHtml(a.ingredienteNome) + priceRange + '</span>'
+          + '<span class="font-bold ' + varCls + ' shrink-0">' + varStr + '</span>'
+          + '</li>';
+      }).join('');
+      if (alertaTimestamp && alertas.length) {
+        /* timestamp from the most recently changed alert across all */
+        var latest     = alertas.reduce(function (m, a) { return new Date(a.dataAlteracao) > new Date(m.dataAlteracao) ? a : m; }, alertas[0]);
+        var horasAtras = Math.max(1, Math.round((Date.now() - new Date(latest.dataAlteracao)) / 3600000));
+        alertaTimestamp.textContent = 'Atualizado h\u00e1 ' + horasAtras + (horasAtras === 1 ? ' hora' : ' horas');
+      }
+    }
+
+    /* ── Wire all chip clicks (called after DOM chips are ready) ── */
+    function wireChips() {
+      if (!filterGroup) return;
+      var chips = filterGroup.querySelectorAll('[data-ingr-chip]');
+      chips.forEach(function (chip) {
+        /* Remove any previous listener to avoid duplicates */
+        if (chip._ingrHandler) chip.removeEventListener('click', chip._ingrHandler);
+        chip._ingrHandler = function () {
+          if (carregando) return;
+          chips.forEach(function (c) {
+            CHIP_ACTIVE.forEach(function (cls) { c.classList.remove(cls); });
+            CHIP_INACTIVE.forEach(function (cls) { c.classList.add(cls); });
+            c.setAttribute('aria-pressed', 'false');
+            c.style.background = ''; c.style.color = '';
+            c.disabled = false;
+          });
+          CHIP_INACTIVE.forEach(function (cls) { chip.classList.remove(cls); });
+          CHIP_ACTIVE.forEach(function (cls) { chip.classList.add(cls); });
+          chip.setAttribute('aria-pressed', 'true');
+          var cor = chip.dataset.cor;
+          if (cor) { chip.style.background = cor; chip.style.color = '#fff'; }
+          categoriaAtiva = chip.dataset.categoriaId || null;
+          paginaAtual    = 0;
+          carregarGrid(0, false);
+        };
+        chip.addEventListener('click', chip._ingrHandler);
+      });
+    }
+
+    /* ── Render category chips ── */
+    function renderCategorias(categorias) {
+      if (!filterGroup) return;
+      filterGroup.querySelectorAll('[data-ingr-chip-dynamic]').forEach(function (el) { el.remove(); });
+
+      if (categorias && categorias.length) {
+        /* Build cor lookup map used by buildIngredienteCard */
+        _catCorMap = {};
+        categorias.forEach(function (cat) { if (cat.cor) _catCorMap[cat.id] = cat.cor; });
+
+        categorias.forEach(function (cat) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.setAttribute('data-ingr-chip', '');
+          btn.setAttribute('data-ingr-chip-dynamic', '');
+          btn.setAttribute('data-categoria-id', cat.id);
+          btn.setAttribute('aria-pressed', 'false');
+          btn.className = 'px-5 py-2.5 rounded-full font-headline font-bold text-sm whitespace-nowrap transition '
+            + CHIP_INACTIVE.join(' ');
+          if (cat.cor) btn.setAttribute('data-cor', cat.cor);
+          btn.textContent = cat.nome;
+          filterGroup.appendChild(btn);
+        });
+      }
+
+      /* Always re-wire all chips (including the static "Todo Estoque") */
+      wireChips();
+    }
+
+    /* ── Bootstrap ── */
+    initSession().then(function (tok) {
+      if (!tok) { window.location.href = 'login.html'; return; }
+
+      /* Wire the static "Todo Estoque" chip immediately — before API responds */
+      wireChips();
+      mostrarSkeleton();
+
+      Promise.all([
+        apiFetch(API + '/ingredientes/categorias').then(function (r) { return r.ok ? r.json() : []; }),
+        apiFetch(API + '/ingredientes/estoque/resumo').then(function (r) { return r.ok ? r.json() : null; }),
+        apiFetch(API + '/ingredientes/estoque/alertas-mercado').then(function (r) { return r.ok ? r.json() : []; }),
+        apiFetch(API + '/ingredientes/estoque?pagina=0&tamanho=20').then(function (r) { return r.ok ? r.json() : null; })
+      ]).then(function (results) {
+        var categorias  = results[0];
+        var resumo      = results[1];
+        var alertas     = results[2];
+        var estoqueData = results[3];
+
+        if (resumo) {
+          if (statTotal)   statTotal.textContent   = resumo.totalIngredientes;
+          if (statCritico) statCritico.textContent = resumo.estoqueCritico;
+        }
+
+        renderAlertaMercado(alertas);
+        renderCategorias(categorias);
+
+        if (estoqueData) {
+          paginaAtual  = estoqueData.pagina;
+          totalPaginas = estoqueData.totalPaginas;
+          renderGrid(estoqueData.conteudo, false);
+        } else {
+          grid.innerHTML = '<p class="col-span-full text-center text-on-surface-variant py-16">Erro ao carregar ingredientes. Tente recarregar a p\u00e1gina.</p>';
+        }
+      }).catch(function () {
+        grid.innerHTML = '<p class="col-span-full text-center text-on-surface-variant py-16">Erro ao carregar ingredientes. Tente recarregar a p\u00e1gina.</p>';
+      });
+    });
+  }
+
+  /* ─────────────────────────────────────────────
      Init
   ───────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', function () {
@@ -1314,6 +2120,8 @@
     initOnboarding();
     initDashboard();
     initCriarReceita();
+    initCriarIngrediente();
+    initIngredientes();
     initLogout();
   });
 })();

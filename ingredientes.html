@@ -23,24 +23,24 @@
   <aside id="app-sidebar" class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-lowest flex flex-col p-6 gap-2 -translate-x-full lg:translate-x-0" aria-label="Menu principal"></aside>
 
   <!-- Main Content -->
-  <main id="main-content" class="lg:ml-64 p-12">
-    <div class="max-w-7xl mx-auto space-y-10">
+  <main id="main-content" class="lg:ml-64 p-10 min-h-[calc(100vh-64px)]">
+    <div class="max-w-6xl mx-auto">
 
       <!-- Page Header -->
-      <section class="flex items-end justify-between">
-        <div>
-          <span class="text-xs font-bold tracking-[0.2em] text-secondary uppercase font-label">Câmara Fria</span>
-          <h2 class="text-4xl font-extrabold font-headline tracking-tight mt-1">Gestão de <span class="text-secondary">Ingredientes</span></h2>
-          <p class="text-on-surface-variant mt-1">Matérias-primas do seu ateliê. Preços sincronizados com o mercado.</p>
+      <section class="mb-10 flex items-end justify-between">
+        <div class="space-y-2">
+          <span class="text-xs font-bold tracking-[0.2em] text-primary uppercase font-label">Câmara Fria</span>
+          <h2 class="text-5xl font-extrabold font-headline text-on-surface tracking-tight leading-tight">Gestão de <span class="text-primary italic">Ingredientes</span></h2>
+          <p class="text-on-surface-variant max-w-md font-body text-lg">Matérias-primas do seu ateliê. Preços sincronizados com o mercado.</p>
         </div>
-        <button class="px-8 py-3 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-xl shadow-primary/20 hover:scale-105 transition-transform flex items-center gap-2">
-          <span class="material-symbols-outlined text-lg">add</span>
+        <a href="criar-ingrediente.html" class="flex items-center gap-2 px-6 py-3 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-xl shadow-primary/20 hover:scale-105 transition-transform active:scale-95">
+          <span class="material-symbols-outlined text-base">add</span>
           Novo Ingrediente
-        </button>
+        </a>
       </section>
 
       <!-- Market Update Alert -->
-      <div class="grid grid-cols-3 gap-6">
+      <div class="grid grid-cols-3 gap-6 mb-10">
         <div class="col-span-1 bg-surface-container-lowest rounded-3xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.02)] border border-outline-variant/10">
           <div class="flex items-center gap-3 mb-4">
             <div class="w-10 h-10 rounded-2xl bg-error/10 flex items-center justify-center text-error">
@@ -48,10 +48,10 @@
             </div>
             <div>
               <p class="text-xs uppercase font-bold tracking-wider text-outline">Alerta de Mercado</p>
-              <h4 class="font-headline font-extrabold">3 Atualizações</h4>
+              <h4 id="alerta-count" class="font-headline font-extrabold">3 Atualizações</h4>
             </div>
           </div>
-          <ul class="space-y-2">
+          <ul id="alerta-lista" class="space-y-2">
             <li class="flex justify-between text-sm">
               <span class="text-on-surface-variant">Cacao en Poudre</span>
               <span class="font-bold text-error">+12%</span>
@@ -62,196 +62,35 @@
             </li>
             <li class="flex justify-between text-sm">
               <span class="text-on-surface-variant">Baunilha Tahiti</span>
-              <span class="font-bold text-secondary">−3%</span>
+              <span class="font-bold text-primary">−3%</span>
             </li>
           </ul>
-          <p class="text-[10px] text-outline-variant mt-4">Atualizado há 2 horas</p>
+          <p id="alerta-timestamp" class="text-[10px] text-outline-variant mt-4">Atualizado há 2 horas</p>
         </div>
-        <div class="bg-secondary-container/20 rounded-3xl p-6 flex flex-col justify-between">
-          <div class="w-10 h-10 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary mb-4">
+        <div class="bg-primary-container/20 rounded-3xl p-6 flex flex-col justify-between">
+          <div class="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4">
             <span class="material-symbols-outlined">inventory_2</span>
           </div>
-          <p class="text-5xl font-extrabold font-headline text-secondary">128</p>
+          <p id="stat-total-ingredientes" class="text-5xl font-extrabold font-headline text-primary">128</p>
           <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant mt-2">Ingredientes Catalogados</p>
         </div>
         <div class="bg-surface-container-highest rounded-3xl p-6 flex flex-col justify-between">
           <div class="w-10 h-10 rounded-2xl bg-error/10 flex items-center justify-center text-error mb-4">
             <span class="material-symbols-outlined">warning</span>
           </div>
-          <p class="text-5xl font-extrabold font-headline text-error">7</p>
+          <p id="stat-estoque-critico" class="text-5xl font-extrabold font-headline text-error">7</p>
           <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant mt-2">Estoque Crítico</p>
         </div>
       </div>
 
       <!-- Filter Chips -->
-      <div class="flex items-center gap-3 overflow-x-auto pb-2" data-filter-group>
-        <button type="button" data-filter-chip aria-pressed="true" class="px-5 py-2.5 rounded-full bg-primary text-on-primary font-headline font-bold text-sm whitespace-nowrap">Todo Estoque</button>
-        <button type="button" data-filter-chip aria-pressed="false" class="px-5 py-2.5 rounded-full bg-surface-container text-on-surface-variant font-headline font-bold text-sm hover:bg-surface-container-high transition whitespace-nowrap">Laticínios</button>
-        <button type="button" data-filter-chip aria-pressed="false" class="px-5 py-2.5 rounded-full bg-surface-container text-on-surface-variant font-headline font-bold text-sm hover:bg-surface-container-high transition whitespace-nowrap">Especiarias Raras</button>
-        <button type="button" data-filter-chip aria-pressed="false" class="px-5 py-2.5 rounded-full bg-surface-container text-on-surface-variant font-headline font-bold text-sm hover:bg-surface-container-high transition whitespace-nowrap">Chocolate Couverture</button>
-        <button type="button" data-filter-chip aria-pressed="false" class="px-5 py-2.5 rounded-full bg-surface-container text-on-surface-variant font-headline font-bold text-sm hover:bg-surface-container-high transition whitespace-nowrap">Farinhas</button>
-        <button type="button" data-filter-chip aria-pressed="false" class="px-5 py-2.5 rounded-full bg-surface-container text-on-surface-variant font-headline font-bold text-sm hover:bg-surface-container-high transition whitespace-nowrap">Gorduras</button>
-        <button type="button" data-filter-chip aria-pressed="false" class="px-5 py-2.5 rounded-full bg-surface-container text-on-surface-variant font-headline font-bold text-sm hover:bg-surface-container-high transition whitespace-nowrap">Frutas</button>
+      <div class="flex items-center gap-3 overflow-x-auto pb-2 mb-8" id="filter-chips-ingredientes">
+        <button type="button" data-ingr-chip aria-pressed="true" class="px-5 py-2.5 rounded-full bg-primary text-on-primary font-headline font-bold text-sm whitespace-nowrap">Todo Estoque</button>
+        <!-- chips de categoria carregados dinamicamente -->
       </div>
 
       <!-- Ingredients Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-        <!-- Card 1 - Normal -->
-        <div class="bg-surface-container-lowest rounded-3xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_16px_48px_rgba(189,0,80,0.06)] transition-all duration-300 group cursor-pointer">
-          <div class="relative h-44 overflow-hidden">
-            <img alt="Chocolate Valrhona" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" src="https://images.unsplash.com/photo-1606312619070-d48b5c9be6c8?w=400&q=80" />
-            <div class="absolute top-4 left-4">
-              <span class="bg-surface-container-lowest/80 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">CHC-001</span>
-            </div>
-            <div class="absolute top-4 right-4">
-              <span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold">Chocolate</span>
-            </div>
-          </div>
-          <div class="p-6">
-            <h3 class="font-headline font-extrabold text-lg">Valrhona Manjari 64%</h3>
-            <p class="text-xs text-on-surface-variant mt-0.5 mb-4">Chocolate couverture escuro de origem Madagascar</p>
-            <div class="flex justify-between items-end">
-              <div>
-                <p class="text-2xl font-extrabold font-headline text-secondary">R$ 89,90</p>
-                <p class="text-[10px] text-on-surface-variant font-bold uppercase">por kg</p>
-              </div>
-              <div class="text-right">
-                <div class="flex items-center gap-1 justify-end text-secondary text-xs font-bold">
-                  <span class="material-symbols-outlined text-sm">trending_down</span> −2% mês
-                </div>
-                <p class="text-[10px] text-on-surface-variant mt-0.5">Estoque: 4,2kg</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 2 - Normal -->
-        <div class="bg-surface-container-lowest rounded-3xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_16px_48px_rgba(189,0,80,0.06)] transition-all duration-300 group cursor-pointer">
-          <div class="relative h-44 overflow-hidden">
-            <img alt="Baunilha" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" src="https://images.unsplash.com/photo-1577003833619-76bbd7f82948?w=400&q=80" />
-            <div class="absolute top-4 left-4">
-              <span class="bg-surface-container-lowest/80 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">ESP-012</span>
-            </div>
-            <div class="absolute top-4 right-4">
-              <span class="bg-tertiary-container/80 text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-bold">Especiaria</span>
-            </div>
-          </div>
-          <div class="p-6">
-            <h3 class="font-headline font-extrabold text-lg">Baunilha Tahiti</h3>
-            <p class="text-xs text-on-surface-variant mt-0.5 mb-4">Favas inteiras, notas florais complexas e florais</p>
-            <div class="flex justify-between items-end">
-              <div>
-                <p class="text-2xl font-extrabold font-headline text-secondary">R$ 420,00</p>
-                <p class="text-[10px] text-on-surface-variant font-bold uppercase">por kg</p>
-              </div>
-              <div class="text-right">
-                <div class="flex items-center gap-1 justify-end text-secondary text-xs font-bold">
-                  <span class="material-symbols-outlined text-sm">trending_down</span> −3% mês
-                </div>
-                <p class="text-[10px] text-on-surface-variant mt-0.5">Estoque: 0,8kg</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 3 - Critical Stock -->
-        <div class="bg-surface-container-lowest rounded-3xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_16px_48px_rgba(172,52,52,0.08)] transition-all duration-300 group cursor-pointer border-2 border-error/10">
-          <div class="relative h-44 overflow-hidden">
-            <img alt="Purê de Framboesa" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" src="https://images.unsplash.com/photo-1497534446932-c925b458314e?w=400&q=80" />
-            <div class="absolute top-4 left-4">
-              <span class="bg-surface-container-lowest/80 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">FRT-008</span>
-            </div>
-            <div class="absolute top-4 right-4">
-              <span class="bg-error text-on-error px-3 py-1 rounded-full text-[10px] font-bold">Estoque Crítico</span>
-            </div>
-          </div>
-          <div class="p-6">
-            <h3 class="font-headline font-extrabold text-lg">Purê de Framboesa</h3>
-            <p class="text-xs text-on-surface-variant mt-0.5 mb-4">Polpa congelada, colheita europeia, acidez equilibrada</p>
-            <div class="flex justify-between items-end">
-              <div>
-                <p class="text-2xl font-extrabold font-headline text-error">R$ 68,30</p>
-                <p class="text-[10px] text-on-surface-variant font-bold uppercase">por kg</p>
-              </div>
-              <div class="text-right">
-                <div class="flex items-center gap-1 justify-end text-error text-xs font-bold">
-                  <span class="material-symbols-outlined text-sm">trending_up</span> +8% mês
-                </div>
-                <p class="text-[10px] text-error mt-0.5 font-bold">Estoque: 0,1kg !</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 4 - Normal -->
-        <div class="bg-surface-container-lowest rounded-3xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_16px_48px_rgba(189,0,80,0.06)] transition-all duration-300 group cursor-pointer">
-          <div class="relative h-44 overflow-hidden">
-            <img alt="Creme de Leite" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" src="https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&q=80" />
-            <div class="absolute top-4 left-4">
-              <span class="bg-surface-container-lowest/80 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">LAT-003</span>
-            </div>
-            <div class="absolute top-4 right-4">
-              <span class="bg-primary-container/80 text-on-primary-container px-3 py-1 rounded-full text-[10px] font-bold">Laticínio</span>
-            </div>
-          </div>
-          <div class="p-6">
-            <h3 class="font-headline font-extrabold text-lg">Creme de Leite 35%</h3>
-            <p class="text-xs text-on-surface-variant mt-0.5 mb-4">Gordura de origem italiana, ideal para ganaches</p>
-            <div class="flex justify-between items-end">
-              <div>
-                <p class="text-2xl font-extrabold font-headline text-secondary">R$ 32,50</p>
-                <p class="text-[10px] text-on-surface-variant font-bold uppercase">por litro</p>
-              </div>
-              <div class="text-right">
-                <div class="flex items-center gap-1 justify-end text-on-surface-variant text-xs font-bold">
-                  <span class="material-symbols-outlined text-sm">trending_flat</span> Estável
-                </div>
-                <p class="text-[10px] text-on-surface-variant mt-0.5">Estoque: 6,0L</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 5 - Normal -->
-        <div class="bg-surface-container-lowest rounded-3xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_16px_48px_rgba(189,0,80,0.06)] transition-all duration-300 group cursor-pointer">
-          <div class="relative h-44 overflow-hidden">
-            <img alt="Amêndoas" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" src="https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=400&q=80" />
-            <div class="absolute top-4 left-4">
-              <span class="bg-surface-container-lowest/80 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">SEM-015</span>
-            </div>
-            <div class="absolute top-4 right-4">
-              <span class="bg-tertiary-container/80 text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-bold">Sementes</span>
-            </div>
-          </div>
-          <div class="p-6">
-            <h3 class="font-headline font-extrabold text-lg">Amêndoas Sicilianas</h3>
-            <p class="text-xs text-on-surface-variant mt-0.5 mb-4">Origem protegida, aroma intenso de frangipane natural</p>
-            <div class="flex justify-between items-end">
-              <div>
-                <p class="text-2xl font-extrabold font-headline text-secondary">R$ 54,00</p>
-                <p class="text-[10px] text-on-surface-variant font-bold uppercase">por kg</p>
-              </div>
-              <div class="text-right">
-                <div class="flex items-center gap-1 justify-end text-on-surface-variant text-xs font-bold">
-                  <span class="material-symbols-outlined text-sm">trending_flat</span> Estável
-                </div>
-                <p class="text-[10px] text-on-surface-variant mt-0.5">Estoque: 2,5kg</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 6 - Add New -->
-        <div role="button" tabindex="0" aria-label="Adicionar novo ingrediente" class="rounded-3xl border-2 border-dashed border-outline-variant/30 h-full min-h-[280px] flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-primary/40 hover:bg-primary-container/5 transition-all group" onkeydown="if(event.key==='Enter'||event.key===' ')this.click()">
-          <div class="w-14 h-14 rounded-2xl bg-surface-container flex items-center justify-center text-outline-variant group-hover:bg-primary-container/20 group-hover:text-primary transition-all">
-            <span class="material-symbols-outlined text-3xl">add</span>
-          </div>
-          <div class="text-center">
-            <p class="font-headline font-bold text-sm text-on-surface-variant group-hover:text-primary transition-colors">Novo Ingrediente</p>
-            <p class="text-xs text-outline-variant mt-1">Adicionar à câmara fria</p>
-          </div>
-        </div>
+      <div id="ingredientes-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-3">
       </div>
     </div>
   </main>

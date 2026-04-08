@@ -65,30 +65,42 @@
                 <input id="input-nome" class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg" placeholder="ex: Ganache de Framboesa Valrhona" type="text" />
               </div>
               <div class="space-y-2">
-                <label for="input-rendimento" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Rendimento (qtd.)</label>
-                <input id="input-rendimento" class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg" placeholder="ex: 24" type="number" min="1" step="1" />
+                <div class="flex items-center gap-1 ml-2">
+                  <label for="input-rendimento" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">Rendimento</label>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Quantidade total produzida pela receita e sua unidade. Ex: 24 unidades, 1 kg, 500 g.">help</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input id="input-rendimento" class="flex-1 min-w-0 bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg" placeholder="ex: 24" type="number" min="1" step="any" />
+                  <div class="relative shrink-0 w-36">
+                    <select id="input-rendimento-unidade"
+                      class="w-full appearance-none bg-none bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-4 pr-10 font-headline transition-all text-on-surface shadow-sm focus:shadow-lg text-sm">
+                      <option value="">Unidade</option>
+                    </select>
+                    <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none text-sm">expand_more</span>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="grid grid-cols-2 gap-8 mt-8">
               <div class="space-y-2">
-                <label for="input-categoria" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Categoria</label>
-                <input id="input-categoria" list="categorias-list" type="text" autocomplete="off"
-                  class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
-                  placeholder="ex: Tortas, Bolos, Macarons..." />
-                <datalist id="categorias-list">
-                  <option value="Tortas" />
-                  <option value="Bolos" />
-                  <option value="Macarons" />
-                  <option value="Doces" />
-                  <option value="Chocolates" />
-                  <option value="Biscoitos" />
-                  <option value="Pães" />
-                  <option value="Sobremesas" />
-                </datalist>
+                <div class="flex items-center gap-1 ml-2">
+                  <label for="input-categoria" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">Categoria</label>
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Classifique a receita por categoria para facilitar a filtragem e organização.">help</span>
+                </div>
+                <div class="relative">
+                  <select id="input-categoria"
+                    class="w-full appearance-none bg-none bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all text-on-surface shadow-sm focus:shadow-lg pr-12">
+                    <option value="">Carregando...</option>
+                  </select>
+                  <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">expand_more</span>
+                </div>
               </div>
               <div class="space-y-2">
                 <label for="input-tempo" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Tempo de Preparo</label>
-                <input id="input-tempo" class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg" placeholder="ex: 3h 30min" type="text" />
+                <div class="flex items-center gap-1">
+                  <input id="input-tempo" class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg" placeholder="ex: 90" type="number" min="0" step="1" inputmode="numeric" />
+                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Informe o tempo total de preparo em minutos. Apenas valores inteiros são permitidos (ex: 90 para 1h30min).">help</span>
+                </div>
               </div>
             </div>
           </div>
@@ -129,7 +141,10 @@
 
           <!-- Notes Board Expanded -->
           <div class="bg-surface-container-lowest rounded-3xl p-8 border-2 border-outline-variant/40 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
-            <h3 class="text-xl font-bold font-headline mb-4 uppercase tracking-widest text-outline">Notas do Processo</h3>
+            <div class="flex items-center gap-1 mb-4">
+              <h3 class="text-xl font-bold font-headline uppercase tracking-widest text-outline mb-0">Notas do Processo</h3>
+              <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Adicione observações importantes sobre o preparo, dicas, pontos de atenção ou etapas críticas do processo.">help</span>
+            </div>
             <textarea id="input-notas" class="w-full h-60 bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl resize-none font-body placeholder:text-outline-variant/60 text-base leading-relaxed p-4 shadow-sm focus:shadow-lg transition-all" placeholder="Temperar o chocolate a 31°C antes de incorporar o purê..."></textarea>
           </div>
         </div>
