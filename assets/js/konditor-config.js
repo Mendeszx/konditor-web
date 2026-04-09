@@ -5,7 +5,7 @@
  */
 
 /** Base URL do backend. */
-window.KONDITOR_API = 'https://konditor-production.up.railway.app/';
+window.KONDITOR_API = 'https://konditor-production.up.railway.app';
 
 /** Google OAuth2 Client ID. */
 window.KONDITOR_GOOGLE_CLIENT_ID = '1045651153478-9vscj0s2dfhi53c4pvu41nj3nfm6pp2v.apps.googleusercontent.com';
