@@ -314,7 +314,8 @@
     var PAGE_ACTIVE_MAP = {
       'criar-receita.html':     'receitas.html',
       'criar-ingrediente.html': 'ingredientes.html',
-      'custos.html':            'receitas.html'
+      'detalhe-receita.html':   'receitas.html',
+      'editar-receita.html':    'receitas.html'
     };
     var filename   = window.location.pathname.split('/').pop() || 'receitas.html';
     var activePage = PAGE_ACTIVE_MAP[filename] || filename;
@@ -418,6 +419,7 @@
     var priceCls    = isLow ? 'text-error' : 'text-primary';
     var linkCls     = isLow ? 'text-error' : 'text-primary';
     var linkLabel   = isLow ? 'Revisar' : 'Analisar';
+    var detalheLink = 'detalhe-receita.html?id=' + encodeURIComponent(r.id);
     var custo = r.custoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     var preco = r.precoUnitario.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -428,13 +430,13 @@
       + '<p class="text-xs text-on-surface-variant font-medium mt-1">' + r.quantidade + ' ' + escHtml(r.unidade) + ' • Custo: ' + custo + '</p></div>'
       + '<div class="flex justify-between items-center pt-3 border-t ' + sepCls + '">'
       + '<span class="text-2xl font-headline font-extrabold ' + priceCls + '">' + preco + ' <span class="text-sm font-semibold text-on-surface-variant">/unid.</span></span>'
-      + '<a href="' + escHtml(r.linkAnalise) + '" class="flex items-center gap-1 ' + linkCls + ' text-sm font-bold hover:gap-2 transition-all duration-200">'
+      + '<a href="' + detalheLink + '" class="flex items-center gap-1 ' + linkCls + ' text-sm font-bold hover:gap-2 transition-all duration-200">'
       + linkLabel + ' <span class="material-symbols-outlined text-sm">arrow_forward</span></a>'
-      + '</div></div></div>';
+      + '</div></div></div>'
   }
 
   function buildDraftCard(r) {
-    var editLink = 'criar-receita.html' + (r.id ? '?id=' + encodeURIComponent(r.id) : '');
+    var editLink = r.id ? 'detalhe-receita.html?id=' + encodeURIComponent(r.id) : 'criar-receita.html';
     var nome     = r.nome ? escHtml(r.nome) : 'Sem nome';
     var catHtml  = r.categoria
       ? '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">' + escHtml(r.categoria) + '</span>'
@@ -877,9 +879,9 @@
   }
 
   /* ─────────────────────────────────────────────
-     Detalhes da Receita — custos.html?id=...
-     GET /receitas/{id}           → recipe detail
-     PATCH /receitas/{id}         → update price
+     Detalhes da Receita — detalhe-receita.html?id=...
+     GET /receitas/{id}    → detalhes
+     PUT  /receitas/{id}   → salvar alterações
   ───────────────────────────────────────────── */
   function initDetalhesReceita() {
     var content    = document.getElementById('detail-content');
@@ -1010,7 +1012,7 @@
       _receitaData = r;
       document.title = 'Konditor | ' + (r.nome || 'Receita');
 
-      var editLink = 'criar-receita.html?id=' + encodeURIComponent(r.id);
+      var editLink = 'editar-receita.html?id=' + encodeURIComponent(r.id);
       if (editBtnEl)    editBtnEl.href    = editLink;
       if (editIngBtnEl) editIngBtnEl.href = editLink;
       if (editLinkEl)   editLinkEl.href   = editLink;
@@ -2390,6 +2392,295 @@
   }
 
   /* ─────────────────────────────────────────────
+     Editar Receita — editar-receita.html?id=...
+     GET /receitas/{id}  → pré-preenche form
+     PUT /receitas/{id}  → salva alterações
+  ───────────────────────────────────────────── */
+  function initEditarReceita() {
+    var container = document.getElementById('edit-ingredientes-container');
+    if (!container) return;
+
+    var API        = window.KONDITOR_API || '';
+    var skeleton   = document.getElementById('edit-skeleton');
+    var errorEl    = document.getElementById('edit-error');
+    var contentEl  = document.getElementById('edit-content');
+
+    var params = new URLSearchParams(window.location.search);
+    var id     = params.get('id');
+    if (!id) { window.location.href = 'receitas.html'; return; }
+
+    /* ── DOM refs ── */
+    var nomeInput    = document.getElementById('edit-nome');
+    var catSelect    = document.getElementById('edit-categoria');
+    var statusSelect = document.getElementById('edit-status');
+    var searchInput  = document.getElementById('edit-ingrediente-search');
+    var dropdown     = document.getElementById('edit-ingrediente-dropdown');
+    var emptyHint    = document.getElementById('edit-ingredientes-empty');
+    var btnSalvar    = document.getElementById('btn-salvar-edicao');
+    var btnSalvarBot = document.getElementById('btn-salvar-edicao-bottom');
+    var cancelTop    = document.getElementById('edit-cancel-btn');
+    var cancelBot    = document.getElementById('edit-cancel-btn-bottom');
+    var detalheLinkEl = document.getElementById('edit-detalhe-link');
+    var nomeHeading  = document.getElementById('edit-nome-heading');
+
+    var detalheUrl = 'detalhe-receita.html?id=' + encodeURIComponent(id);
+    if (detalheLinkEl) detalheLinkEl.href = detalheUrl;
+    if (cancelTop)     cancelTop.href     = detalheUrl;
+    if (cancelBot)     cancelBot.href     = detalheUrl;
+
+    /* ── State ── */
+    var state = {
+      ingredientes: [],   /* { ingredienteId, unidadeId, nome, unidadeSimbolo, quantidade } */
+      searchTimer: null
+    };
+
+    /* ── Helpers ── */
+    function escH(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function showToast(msg, tipo) {
+      var toast = document.getElementById('editar-toast');
+      var icon  = document.getElementById('editar-toast-icon');
+      var msgEl = document.getElementById('editar-toast-msg');
+      if (!toast) return;
+      toast.className = 'fixed top-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl font-headline font-bold text-sm '
+        + (tipo === 'erro' ? 'bg-error text-white' : 'bg-secondary text-white');
+      if (icon)  icon.textContent  = tipo === 'erro' ? 'error' : 'check_circle';
+      if (msgEl) msgEl.textContent = msg;
+      clearTimeout(toast._t);
+      toast._t = setTimeout(function () { toast.className = 'hidden'; }, 4000);
+    }
+
+    function setLoading(btn, loading) {
+      if (!btn) return;
+      if (loading) {
+        btn.dataset.origText = btn.textContent.trim();
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1rem;animation:spin .9s linear infinite;vertical-align:middle;">progress_activity</span> Aguarde\u2026';
+      } else {
+        btn.disabled = false;
+        btn.textContent = btn.dataset.origText || btn.textContent;
+      }
+    }
+
+    /* ── Render ingredient rows ── */
+    function renderIngredientes() {
+      container.innerHTML = '';
+      if (!state.ingredientes.length) {
+        if (emptyHint) emptyHint.classList.remove('hidden');
+        return;
+      }
+      if (emptyHint) emptyHint.classList.add('hidden');
+
+      state.ingredientes.forEach(function (ing, idx) {
+        var row = document.createElement('div');
+        row.className = 'ingredient-row flex items-center gap-3 mb-3 group transition-all';
+        row.dataset.index = String(idx);
+        row.innerHTML =
+          '<div class="flex-grow grid grid-cols-12 gap-3 p-3 rounded-2xl bg-surface-container-low group-hover:bg-white group-hover:shadow-md transition-all border-l-4 border-primary">'
+          + '<div class="col-span-5 flex items-center">'
+          + '<span class="font-medium text-sm text-on-surface truncate" title="' + escH(ing.nome) + '">' + escH(ing.nome) + '</span>'
+          + '</div>'
+          + '<div class="col-span-3 flex items-center justify-end">'
+          + '<input type="number" min="0.001" step="any" class="edit-qty-input w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-xl text-right font-bold py-1.5 px-3 text-sm transition-all shadow-sm" value="' + escH(String(ing.quantidade || '')) + '" placeholder="Qtd." />'
+          + '</div>'
+          + '<div class="col-span-4 flex items-center">'
+          + '<span class="ml-2 text-sm font-bold text-outline uppercase">' + escH(ing.unidadeSimbolo) + '</span>'
+          + '</div>'
+          + '</div>'
+          + '<button type="button" aria-label="Remover ingrediente" class="edit-remove-btn w-9 h-9 flex items-center justify-center rounded-full text-outline-variant hover:text-error hover:bg-error/10 transition-all shrink-0">'
+          + '<span class="material-symbols-outlined text-base">delete</span>'
+          + '</button>';
+        container.appendChild(row);
+      });
+
+      /* Qty change listeners */
+      container.querySelectorAll('.edit-qty-input').forEach(function (inp) {
+        inp.addEventListener('input', function () {
+          var idx = Number(inp.closest('.ingredient-row').dataset.index);
+          if (state.ingredientes[idx]) state.ingredientes[idx].quantidade = inp.value;
+        });
+      });
+
+      /* Remove listeners */
+      container.querySelectorAll('.edit-remove-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var idx = Number(btn.closest('.ingredient-row').dataset.index);
+          state.ingredientes.splice(idx, 1);
+          renderIngredientes();
+        });
+      });
+    }
+
+    /* ── Ingredient search ── */
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        clearTimeout(state.searchTimer);
+        var q = searchInput.value.trim();
+        if (!dropdown) return;
+        if (q.length < 2) { dropdown.classList.add('hidden'); return; }
+        state.searchTimer = setTimeout(function () {
+          apiFetch(API + '/ingredientes/estoque?search=' + encodeURIComponent(q) + '&size=10')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+              if (!data) return;
+              var items = Array.isArray(data) ? data : (data.conteudo || []);
+              if (!items.length) { dropdown.classList.add('hidden'); return; }
+              dropdown.innerHTML = items.map(function (it) {
+                var sym  = (it.unidadeSimbolo || it.unidade || '').toUpperCase();
+                var marca = it.marca ? ' — ' + it.marca : '';
+                return '<button type="button" class="edit-search-item w-full text-left px-4 py-3 hover:bg-primary-container/20 transition-colors text-sm font-medium" '
+                  + 'data-id="' + escH(it.id) + '" data-nome="' + escH(it.nome + marca) + '" data-unidade-id="' + escH(it.unidadeId || it.unidade_id || '') + '" data-simbolo="' + escH(sym) + '">'
+                  + '<span class="font-bold">' + escH(it.nome) + '</span>'
+                  + (marca ? '<span class="text-outline-variant">' + escH(marca) + '</span>' : '')
+                  + ' <span class="text-xs text-outline bg-surface-container px-2 py-0.5 rounded-full ml-1">' + sym + '</span>'
+                  + '</button>';
+              }).join('');
+              dropdown.classList.remove('hidden');
+              dropdown.querySelectorAll('.edit-search-item').forEach(function (btn) {
+                btn.addEventListener('mousedown', function (e) {
+                  e.preventDefault();
+                  state.ingredientes.push({
+                    ingredienteId:  btn.dataset.id,
+                    unidadeId:      btn.dataset.unidadeId,
+                    nome:           btn.dataset.nome,
+                    unidadeSimbolo: btn.dataset.simbolo,
+                    quantidade:     ''
+                  });
+                  renderIngredientes();
+                  searchInput.value = '';
+                  dropdown.classList.add('hidden');
+                });
+              });
+            })
+            .catch(function () { dropdown.classList.add('hidden'); });
+        }, 300);
+      });
+
+      searchInput.addEventListener('blur', function () {
+        setTimeout(function () { if (dropdown) dropdown.classList.add('hidden'); }, 200);
+      });
+    }
+
+    /* ── Build PUT payload ── */
+    function buildPayload() {
+      return {
+        nome:        nomeInput    ? nomeInput.value.trim() : '',
+        descricao:   '',
+        categoriaId: catSelect    && catSelect.value    ? catSelect.value    : null,
+        status:      statusSelect && statusSelect.value ? statusSelect.value : 'rascunho',
+        ingredientes: state.ingredientes
+          .filter(function (i) { return i.ingredienteId && i.unidadeId && i.quantidade; })
+          .map(function (i) {
+            return { ingredienteId: i.ingredienteId, quantidade: Number(i.quantidade), unidadeId: i.unidadeId };
+          })
+      };
+    }
+
+    /* ── Validate ── */
+    function validar() {
+      var nome = nomeInput ? nomeInput.value.trim() : '';
+      if (!nome) { showToast('O nome da receita é obrigatório.', 'erro'); if (nomeInput) nomeInput.focus(); return false; }
+      if (!state.ingredientes.length) { showToast('Adicione pelo menos um ingrediente.', 'erro'); if (searchInput) searchInput.focus(); return false; }
+      if (state.ingredientes.some(function (i) { return !i.quantidade || Number(i.quantidade) <= 0; })) {
+        showToast('Preencha a quantidade de todos os ingredientes.', 'erro'); return false;
+      }
+      return true;
+    }
+
+    /* ── Save handler ── */
+    function salvar(btn) {
+      if (!validar()) return;
+      setLoading(btn, true);
+      var other = btn === btnSalvar ? btnSalvarBot : btnSalvar;
+      if (other) other.disabled = true;
+      apiFetch(API + '/receitas/' + encodeURIComponent(id), {
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(buildPayload())
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+        .then(function (res) {
+          setLoading(btn, false);
+          if (other) other.disabled = false;
+          if (!res.ok) {
+            var msg = (res.data && (res.data.detail || res.data.message)) || 'Erro ao salvar alterações.';
+            showToast(msg, 'erro');
+            return;
+          }
+          showToast('Receita atualizada com sucesso!', 'sucesso');
+          setTimeout(function () { window.location.href = detalheUrl; }, 1200);
+        })
+        .catch(function () {
+          setLoading(btn, false);
+          if (other) other.disabled = false;
+          showToast('Falha de conexão. Tente novamente.', 'erro');
+        });
+    }
+
+    if (btnSalvar)    btnSalvar.addEventListener('click',    function () { salvar(btnSalvar); });
+    if (btnSalvarBot) btnSalvarBot.addEventListener('click', function () { salvar(btnSalvarBot); });
+
+    /* ── Bootstrap: load selects + recipe data ── */
+    initSession().then(function (tok) {
+      if (!tok) { window.location.href = 'login.html'; return; }
+      Promise.all([
+        apiFetch(API + '/receitas/categorias').then(function (r) { return r.ok ? r.json() : []; }),
+        apiFetch(API + '/receitas/' + encodeURIComponent(id)).then(function (r) {
+          if (!r.ok) throw new Error('not_found');
+          return r.json();
+        })
+      ])
+        .then(function (results) {
+          var categorias = results[0];
+          var data       = results[1];
+
+          /* Populate categories */
+          if (catSelect) {
+            catSelect.innerHTML = '<option value="">Sem categoria</option>';
+            if (Array.isArray(categorias)) {
+              categorias.forEach(function (cat) {
+                var opt = document.createElement('option');
+                opt.value       = cat.id;
+                opt.textContent = cat.nome;
+                catSelect.appendChild(opt);
+              });
+            }
+          }
+
+          /* Pre-fill fields */
+          document.title = 'Konditor | Editar — ' + (data.nome || '');
+          if (nomeHeading) nomeHeading.textContent = data.nome || 'Receita';
+          if (nomeInput)   nomeInput.value        = data.nome         || '';
+          if (statusSelect) statusSelect.value    = data.status       || 'rascunho';
+          if (catSelect && data.categoria && data.categoria.id) catSelect.value = data.categoria.id;
+
+          /* Pre-fill ingredients */
+          if (Array.isArray(data.ingredientes)) {
+            state.ingredientes = data.ingredientes.map(function (ing) {
+              return {
+                ingredienteId:  ing.ingredienteId,
+                unidadeId:      ing.unidadeId      || '',
+                nome:           ing.nome           || '',
+                unidadeSimbolo: ing.unidade        || '',
+                quantidade:     ing.quantidade     || ''
+              };
+            });
+          }
+
+          renderIngredientes();
+
+          /* Show content */
+          if (skeleton)  skeleton.classList.add('hidden');
+          if (contentEl) contentEl.classList.remove('hidden');
+        })
+        .catch(function () {
+          if (skeleton)  skeleton.classList.add('hidden');
+          if (errorEl)   errorEl.classList.remove('hidden');
+        });
+    });
+  }
+
+  /* ─────────────────────────────────────────────
      Init
   ───────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', function () {
@@ -2405,6 +2696,7 @@
     initDashboard();
     initDetalhesReceita();
     initCriarReceita();
+    initEditarReceita();
     initCriarIngrediente();
     initIngredientes();
     initLogout();

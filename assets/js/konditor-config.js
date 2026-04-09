@@ -5,10 +5,10 @@
  */
 
 /** Base URL do backend. */
-window.KONDITOR_API = 'http://localhost:8080';
+window.KONDITOR_API = 'https://konditor-production.up.railway.app/';
 
 /** Google OAuth2 Client ID. */
-window.KONDITOR_GOOGLE_CLIENT_ID = '1045651153478-4379bpb4fepqg0gvlg4goktic09vl883.apps.googleusercontent.com';
+window.KONDITOR_GOOGLE_CLIENT_ID = '1045651153478-9vscj0s2dfhi53c4pvu41nj3nfm6pp2v.apps.googleusercontent.com';
 
 tailwind.config = {
   darkMode: "class",

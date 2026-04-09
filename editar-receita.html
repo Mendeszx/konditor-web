@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Edite os dados de uma receita existente no Konditor." />
+  <title>Konditor | Editar Receita</title>
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/konditor.css" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="assets/js/konditor-config.js"></script>
+</head>
+<body class="bg-background font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+
+  <!-- Toast notification -->
+  <div id="editar-toast" role="alert" aria-live="assertive" class="hidden fixed top-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl font-headline font-bold text-sm">
+    <span id="editar-toast-icon" class="material-symbols-outlined text-xl"></span>
+    <span id="editar-toast-msg"></span>
+  </div>
+
+  <a href="#main-content" class="skip-link">Ir para o conteudo principal</a>
+
+  <!-- Mobile sidebar overlay -->
+  <div id="sidebar-overlay" class="fixed inset-0 z-30 bg-black/40 opacity-0 pointer-events-none lg:hidden" aria-hidden="true"></div>
+
+  <aside id="app-sidebar" class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-lowest flex flex-col p-6 gap-2 -translate-x-full lg:translate-x-0" aria-label="Menu principal"></aside>
+
+  <!-- Main Content -->
+  <main id="main-content" class="lg:ml-64 p-12 min-h-screen">
+    <div class="max-w-4xl mx-auto">
+
+      <!-- Loading skeleton -->
+      <div id="edit-skeleton">
+        <div class="h-4 w-28 bg-slate-200 rounded-full animate-pulse mb-10"></div>
+        <div class="space-y-4 mb-10">
+          <div class="h-10 w-1/2 bg-slate-200 rounded-xl animate-pulse"></div>
+          <div class="h-4 w-1/3 bg-slate-100 rounded-full animate-pulse"></div>
+        </div>
+        <div class="h-72 bg-slate-100 rounded-3xl animate-pulse mb-6"></div>
+        <div class="h-48 bg-slate-100 rounded-3xl animate-pulse"></div>
+      </div>
+
+      <!-- Error state -->
+      <div id="edit-error" class="hidden text-center py-24 space-y-4">
+        <span class="material-symbols-outlined text-5xl text-outline-variant">error</span>
+        <p class="text-lg font-headline font-bold text-on-surface-variant">Receita não encontrada.</p>
+        <a href="receitas.html" class="inline-flex items-center gap-2 text-primary font-bold hover:underline">
+          <span class="material-symbols-outlined text-sm">arrow_back</span> Voltar para receitas
+        </a>
+      </div>
+
+      <!-- Form content -->
+      <div id="edit-content" class="hidden">
+
+        <!-- Breadcrumb + Header -->
+        <nav class="flex items-center gap-2 text-xs text-on-surface-variant font-medium mb-8">
+          <a href="receitas.html" class="hover:text-primary transition-colors">Receitas</a>
+          <span class="material-symbols-outlined text-xs">chevron_right</span>
+          <a id="edit-detalhe-link" href="detalhe-receita.html" class="hover:text-primary transition-colors">Detalhes</a>
+          <span class="material-symbols-outlined text-xs">chevron_right</span>
+          <span class="text-on-surface font-bold">Editar</span>
+        </nav>
+
+        <section class="mb-10 flex items-end justify-between gap-4 flex-wrap">
+          <div class="space-y-1">
+            <span class="text-xs font-bold tracking-[0.2em] text-primary uppercase font-label">Edição</span>
+            <h2 class="text-4xl font-extrabold font-headline text-on-surface tracking-tight leading-tight">
+              Editar <span id="edit-nome-heading" class="text-primary italic">Receita</span>
+            </h2>
+          </div>
+          <div class="flex gap-3 shrink-0">
+            <a id="edit-cancel-btn" href="detalhe-receita.html" class="px-6 py-3 rounded-full bg-surface-container-highest text-on-surface font-headline font-bold text-sm hover:opacity-80 transition-opacity">
+              Cancelar
+            </a>
+            <button id="btn-salvar-edicao" class="px-8 py-3 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-xl shadow-primary/20 hover:scale-105 transition-transform active:scale-95">
+              Salvar Alterações
+            </button>
+          </div>
+        </section>
+
+        <!-- Form card -->
+        <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)] space-y-8">
+
+          <!-- Nome + Categoria -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label for="edit-nome" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Nome da Receita</label>
+              <input id="edit-nome" type="text"
+                class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                placeholder="Nome da receita" />
+            </div>
+            <div class="space-y-2">
+              <label for="edit-categoria" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Categoria</label>
+              <div class="relative">
+                <select id="edit-categoria"
+                  class="w-full appearance-none bg-none bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all text-on-surface shadow-sm focus:shadow-lg pr-12">
+                  <option value="">Carregando...</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">expand_more</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="space-y-2">
+            <label for="edit-status" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Status</label>
+            <div class="relative w-full sm:w-64">
+              <select id="edit-status"
+                class="w-full appearance-none bg-none bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all text-on-surface shadow-sm focus:shadow-lg pr-12">
+                <option value="rascunho">Rascunho</option>
+                <option value="publicada">Publicada</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">expand_more</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Ingredients -->
+        <div class="bg-surface-container-lowest rounded-3xl p-8 mt-6 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold font-headline">Ingredientes</h3>
+            <a href="ingredientes.html" class="flex items-center gap-1 text-xs text-primary font-bold hover:underline">
+              <span class="material-symbols-outlined text-sm">open_in_new</span> Cadastrar ingrediente
+            </a>
+          </div>
+
+          <!-- Search -->
+          <div class="relative mb-4">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">search</span>
+            <input id="edit-ingrediente-search" type="text" autocomplete="off"
+              class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-3 pl-12 pr-4 font-medium transition-all shadow-sm focus:shadow-lg placeholder:text-outline-variant"
+              placeholder="Buscar ingrediente cadastrado..." />
+            <div id="edit-ingrediente-dropdown"
+              class="hidden absolute z-50 top-full left-0 right-0 mt-1 bg-white rounded-2xl shadow-2xl border border-outline-variant/20 max-h-56 overflow-y-auto">
+            </div>
+          </div>
+
+          <!-- Column headers -->
+          <div class="grid grid-cols-12 gap-3 px-3 mb-2 mr-14">
+            <div class="col-span-5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Ingrediente</div>
+            <div class="col-span-3 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant text-right">Qtd.</div>
+            <div class="col-span-4 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Unidade</div>
+          </div>
+
+          <div id="edit-ingredientes-container"></div>
+
+          <p id="edit-ingredientes-empty" class="text-sm text-on-surface-variant text-center py-6 hidden">
+            Nenhum ingrediente adicionado. Use a busca acima para selecionar.
+          </p>
+        </div>
+
+        <!-- Bottom action bar -->
+        <div class="flex justify-end gap-3 mt-8">
+          <a id="edit-cancel-btn-bottom" href="detalhe-receita.html" class="px-6 py-3 rounded-full bg-surface-container-highest text-on-surface font-headline font-bold text-sm hover:opacity-80 transition-opacity">
+            Cancelar
+          </a>
+          <button id="btn-salvar-edicao-bottom" class="px-8 py-3 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-xl shadow-primary/20 hover:scale-105 transition-transform active:scale-95">
+            Salvar Alterações
+          </button>
+        </div>
+
+      </div><!-- /edit-content -->
+    </div>
+  </main>
+
+  <!-- Tooltip box -->
+  <div id="tooltip-box" class="hidden fixed z-[200] max-w-xs bg-on-surface text-surface text-xs rounded-xl px-4 py-3 shadow-2xl leading-relaxed pointer-events-none"></div>
+
+  <script src="assets/js/konditor-app.js" defer></script>
+</body>
+</html>
