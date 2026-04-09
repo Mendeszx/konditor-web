@@ -44,7 +44,10 @@
               <p id="stat-total-receitas" class="text-4xl font-headline font-extrabold text-on-surface">—</p>
             </div>
             <div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-1">
-              <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Margem Média</p>
+              <div class="flex items-center gap-1 ml-2">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Margem Média</p>
+                <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Percentual médio de lucro sobre o preço de venda das suas receitas publicadas. Quanto maior, mais rentável é o seu cardápio.">help</span>
+              </div>
               <p id="stat-margem-media" class="text-4xl font-headline font-extrabold text-secondary">—</p>
             </div>
           </div>
@@ -99,6 +102,7 @@
       </div>
     </div>
   </main>
+  <div id="tooltip-box" class="hidden fixed z-[200] max-w-xs bg-on-surface text-surface text-xs rounded-xl px-4 py-3 shadow-2xl leading-relaxed pointer-events-none"></div>
   <script src="assets/js/konditor-app.js" defer></script>
 </body>
 </html>

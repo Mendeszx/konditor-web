@@ -313,7 +313,8 @@
     /* Mapeamentos de página → link ativo */
     var PAGE_ACTIVE_MAP = {
       'criar-receita.html':     'receitas.html',
-      'criar-ingrediente.html': 'ingredientes.html'
+      'criar-ingrediente.html': 'ingredientes.html',
+      'custos.html':            'receitas.html'
     };
     var filename   = window.location.pathname.split('/').pop() || 'receitas.html';
     var activePage = PAGE_ACTIVE_MAP[filename] || filename;
@@ -321,16 +322,22 @@
     var NAV = [
       { href: 'receitas.html',     icon: 'menu_book',  label: 'Receitas' },
       { href: 'ingredientes.html', icon: 'liquor',     label: 'Ingredientes' },
-      { href: 'custos.html',       icon: 'payments',   label: 'Custos' },
-      { href: 'precos.html',       icon: 'sell',       label: 'Precificação' },
-      { href: 'desempenho.html',   icon: 'storefront', label: 'Desempenho' },
-      { href: 'lucro.html',        icon: 'monitoring', label: 'Visão de Lucro' }
+      { href: 'precos.html',       icon: 'sell',       label: 'Precificação',  disabled: true },
+      { href: 'desempenho.html',   icon: 'storefront', label: 'Desempenho',    disabled: true },
+      { href: 'lucro.html',        icon: 'monitoring', label: 'Visão de Lucro', disabled: true }
     ];
 
-    var INACTIVE = 'flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200';
-    var ACTIVE   = 'flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-primary bg-primary-container/20 border-r-4 border-primary font-headline text-sm';
+    var INACTIVE  = 'flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary-container/10 transition-all font-headline text-sm hover:translate-x-1 duration-200';
+    var ACTIVE    = 'flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-primary bg-primary-container/20 border-r-4 border-primary font-headline text-sm';
+    var DISABLED  = 'flex items-center gap-3 px-4 py-3 rounded-xl text-outline-variant font-headline text-sm cursor-not-allowed opacity-50 select-none';
 
     var navHtml = NAV.map(function (item) {
+      if (item.disabled) {
+        return '<span class="' + DISABLED + '" title="Em breve">'
+          + '<span class="material-symbols-outlined">' + item.icon + '</span> ' + item.label
+          + '<span class="ml-auto text-[10px] font-medium tracking-wide bg-surface-variant text-outline-variant px-2 py-0.5 rounded-full">em breve</span>'
+          + '</span>';
+      }
       var isActive = item.href === activePage;
       return (isActive
         ? '<a aria-current="page" class="' + ACTIVE   + '" href="' + item.href + '">'
@@ -541,6 +548,24 @@
       });
     }
 
+    /* ── Tooltips ── */
+    var tooltipBox = document.getElementById('tooltip-box');
+    document.querySelectorAll('.tooltip-trigger').forEach(function (el) {
+      el.addEventListener('mouseenter', function () {
+        if (!tooltipBox) return;
+        tooltipBox.textContent = el.dataset.tooltip || '';
+        tooltipBox.classList.remove('hidden');
+        var r = el.getBoundingClientRect();
+        var top = r.top - tooltipBox.offsetHeight - 8;
+        var left = Math.min(r.left, window.innerWidth - tooltipBox.offsetWidth - 16);
+        tooltipBox.style.top  = Math.max(8, top) + 'px';
+        tooltipBox.style.left = Math.max(8, left) + 'px';
+      });
+      el.addEventListener('mouseleave', function () {
+        if (tooltipBox) tooltipBox.classList.add('hidden');
+      });
+    });
+
     initSession().then(function (tok) {
       if (!tok) return;
 
@@ -573,7 +598,7 @@
      No FedCM, no GIS library required for the auth step.
   ───────────────────────────────────────────── */
   function initGoogleAuth() {
-    var CLIENT_ID    = '1045651153478-4379bpb4fepqg0gvlg4goktic09vl883.apps.googleusercontent.com';
+    var CLIENT_ID    = window.KONDITOR_GOOGLE_CLIENT_ID;
     var CALLBACK_URI = window.location.origin + '/auth-callback.html';
     var btns = document.querySelectorAll('[data-google-signin]');
     if (!btns.length) return;
@@ -852,6 +877,265 @@
   }
 
   /* ─────────────────────────────────────────────
+     Detalhes da Receita — custos.html?id=...
+     GET /receitas/{id}           → recipe detail
+     PATCH /receitas/{id}         → update price
+  ───────────────────────────────────────────── */
+  function initDetalhesReceita() {
+    var content    = document.getElementById('detail-content');
+    if (!content) return;
+
+    var skeleton   = document.getElementById('detail-skeleton');
+    var errorEl    = document.getElementById('detail-error');
+    var API        = window.KONDITOR_API || '';
+
+    var params = new URLSearchParams(window.location.search);
+    var id     = params.get('id');
+    if (!id) { window.location.href = 'receitas.html'; return; }
+
+    /* ── DOM refs ── */
+    var nomeEl          = document.getElementById('det-nome');
+    var metaEl          = document.getElementById('det-meta');
+    var catEl           = document.getElementById('det-categoria');
+    var statusEl        = document.getElementById('det-status');
+    var margemBadgeEl   = document.getElementById('det-margem-badge');
+    var editBtnEl       = document.getElementById('det-edit-btn');
+    var editIngBtnEl    = document.getElementById('det-edit-ingredients-btn');
+    var editLinkEl      = document.getElementById('det-btn-editar-link');
+    var precoEl         = document.getElementById('det-preco');
+    var custoTotalEl    = document.getElementById('det-custo-total');
+    var margemEl        = document.getElementById('det-margem');
+    var rendimentoEl    = document.getElementById('det-rendimento');
+    var costBarsEl      = document.getElementById('det-cost-bars');
+    var ingredientesEl  = document.getElementById('det-ingredientes');
+    var notasSectionEl  = document.getElementById('det-notas-section');
+    var notasEl         = document.getElementById('det-notas');
+    var custoUnidEl     = document.getElementById('det-custo-unid');
+    var rendUnidEl      = document.getElementById('det-rend-unid');
+    var custoTotalOptEl = document.getElementById('det-custo-total-opt');
+    var sliderEl        = document.getElementById('det-margem-slider');
+    var sliderOutputEl  = document.getElementById('det-slider-output');
+    var precoSugEl      = document.getElementById('det-preco-sugerido');
+    var applyBtn        = document.getElementById('det-btn-aplicar');
+
+    var _custoTotal     = 0;
+    var _quantidade     = 1;
+    var _suggestedPrice = 0;
+    var _receitaData    = null;
+
+    /* ── Helpers ── */
+    function fmtBRL(v) {
+      return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function setLoading(btn, loading) {
+      if (!btn) return;
+      if (loading) {
+        btn.dataset.origText = btn.textContent.trim();
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1rem;animation:spin .9s linear infinite;vertical-align:middle;">progress_activity</span> Aguarde\u2026';
+      } else {
+        btn.disabled = false;
+        btn.textContent = btn.dataset.origText || btn.textContent;
+      }
+    }
+
+    function showToastDetail(msg, tipo) {
+      var toast  = document.getElementById('detail-toast');
+      var icon   = document.getElementById('detail-toast-icon');
+      var msgEl  = document.getElementById('detail-toast-msg');
+      if (!toast) return;
+      toast.className = 'fixed top-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl font-headline font-bold text-sm '
+        + (tipo === 'erro' ? 'bg-error text-white' : 'bg-secondary text-white');
+      if (icon)  icon.textContent  = tipo === 'erro' ? 'error' : 'check_circle';
+      if (msgEl) msgEl.textContent = msg;
+      clearTimeout(toast._t);
+      toast._t = setTimeout(function () { toast.className = 'hidden'; }, 4000);
+    }
+
+    /* ── Pricing slider ── */
+    function updateSuggestedPrice() {
+      var pctVal  = parseFloat(sliderEl ? sliderEl.value : 30);
+      var margem  = pctVal / 100;
+      if (margem >= 1) margem = 0.99;
+      var custoUnid = _quantidade > 0 ? _custoTotal / _quantidade : 0;
+      _suggestedPrice = margem < 1 ? custoUnid / (1 - margem) : 0;
+      if (sliderOutputEl) sliderOutputEl.textContent = pctVal + '%';
+      if (precoSugEl)     precoSugEl.textContent     = fmtBRL(_suggestedPrice);
+      /* Track fill */
+      if (sliderEl) {
+        var pct = ((pctVal - Number(sliderEl.min)) / (Number(sliderEl.max) - Number(sliderEl.min))) * 100;
+        sliderEl.style.backgroundImage = 'linear-gradient(to right, #bd0050 ' + pct + '%, #e6e8ec ' + pct + '%)';
+      }
+    }
+
+    if (sliderEl) sliderEl.addEventListener('input', updateSuggestedPrice);
+
+    /* ── Cost bar builder ── */
+    function buildCostBar(label, colorClass, value, pct) {
+      return '<div>'
+        + '<div class="flex justify-between text-sm mb-2">'
+        + '<div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full ' + colorClass + '"></div>'
+        + '<span class="font-medium">' + label + '</span></div>'
+        + '<span class="font-bold text-on-surface">' + fmtBRL(value)
+        + ' <span class="font-normal text-on-surface-variant">(' + pct.toFixed(0) + '%)</span></span>'
+        + '</div>'
+        + '<div class="h-3 bg-surface-container-low rounded-full overflow-hidden">'
+        + '<div class="h-full ' + colorClass + ' rounded-full transition-all duration-1000" style="width:' + pct.toFixed(1) + '%"></div>'
+        + '</div>'
+        + '</div>';
+    }
+
+    /* ── Ingredient row builder ── */
+    function buildIngredientRow(ing) {
+      var info = '';
+      if (ing.quantidade != null && ing.unidade) {
+        info = ing.quantidade + ' ' + ing.unidade;
+      }
+      var nome = ing.nome || '';
+      return '<div class="flex items-center gap-4 p-4 bg-surface-container-low rounded-2xl hover:bg-white transition-all">'
+        + '<div class="w-10 h-10 rounded-xl bg-primary-container/30 flex items-center justify-center shrink-0">'
+        + '<span class="material-symbols-outlined text-primary text-base">egg_alt</span>'
+        + '</div>'
+        + '<div class="flex-1 min-w-0">'
+        + '<p class="font-medium text-sm truncate">' + escHtml(nome) + '</p>'
+        + (info ? '<p class="text-xs text-on-surface-variant mt-0.5">' + escHtml(info) + '</p>' : '')
+        + '</div>'
+        + '<p class="font-bold text-sm shrink-0">' + fmtBRL(ing.custo || 0) + '</p>'
+        + '</div>';
+    }
+
+    /* ── Render recipe ── */
+    function renderReceita(r) {
+      _receitaData = r;
+      document.title = 'Konditor | ' + (r.nome || 'Receita');
+
+      var editLink = 'criar-receita.html?id=' + encodeURIComponent(r.id);
+      if (editBtnEl)    editBtnEl.href    = editLink;
+      if (editIngBtnEl) editIngBtnEl.href = editLink;
+      if (editLinkEl)   editLinkEl.href   = editLink;
+
+      /* Header */
+      if (nomeEl) nomeEl.textContent = r.nome || '';
+      if (catEl)  catEl.textContent  = (r.categoria && r.categoria.nome) || 'Sem categoria';
+
+      if (metaEl) {
+        var ts = r.atualizadoEm || r.criadoEm;
+        metaEl.textContent = ts ? 'Atualizado em ' + new Date(ts).toLocaleDateString('pt-BR') : '';
+      }
+
+      if (statusEl) {
+        var isPublicada = r.status === 'publicada';
+        statusEl.textContent = isPublicada ? 'Publicada' : 'Rascunho';
+        statusEl.className   = 'px-3 py-1 rounded-full text-[10px] font-bold '
+          + (isPublicada ? 'bg-secondary/15 text-secondary' : 'bg-amber-50 text-amber-600');
+      }
+
+      /* Calculate margin from precoSugerido and custoTotal */
+      var custoTotal = r.custoTotal    || 0;
+      var precoSug   = r.precoSugerido || 0;
+      var margem = precoSug > 0 ? ((precoSug - custoTotal) / precoSug * 100) : 0;
+      var isLow  = margem < 30;
+
+      if (margemBadgeEl) {
+        margemBadgeEl.textContent = margem.toFixed(1) + '% margem';
+        margemBadgeEl.className   = 'px-3 py-1 rounded-full text-[10px] font-bold '
+          + (isLow ? 'bg-error/10 text-error' : 'bg-secondary/15 text-secondary');
+      }
+
+      /* KPI cards */
+      if (precoEl)      precoEl.textContent     = r.precoSugerido != null ? fmtBRL(r.precoSugerido) : '\u2014';
+      if (custoTotalEl) custoTotalEl.textContent = r.custoTotal    != null ? fmtBRL(r.custoTotal)    : '\u2014';
+      if (margemEl)     margemEl.textContent     = margem.toFixed(1) + '%';
+      if (rendimentoEl) rendimentoEl.textContent = '\u2014';
+
+      /* Pricing sidebar */
+      _custoTotal = custoTotal;
+      _quantidade = 1;
+      if (custoUnidEl)     custoUnidEl.textContent     = fmtBRL(custoTotal);
+      if (rendUnidEl)      rendUnidEl.textContent      = '\u2014';
+      if (custoTotalOptEl) custoTotalOptEl.textContent = fmtBRL(custoTotal);
+
+      if (sliderEl) {
+        sliderEl.value = String(Math.min(90, Math.max(5, Math.round(margem))));
+        updateSuggestedPrice();
+      }
+
+      /* Cost decomposition — API only returns total ingredient cost in custoTotal */
+      if (costBarsEl) {
+        costBarsEl.innerHTML = buildCostBar('Ingredientes', 'bg-primary', custoTotal, 100);
+      }
+
+      /* Ingredient detail list */
+      if (ingredientesEl) {
+        if (r.ingredientes && r.ingredientes.length) {
+          ingredientesEl.innerHTML = r.ingredientes.map(buildIngredientRow).join('');
+        } else {
+          ingredientesEl.innerHTML = '<p class="text-sm text-on-surface-variant text-center py-8">Sem ingredientes cadastrados.</p>';
+        }
+      }
+
+      /* Notes */
+      if (notasSectionEl && notasEl && r.notas && r.notas.trim()) {
+        notasEl.textContent = r.notas;
+        notasSectionEl.classList.remove('hidden');
+      }
+
+      /* Show content */
+      if (skeleton) skeleton.classList.add('hidden');
+      content.classList.remove('hidden');
+    }
+
+    /* ── Apply price button ── */
+    if (applyBtn) {
+      applyBtn.addEventListener('click', function () {
+        if (!id || _suggestedPrice <= 0 || !_receitaData) return;
+        setLoading(applyBtn, true);
+        apiFetch(API + '/receitas/' + encodeURIComponent(id), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome:        _receitaData.nome,
+            descricao:   _receitaData.descricao  || '',
+            categoriaId: (_receitaData.categoria && _receitaData.categoria.id) || null,
+            ingredientes: (_receitaData.ingredientes || []).map(function (ing) {
+              return { ingredienteId: ing.ingredienteId, quantidade: ing.quantidade };
+            }),
+            status: _receitaData.status || 'rascunho'
+          })
+        })
+          .then(function (res) {
+            setLoading(applyBtn, false);
+            if (res.ok) {
+              showToastDetail('Receita salva com sucesso!', 'sucesso');
+            } else {
+              showToastDetail('Erro ao atualizar o pre\u00e7o. Tente novamente.', 'erro');
+            }
+          })
+          .catch(function () {
+            setLoading(applyBtn, false);
+            showToastDetail('Falha de conex\u00e3o.', 'erro');
+          });
+      });
+    }
+
+    /* ── Bootstrap ── */
+    initSession().then(function (tok) {
+      if (!tok) return;
+      apiFetch(API + '/receitas/' + encodeURIComponent(id))
+        .then(function (res) {
+          if (!res.ok) throw new Error('not_found');
+          return res.json();
+        })
+        .then(function (data) { renderReceita(data); })
+        .catch(function () {
+          if (skeleton) skeleton.classList.add('hidden');
+          if (errorEl)  errorEl.classList.remove('hidden');
+        });
+    });
+  }
+
+  /* ─────────────────────────────────────────────
      Logout — POST /auth/logout → limpa token → login
   ───────────────────────────────────────────── */
   function initLogout() {
@@ -894,12 +1178,17 @@
     /* ── Load recipe categories + rendimento units ── */
     initSession().then(function (tok) {
       if (!tok) return;
-      /* Units for rendimento */
-      apiFetch(API + '/unidades')
-        .then(function (r) { return r.ok ? r.json() : []; })
-        .then(function (unidades) {
-          var sel = document.getElementById('input-rendimento-unidade');
-          if (!sel || !Array.isArray(unidades) || !unidades.length) return;
+
+      Promise.all([
+        apiFetch(API + '/unidades').then(function (r) { return r.ok ? r.json() : []; }),
+        apiFetch(API + '/receitas/categorias').then(function (r) { return r.ok ? r.json() : []; })
+      ]).then(function (results) {
+        var unidades   = results[0];
+        var categorias = results[1];
+
+        /* Populate units select */
+        var sel = document.getElementById('input-rendimento-unidade');
+        if (sel && Array.isArray(unidades) && unidades.length) {
           var TIPO_LABELS = { weight: 'Peso', volume: 'Volume', unit: 'Contagem' };
           var TIPO_ORDER  = ['weight', 'volume', 'unit'];
           var grupos = {};
@@ -921,13 +1210,11 @@
             });
             sel.appendChild(grp);
           });
-        })
-        .catch(function () {});
-      var catSel = document.getElementById('input-categoria');
-      apiFetch(API + '/receitas/categorias')
-        .then(function (r) { return r.ok ? r.json() : []; })
-        .then(function (categorias) {
-          if (!catSel) return;
+        }
+
+        /* Populate categories select */
+        var catSel = document.getElementById('input-categoria');
+        if (catSel) {
           catSel.innerHTML = '<option value="">Sem categoria</option>';
           if (Array.isArray(categorias)) {
             categorias.forEach(function (cat) {
@@ -938,11 +1225,12 @@
               catSel.appendChild(opt);
             });
           }
-        })
-        .catch(function () {
-          var catSel2 = document.getElementById('input-categoria');
-          if (catSel2) catSel2.innerHTML = '<option value="">Sem categoria</option>';
-        });
+        }
+
+      }).catch(function () {
+        var catSel2 = document.getElementById('input-categoria');
+        if (catSel2) catSel2.innerHTML = '<option value="">Sem categoria</option>';
+      });
     });
 
     /* ── State ── */
@@ -1267,30 +1555,25 @@
     }
 
     function buildPayload(status) {
-      var rendQtd      = parseFloat(rendInput ? rendInput.value : '') || 1;
-      var valorHora    = parseFloat(inpValorHora ? inpValorHora.value : '') || 0;
-      var custFixosVal = parseFloat(inpCustFixos ? inpCustFixos.value : '') || 0;
-      var margem       = pctVal(inpMargemLucro, 30);
-      var precoFin     = elPrecoFinal ? parseFloat(elPrecoFinal.value) : NaN;
-      return {
-        nome:                 nomInput ? nomInput.value.trim() : '',
-        categoriaId:          catSelect && catSelect.value ? catSelect.value : null,
-        rendimentoQuantidade:  rendQtd,
-        rendimentoUnidadeId:  rendUndSelect && rendUndSelect.value ? rendUndSelect.value : null,
-        tempoPreparoMinutos:  parseTempoMinutos(),
+      var rendQtd  = parseFloat(rendInput ? rendInput.value : '') || 1;
+      var precoFin = elPrecoFinal ? parseFloat(elPrecoFinal.value) : NaN;
+      var payload = {
+        nome:                nomInput  ? nomInput.value.trim() : '',
+        descricao:           '',
+        categoriaId:         catSelect && catSelect.value ? catSelect.value : null,
+        rendimentoQuantidade: rendQtd,
+        rendimentoUnidadeId: rendUndSelect && rendUndSelect.value ? rendUndSelect.value : null,
+        tempoPreparoMinutos: parseTempoMinutos(),
         ingredientes: state.ingredientes
           .filter(function (ing) { return ing.ingredienteId && ing.unidadeId && ing.quantidade; })
           .map(function (ing) {
             return { ingredienteId: ing.ingredienteId, quantidade: Number(ing.quantidade), unidadeId: ing.unidadeId };
           }),
-        notas:                notasInput ? notasInput.value.trim() : '',
-        precoFinal:           isNaN(precoFin) || precoFin <= 0 ? 0 : precoFin,
-        maoDeObraValorHora:   valorHora,
-        custosFixosValor:     custFixosVal,
-        custosFixosTipo:      state.custosFixosTipo,
-        margemDesejada:       margem,
-        status:               status
+        notas:      notasInput ? notasInput.value.trim() : '',
+        precoFinal: isNaN(precoFin) || precoFin < 0 ? 0 : precoFin
       };
+      if (status) payload.status = status;
+      return payload;
     }
 
     function validarForm() {
@@ -1344,9 +1627,10 @@
       btnPublicar.addEventListener('click', function () {
         if (!validarForm()) return;
         setLoading(btnPublicar, true);
+        var payload = buildPayload('publicada');
         var req = state.receitaId
-          ? apiFetch(API + '/receitas/' + state.receitaId + '/publicar', { method: 'POST' })
-          : apiFetch(API + '/receitas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildPayload('publicada')) });
+          ? apiFetch(API + '/receitas/' + state.receitaId, { method: 'PUT',  headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+          : apiFetch(API + '/receitas',                    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         req
           .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, data: d }; }); })
           .then(function (res) {
@@ -2119,6 +2403,7 @@
     initGoogleAuth();
     initOnboarding();
     initDashboard();
+    initDetalhesReceita();
     initCriarReceita();
     initCriarIngrediente();
     initIngredientes();

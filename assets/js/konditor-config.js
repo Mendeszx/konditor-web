@@ -7,6 +7,9 @@
 /** Base URL do backend. */
 window.KONDITOR_API = 'http://localhost:8080';
 
+/** Google OAuth2 Client ID. */
+window.KONDITOR_GOOGLE_CLIENT_ID = '1045651153478-4379bpb4fepqg0gvlg4goktic09vl883.apps.googleusercontent.com';
+
 tailwind.config = {
   darkMode: "class",
   theme: {
