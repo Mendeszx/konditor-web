@@ -3,6 +3,13 @@
    Design system utilities, responsive sidebar, accessibility.
    ============================================================= */
 
+/* ── Force light color scheme — prevents mobile browsers from applying
+   native dark-mode styles (inputs, backgrounds, scrollbars) when the
+   device is in system dark mode. ── */
+:root {
+  color-scheme: light;
+}
+
 /* ── Skip to content (accessibility) ── */
 .skip-link {
   position: absolute;
