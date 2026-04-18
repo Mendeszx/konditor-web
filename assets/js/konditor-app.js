@@ -423,32 +423,82 @@
   }
 
   function buildRecipeCard(r) {
-    var isLow       = r.margemStatus === 'baixa';
-    var borderCls   = isLow ? 'border-error/15 hover:border-error/30 hover:shadow-error/10' : 'border-slate-100 hover:border-primary/15 hover:shadow-primary/8';
-    var catBadge    = isLow
-      ? '<span class="bg-error/10 text-error px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">' + escHtml(r.categoria) + '</span>'
-      : '<span class="bg-primary-container/30 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">' + escHtml(r.categoria) + '</span>';
+    var isLow     = r.margemStatus === 'baixa';
+    var isWarning = r.margemStatus === 'abaixo_desejada';
+    var borderCls = isLow
+      ? 'border-error/15 hover:border-error/30 hover:shadow-error/10'
+      : (isWarning
+          ? 'border-amber-200 hover:border-amber-300'
+          : 'border-slate-100 hover:border-primary/15 hover:shadow-primary/8');
+    var catText  = r.categoria || 'Sem categoria';
+    var catBadge = isLow
+      ? '<span class="bg-error/10 text-error px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">' + escHtml(catText) + '</span>'
+      : (isWarning
+          ? '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">' + escHtml(catText) + '</span>'
+          : '<span class="bg-primary-container/30 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">' + escHtml(catText) + '</span>');
     var margemBadge = isLow
-      ? '<span class="bg-error/10 text-error px-3 py-1 rounded-full text-[10px] font-bold">' + r.margem + '% margem</span>'
-      : '<span class="bg-secondary/15 text-secondary px-3 py-1 rounded-full text-[10px] font-bold">' + r.margem + '% margem</span>';
-    var sepCls      = isLow ? 'border-error/10' : 'border-slate-100';
-    var priceCls    = isLow ? 'text-error' : 'text-primary';
-    var linkCls     = isLow ? 'text-error' : 'text-primary';
-    var linkLabel   = isLow ? 'Revisar' : 'Analisar';
+      ? '<span class="bg-error/10 text-error px-3 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-0.5"><span class="material-symbols-outlined" style="font-size:0.8rem">trending_down</span>\u00a0' + r.margem + '%</span>'
+      : (isWarning
+          ? '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-0.5"><span class="material-symbols-outlined" style="font-size:0.8rem">warning</span>\u00a0' + r.margem + '%</span>'
+          : '<span class="bg-secondary/15 text-secondary px-3 py-1 rounded-full text-[10px] font-bold">' + r.margem + '% margem</span>');
+    var sepCls   = isLow ? 'border-error/10'  : (isWarning ? 'border-amber-100' : 'border-slate-100');
+    var priceCls = isLow ? 'text-error'       : (isWarning ? 'text-amber-700'   : 'text-primary');
+    var linkCls  = isLow ? 'text-error'       : (isWarning ? 'text-amber-700'   : 'text-primary');
+    var linkLabel = (isLow || isWarning) ? 'Revisar' : 'Analisar';
     var detalheLink = 'detalhe-receita.html?id=' + encodeURIComponent(r.id);
-    var custo = r.custoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    var preco = r.precoUnitario.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    var fmtBRL = function (v) { return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
 
-    return '<div class="group bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border hover:-translate-y-0.5 ' + borderCls + '" data-categoria="' + escHtml(r.categoria) + '">'
-      + '<div class="p-6 flex flex-col gap-4 h-full">'
+    /* Tempo de preparo */
+    var tempoHtml = '';
+    if (r.tempoPreparo != null) {
+      var h = Math.floor(r.tempoPreparo / 60);
+      var m = r.tempoPreparo % 60;
+      var tempoStr = h > 0 ? (h + 'h' + (m > 0 ? m + 'min' : '')) : (m + 'min');
+      tempoHtml = '\u00a0\u2022\u00a0<span class="inline-flex items-center gap-0.5"><span class="material-symbols-outlined" style="font-size:0.75rem">schedule</span>' + tempoStr + '</span>';
+    }
+
+    /* Rendimento */
+    var unidHtml = r.unidade ? r.quantidade + '\u00a0' + escHtml(r.unidade) : r.quantidade + ' un.';
+    if (r.pesoPorUnidade != null && r.pesoPorUnidadeSimbolo) {
+      unidHtml += '\u00a0\u2022\u00a0' + r.pesoPorUnidade + escHtml(r.pesoPorUnidadeSimbolo) + '/un.';
+    }
+
+    /* Porções/unidades individuais */
+    var porcoesHtml = '';
+    if (r.numeroPorcoesUnidades != null && r.custoPorPorcaoOuUnidade != null) {
+      var nPorcoes = Number(r.numeroPorcoesUnidades).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+      porcoesHtml = '<div class="flex justify-between text-xs text-on-surface-variant bg-surface-container/30 rounded-xl px-3 py-1.5 mt-1">'
+        + '<span>' + nPorcoes + ' por\u00e7\u00f5es \u00b7 custo <strong class="text-on-surface">' + fmtBRL(r.custoPorPorcaoOuUnidade) + '</strong></span>'
+        + (r.precoPorPorcaoOuUnidade != null
+            ? '<span>sugerido <strong class="text-on-surface">' + fmtBRL(r.precoPorPorcaoOuUnidade) + '</strong></span>'
+            : '')
+        + '</div>';
+    } else if (r.custoPorGramaOuMl != null && r.pesoPorUnidadeSimbolo) {
+      porcoesHtml = '<div class="flex justify-between text-xs text-on-surface-variant bg-surface-container/30 rounded-xl px-3 py-1.5 mt-1">'
+        + '<span>Custo/' + escHtml(r.pesoPorUnidadeSimbolo) + ' <strong class="text-on-surface">' + fmtBRL(r.custoPorGramaOuMl) + '</strong></span>'
+        + (r.precoPorGramaOuMl != null
+            ? '<span>Sugerido/' + escHtml(r.pesoPorUnidadeSimbolo) + ' <strong class="text-on-surface">' + fmtBRL(r.precoPorGramaOuMl) + '</strong></span>'
+            : '')
+        + '</div>';
+    }
+
+    return '<div class="group bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border hover:-translate-y-0.5 ' + borderCls + '" data-categoria="' + escHtml(r.categoria || '') + '">'
+      + '<div class="p-6 flex flex-col gap-3 h-full">'
       + '<div class="flex items-center justify-between">' + catBadge + margemBadge + '</div>'
-      + '<div class="flex-1"><h3 class="text-lg font-headline font-bold text-on-surface">' + escHtml(r.nome) + '</h3>'
-      + '<p class="text-xs text-on-surface-variant font-medium mt-1">' + r.quantidade + ' ' + escHtml(r.unidade) + ' • Custo: ' + custo + '</p></div>'
+      + '<div class="flex-1">'
+      + '<h3 class="text-lg font-headline font-bold text-on-surface leading-snug">' + escHtml(r.nome) + '</h3>'
+      + '<p class="text-xs text-on-surface-variant font-medium mt-1 flex items-center flex-wrap gap-0.5">' + unidHtml + tempoHtml + '</p>'
+      + '</div>'
+      + '<div class="flex justify-between text-xs text-on-surface-variant bg-surface-container/50 rounded-xl px-3 py-2">'
+      + '<span>Custo/un. <strong class="text-on-surface">' + fmtBRL(r.custoUnitario) + '</strong></span>'
+      + '<span>Lote <strong class="text-on-surface">' + fmtBRL(r.custoTotal) + '</strong></span>'
+      + '</div>'
+      + porcoesHtml
       + '<div class="flex justify-between items-center pt-3 border-t ' + sepCls + '">'
-      + '<span class="text-2xl font-headline font-extrabold ' + priceCls + '">' + preco + ' <span class="text-sm font-semibold text-on-surface-variant">/unid.</span></span>'
-      + '<a href="' + detalheLink + '" class="flex items-center gap-1 ' + linkCls + ' text-sm font-bold hover:gap-2 transition-all duration-200">'
+      + '<span class="text-2xl font-headline font-extrabold ' + priceCls + '">' + fmtBRL(r.precoUnitario) + ' <span class="text-sm font-semibold text-on-surface-variant">/unid.</span></span>'
+      + '<a href="' + detalheLink + '" class="flex items-center gap-1 ' + linkCls + ' text-sm font-bold hover:gap-2 transition-all duration-200 shrink-0">'
       + linkLabel + ' <span class="material-symbols-outlined text-sm">arrow_forward</span></a>'
-      + '</div></div></div>'
+      + '</div></div></div>';
   }
 
   function buildDraftCard(r) {
@@ -485,6 +535,11 @@
     var margemEl     = document.getElementById('stat-margem-media');
     var melhorNomeEl = document.getElementById('stat-melhor-nome');
     var melhorPctEl  = document.getElementById('stat-melhor-margem-pct');
+    var melhorLinkEl = document.getElementById('stat-melhor-link');
+    var rascunhosEl  = document.getElementById('stat-total-rascunhos');
+    var alertaEl     = document.getElementById('stat-margem-baixa');
+    var alertaCard   = document.getElementById('stat-card-alerta');
+    var badgeRasc    = document.getElementById('badge-rascunhos');
     var filterGroup  = document.getElementById('filter-chips-group');
     var btnRascunhos = document.getElementById('btn-ver-rascunhos');
 
@@ -498,9 +553,58 @@
       if (filterGroup) filterGroup.classList.remove('hidden');
 
       if (totalEl)      totalEl.textContent      = stats.totalReceitas;
-      if (margemEl)     margemEl.textContent     = Number(stats.margemMedia).toFixed(1) + '%';
+      if (margemEl)     margemEl.textContent     = stats.margemMedia + '%';
       if (melhorNomeEl) melhorNomeEl.textContent = stats.melhorMargem ? stats.melhorMargem.nome : '\u2014';
       if (melhorPctEl)  melhorPctEl.textContent  = stats.melhorMargem ? stats.melhorMargem.margem + '% de margem' : '';
+      if (melhorLinkEl && stats.melhorMargem && stats.melhorMargem.id) {
+        melhorLinkEl.href = 'detalhe-receita.html?id=' + encodeURIComponent(stats.melhorMargem.id);
+        melhorLinkEl.classList.remove('hidden');
+      }
+      if (rascunhosEl) rascunhosEl.textContent = stats.totalRascunhos;
+      if (badgeRasc && stats.totalRascunhos > 0) {
+        badgeRasc.textContent = stats.totalRascunhos;
+        badgeRasc.classList.remove('hidden');
+      }
+      if (alertaEl) {
+        var iconWrap    = document.getElementById('stat-alerta-icon-wrap');
+        var iconEl      = document.getElementById('stat-alerta-icon');
+        var abaixoMetaEl = document.getElementById('stat-abaixo-meta');
+        var baixa      = stats.receitasComMargemBaixa || 0;
+        var abaixoMeta = stats.receitasAbaixoMargemDesejada || 0;
+        var somenteAmarelo = abaixoMeta - baixa;
+
+        /* Sub-label yellow (above 30% but below target) */
+        if (abaixoMetaEl) {
+          if (somenteAmarelo > 0) {
+            abaixoMetaEl.textContent = '+ ' + somenteAmarelo + ' abaixo da meta';
+            abaixoMetaEl.classList.remove('hidden');
+          } else {
+            abaixoMetaEl.classList.add('hidden');
+          }
+        }
+
+        if (baixa > 0) {
+          /* 🔴 RED — critical */
+          alertaEl.textContent = baixa;
+          alertaEl.className   = 'text-3xl font-headline font-extrabold text-error leading-none mt-0.5';
+          if (alertaCard) { alertaCard.className = alertaCard.className.replace('border-slate-100','border-error/20').replace('bg-surface-container-lowest','bg-error/5') + ' '; }
+          if (iconWrap)   { iconWrap.className   = 'w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center shrink-0'; }
+          if (iconEl)     { iconEl.className      = 'material-symbols-outlined text-error'; iconEl.style.fontSize = '1.25rem'; iconEl.textContent = 'warning'; }
+        } else if (abaixoMeta > 0) {
+          /* 🟡 YELLOW — below target */
+          alertaEl.textContent = abaixoMeta;
+          alertaEl.className   = 'text-3xl font-headline font-extrabold text-amber-600 leading-none mt-0.5';
+          if (alertaCard) { alertaCard.className = alertaCard.className.replace('border-slate-100','border-amber-200').replace('bg-surface-container-lowest','bg-amber-50') + ' '; }
+          if (iconWrap)   { iconWrap.className   = 'w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0'; }
+          if (iconEl)     { iconEl.className      = 'material-symbols-outlined text-amber-600'; iconEl.style.fontSize = '1.25rem'; iconEl.textContent = 'warning'; }
+        } else {
+          /* 🟢 GREEN — all good */
+          alertaEl.textContent = '0';
+          alertaEl.className   = 'text-3xl font-headline font-extrabold text-green-600 leading-none mt-0.5';
+          if (iconWrap)   { iconWrap.className   = 'w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center shrink-0'; }
+          if (iconEl)     { iconEl.className      = 'material-symbols-outlined text-green-500'; iconEl.style.fontSize = '1.25rem'; iconEl.textContent = 'check_circle'; }
+        }
+      }
 
       if (!receitas || receitas.length === 0) {
         grid.innerHTML = '<p class="col-span-3 text-center text-on-surface-variant py-16">Nenhuma receita publicada ainda. '
@@ -1049,39 +1153,58 @@
           + (isPublicada ? 'bg-secondary/15 text-secondary' : 'bg-amber-50 text-amber-600');
       }
 
-      /* Calculate margin from precoSugerido and custoTotal */
-      var custoTotal = r.custoTotal    || 0;
-      var precoSug   = r.precoSugerido || 0;
-      var margem = precoSug > 0 ? ((precoSug - custoTotal) / precoSug * 100) : 0;
-      var isLow  = margem < 30;
+      /* Margem — use the API field directly */
+      var margem = r.margem != null ? Number(r.margem) : 0;
+      var isLow         = margem < 30;
+      var isBelowTarget = !isLow && r.margemDesejada != null && margem < r.margemDesejada;
 
       if (margemBadgeEl) {
         margemBadgeEl.textContent = margem.toFixed(1) + '% margem';
         margemBadgeEl.className   = 'px-3 py-1 rounded-full text-[10px] font-bold '
-          + (isLow ? 'bg-error/10 text-error' : 'bg-secondary/15 text-secondary');
+          + (isLow         ? 'bg-error/10 text-error'
+          : (isBelowTarget ? 'bg-amber-100 text-amber-700'
+                           : 'bg-secondary/15 text-secondary'));
       }
 
       /* KPI cards */
-      if (precoEl)      precoEl.textContent     = r.precoSugerido != null ? fmtBRL(r.precoSugerido) : '\u2014';
-      if (custoTotalEl) custoTotalEl.textContent = r.custoTotal    != null ? fmtBRL(r.custoTotal)    : '\u2014';
+      var custoCalculado = r.custoCalculado || 0;
+      var rendQtd        = r.rendimentoQuantidade || 1;
+      var rendStr        = r.rendimentoQuantidade != null
+        ? String(r.rendimentoQuantidade) + (r.rendimentoUnidadeSimbolo ? '\u00a0' + r.rendimentoUnidadeSimbolo : '')
+        : '\u2014';
+
+      if (precoEl)      precoEl.textContent      = r.precoFinal     != null ? fmtBRL(r.precoFinal)    : '\u2014';
+      if (custoTotalEl) custoTotalEl.textContent = custoCalculado   >  0    ? fmtBRL(custoCalculado)  : '\u2014';
       if (margemEl)     margemEl.textContent     = margem.toFixed(1) + '%';
-      if (rendimentoEl) rendimentoEl.textContent = '\u2014';
+      if (rendimentoEl) rendimentoEl.textContent = rendStr;
 
       /* Pricing sidebar */
-      _custoTotal = custoTotal;
-      _quantidade = 1;
-      if (custoUnidEl)     custoUnidEl.textContent     = fmtBRL(custoTotal);
-      if (rendUnidEl)      rendUnidEl.textContent      = '\u2014';
-      if (custoTotalOptEl) custoTotalOptEl.textContent = fmtBRL(custoTotal);
+      _custoTotal = custoCalculado;
+      _quantidade = rendQtd;
+
+      var custoUnid = rendQtd > 0 ? custoCalculado / rendQtd : 0;
+      if (custoUnidEl)     custoUnidEl.textContent     = fmtBRL(custoUnid);
+      if (rendUnidEl)      rendUnidEl.textContent      = rendStr;
+      if (custoTotalOptEl) custoTotalOptEl.textContent = fmtBRL(custoCalculado);
 
       if (sliderEl) {
-        sliderEl.value = String(Math.min(90, Math.max(5, Math.round(margem))));
+        var initMargem = r.margemDesejada != null
+          ? Math.min(90, Math.max(5, Math.round(r.margemDesejada)))
+          : 30;
+        sliderEl.value = String(initMargem);
         updateSuggestedPrice();
       }
 
-      /* Cost decomposition — API only returns total ingredient cost in custoTotal */
+      /* Cost decomposition — three components */
       if (costBarsEl) {
-        costBarsEl.innerHTML = buildCostBar('Ingredientes', 'bg-primary', custoTotal, 100);
+        var custoIng = r.custoIngredientes || 0;
+        var custoMao = r.custoMaoDeObra    || 0;
+        var custoFix = r.custosFixos       || 0;
+        var base     = custoCalculado || (custoIng + custoMao + custoFix) || 1;
+        costBarsEl.innerHTML =
+            buildCostBar('Ingredientes', 'bg-primary',   custoIng, custoIng / base * 100)
+          + buildCostBar('Mão de Obra',  'bg-secondary', custoMao, custoMao / base * 100)
+          + buildCostBar('Custos Fixos', 'bg-amber-400', custoFix, custoFix / base * 100);
       }
 
       /* Ingredient detail list */
@@ -1288,6 +1411,7 @@
       ingredientes: [],   // { ingredienteId, unidadeId, nome, unidadeSimbolo, quantidade }
       precoSugerido: null,
       precoFinalManual: false,  // true enquanto o cliente editar o campo manualmente
+      calcData: null,           // último resultado de POST /receitas/calcular
       calcTimer: null,
       searchTimer: null,
       custosFixosTipo: 'percentual'  // 'percentual' | 'fixo'
@@ -1612,7 +1736,8 @@
     }
 
     function atualizarPainel(data) {
-      /* Preço sugerido do lote inteiro — sempre exibido no destaque principal */
+      /* Persiste o resultado completo do cálculo para uso no buildPayload */
+      state.calcData      = data;
       state.precoSugerido = data.precoSugerido;
 
       if (elCustoIngr) elCustoIngr.textContent = fmtBRL(data.custoIngredientes);
@@ -1700,6 +1825,7 @@
     function buildPayload(status) {
       var rendQtd  = parseFloat(rendInput ? rendInput.value : '') || 1;
       var precoFin = elPrecoFinal ? parseFloat(elPrecoFinal.value) : NaN;
+      var cd = state.calcData;
       var payload = {
         nome:                nomInput  ? nomInput.value.trim() : '',
         descricao:           '',
@@ -1713,7 +1839,12 @@
             return { ingredienteId: ing.ingredienteId, quantidade: Number(ing.quantidade), unidadeId: ing.unidadeId };
           }),
         notas:      notasInput ? notasInput.value.trim() : '',
-        precoFinal: isNaN(precoFin) || precoFin < 0 ? 0 : precoFin
+        precoFinal: isNaN(precoFin) || precoFin < 0 ? 0 : precoFin,
+        /* Parâmetros de configuração de cálculo — sempre enviados */
+        maoDeObraValorHora: cd && cd.maoDeObraValorHora != null ? cd.maoDeObraValorHora : (parseFloat(inpValorHora ? inpValorHora.value : '') || 0),
+        custosFixosValor:   cd && cd.custosFixosValor   != null ? cd.custosFixosValor   : (parseFloat(inpCustFixos ? inpCustFixos.value : '') || 0),
+        custosFixosTipo:    (cd && cd.custosFixosTipo)  || state.custosFixosTipo,
+        margemDesejada:     cd && cd.margemUtilizada    != null ? cd.margemUtilizada     : pctVal(inpMargemLucro, 30)
       };
       /* Peso por unidade — só quando preenchido */
       var ppuVal = pesoPorUndInput ? parseFloat(pesoPorUndInput.value) : NaN;
@@ -1723,6 +1854,22 @@
         payload.pesoPorUnidadeUnidadeId = ppuId;
       }
       if (status) payload.status = status;
+
+      /* Campos de custo pré-calculado — output de POST /receitas/calcular */
+      if (cd) {
+        payload.custoIngredientes       = cd.custoIngredientes       || 0;
+        payload.custoMaoDeObra          = cd.custoMaoDeObra          || 0;
+        payload.custosFixos             = cd.custosFixos             || 0;
+        payload.custoCalculado          = cd.custoTotal              || 0;
+        payload.precoSugerido           = cd.precoSugerido           || 0;
+        payload.precoSugeridoPorUnidade = cd.precoSugeridoPorUnidade != null ? cd.precoSugeridoPorUnidade : null;
+        payload.numeroPorcoesUnidades   = cd.numeroPorcoesUnidades   != null ? cd.numeroPorcoesUnidades   : null;
+        payload.custoPorGramaOuMl       = cd.custoPorGramaOuMl       != null ? cd.custoPorGramaOuMl       : null;
+        payload.precoPorGramaOuMl       = cd.precoPorGramaOuMl       != null ? cd.precoPorGramaOuMl       : null;
+        payload.custoPorPorcaoOuUnidade = cd.custoPorPorcaoOuUnidade != null ? cd.custoPorPorcaoOuUnidade : null;
+        payload.precoPorPorcaoOuUnidade = cd.precoPorPorcaoOuUnidade != null ? cd.precoPorPorcaoOuUnidade : null;
+      }
+
       return payload;
     }
 
@@ -2587,7 +2734,10 @@
     /* ── State ── */
     var state = {
       ingredientes: [],   /* { ingredienteId, unidadeId, nome, unidadeSimbolo, quantidade } */
-      searchTimer: null
+      calcData: null,     /* último resultado de POST /receitas/calcular */
+      custosFixosTipo: 'percentual',
+      searchTimer: null,
+      calcTimer: null
     };
 
     /* ── Helpers ── */
@@ -2654,6 +2804,8 @@
         inp.addEventListener('input', function () {
           var idx = Number(inp.closest('.ingredient-row').dataset.index);
           if (state.ingredientes[idx]) state.ingredientes[idx].quantidade = inp.value;
+          clearTimeout(state.calcTimer);
+          state.calcTimer = setTimeout(calcularCustos, 600);
         });
       });
 
@@ -2663,6 +2815,8 @@
           var idx = Number(btn.closest('.ingredient-row').dataset.index);
           state.ingredientes.splice(idx, 1);
           renderIngredientes();
+          clearTimeout(state.calcTimer);
+          state.calcTimer = setTimeout(calcularCustos, 400);
         });
       });
     }
@@ -2705,6 +2859,8 @@
                   renderIngredientes();
                   searchInput.value = '';
                   dropdown.classList.add('hidden');
+                  clearTimeout(state.calcTimer);
+                  state.calcTimer = setTimeout(calcularCustos, 400);
                 });
               });
             })
@@ -2717,11 +2873,57 @@
       });
     }
 
+    /* ── Recalcular custos ao alterar receita ── */
+    function calcularCustos() {
+      var validos = state.ingredientes.filter(function (ing) {
+        return ing.ingredienteId && ing.unidadeId && ing.quantidade && Number(ing.quantidade) > 0;
+      });
+      if (!validos.length) return;
+
+      var rendQtd   = parseFloat(rendInput ? rendInput.value : '') || 1;
+      var rendUndId = rendUndSelect && rendUndSelect.value ? rendUndSelect.value : null;
+      var tempoMin  = tempoInput && tempoInput.value ? parseInt(tempoInput.value) || 0 : 0;
+      var cd        = state.calcData;
+      var valorHora    = cd && cd.maoDeObraValorHora != null ? cd.maoDeObraValorHora : 0;
+      var custFixosVal = cd && cd.custosFixosValor   != null ? cd.custosFixosValor   : 0;
+      var margem       = cd && cd.margemUtilizada    != null ? cd.margemUtilizada    : 30;
+      var tipoFixos    = (cd && cd.custosFixosTipo)  || state.custosFixosTipo;
+
+      var body = {
+        ingredientes: validos.map(function (ing) {
+          return { ingredienteId: ing.ingredienteId, quantidade: Number(ing.quantidade), unidadeId: ing.unidadeId };
+        }),
+        rendimentoQuantidade: rendQtd,
+        maoDeObraValorHora:   valorHora,
+        tempoPreparoMinutos:  tempoMin,
+        custosFixosValor:     custFixosVal,
+        custosFixosTipo:      tipoFixos,
+        margemDesejada:       margem
+      };
+      if (rendUndId) body.rendimentoUnidadeId = rendUndId;
+      var ppuVal = pesoPorUndInput  ? parseFloat(pesoPorUndInput.value)  : NaN;
+      var ppuId  = pesoPorUndSelect ? pesoPorUndSelect.value             : '';
+      if (!isNaN(ppuVal) && ppuVal > 0 && ppuId) {
+        body.pesoPorUnidade          = ppuVal;
+        body.pesoPorUnidadeUnidadeId = ppuId;
+      }
+
+      apiFetch(API + '/receitas/calcular', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) { if (data) state.calcData = data; })
+        .catch(function () {});
+    }
+
     /* ── Build PUT payload ── */
     function buildPayload() {
       var rendQtd  = parseFloat(rendInput ? rendInput.value : '') || 1;
       var precoFin = precoFinalInput ? parseFloat(precoFinalInput.value) : NaN;
       var tempoMin = tempoInput && tempoInput.value ? parseInt(tempoInput.value) || 0 : 0;
+      var cd = state.calcData;
       var payload = {
         nome:                 nomeInput    ? nomeInput.value.trim()  : '',
         descricao:            '',
@@ -2736,7 +2938,12 @@
           .filter(function (i) { return i.ingredienteId && i.unidadeId && i.quantidade; })
           .map(function (i) {
             return { ingredienteId: i.ingredienteId, quantidade: Number(i.quantidade), unidadeId: i.unidadeId };
-          })
+          }),
+        /* Parâmetros de configuração de cálculo — sempre enviados */
+        maoDeObraValorHora: cd && cd.maoDeObraValorHora != null ? cd.maoDeObraValorHora : 0,
+        custosFixosValor:   cd && cd.custosFixosValor   != null ? cd.custosFixosValor   : 0,
+        custosFixosTipo:    (cd && cd.custosFixosTipo)  || state.custosFixosTipo,
+        margemDesejada:     cd && cd.margemUtilizada    != null ? cd.margemUtilizada    : 30
       };
       var ppuVal = pesoPorUndInput ? parseFloat(pesoPorUndInput.value) : NaN;
       var ppuId  = pesoPorUndSelect ? pesoPorUndSelect.value : '';
@@ -2744,6 +2951,22 @@
         payload.pesoPorUnidade          = ppuVal;
         payload.pesoPorUnidadeUnidadeId = ppuId;
       }
+
+      /* Campos de custo pré-calculado — output de POST /receitas/calcular */
+      if (cd) {
+        payload.custoIngredientes       = cd.custoIngredientes       || 0;
+        payload.custoMaoDeObra          = cd.custoMaoDeObra          || 0;
+        payload.custosFixos             = cd.custosFixos             || 0;
+        payload.custoCalculado          = cd.custoTotal              || 0;
+        payload.precoSugerido           = cd.precoSugerido           || 0;
+        payload.precoSugeridoPorUnidade = cd.precoSugeridoPorUnidade != null ? cd.precoSugeridoPorUnidade : null;
+        payload.numeroPorcoesUnidades   = cd.numeroPorcoesUnidades   != null ? cd.numeroPorcoesUnidades   : null;
+        payload.custoPorGramaOuMl       = cd.custoPorGramaOuMl       != null ? cd.custoPorGramaOuMl       : null;
+        payload.precoPorGramaOuMl       = cd.precoPorGramaOuMl       != null ? cd.precoPorGramaOuMl       : null;
+        payload.custoPorPorcaoOuUnidade = cd.custoPorPorcaoOuUnidade != null ? cd.custoPorPorcaoOuUnidade : null;
+        payload.precoPorPorcaoOuUnidade = cd.precoPorPorcaoOuUnidade != null ? cd.precoPorPorcaoOuUnidade : null;
+      }
+
       return payload;
     }
 
@@ -2862,6 +3085,14 @@
             pesoPorUndWrap.classList.toggle('hidden', tipo !== 'weight' && tipo !== 'volume');
           }
           if (rendUndSelect) rendUndSelect.addEventListener('change', atualizarVisibilidadePPU);
+          if (rendUndSelect) rendUndSelect.addEventListener('change', function () {
+            clearTimeout(state.calcTimer);
+            state.calcTimer = setTimeout(calcularCustos, 400);
+          });
+          if (rendInput) rendInput.addEventListener('input', function () {
+            clearTimeout(state.calcTimer);
+            state.calcTimer = setTimeout(calcularCustos, 600);
+          });
 
           /* Pre-fill fields */
           document.title = 'Konditor | Editar — ' + (data.nome || '');
@@ -2898,6 +3129,22 @@
           }
 
           renderIngredientes();
+
+          /* Seed calcData from saved recipe — backend persists exact values */
+          if (data.custoCalculado != null || data.custoIngredientes != null) {
+            state.calcData = {
+              custoIngredientes:  data.custoIngredientes  || 0,
+              custoMaoDeObra:     data.custoMaoDeObra     || 0,
+              custosFixos:        data.custosFixos        || 0,
+              custoTotal:         data.custoCalculado     || 0,
+              precoSugerido:      data.precoSugerido      || 0,
+              maoDeObraValorHora: data.maoDeObraValorHora != null ? data.maoDeObraValorHora : 0,
+              custosFixosValor:   data.custosFixosValor   != null ? data.custosFixosValor   : 0,
+              custosFixosTipo:    data.custosFixosTipo    || 'percentual',
+              margemUtilizada:    data.margemDesejada     != null ? data.margemDesejada     : 30
+            };
+            state.custosFixosTipo = state.calcData.custosFixosTipo;
+          }
 
           /* Show content */
           if (skeleton)  skeleton.classList.add('hidden');

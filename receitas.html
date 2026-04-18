@@ -28,51 +28,98 @@
     <div class="max-w-6xl mx-auto">
 
       <!-- Page Header + Stats -->
-      <section class="mb-10 grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+      <section class="mb-10 space-y-6">
 
-        <!-- Left: title + description + stats -->
-        <div class="flex flex-col justify-between gap-6">
-          <div class="space-y-2">
+        <!-- Title row -->
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div class="space-y-1">
             <span class="text-xs font-bold tracking-[0.2em] text-primary uppercase font-label">Laboratório</span>
             <h2 class="text-5xl font-extrabold font-headline text-on-surface tracking-tight leading-tight">
               Minhas <span class="text-primary italic">Receitas</span>
             </h2>
             <p class="text-on-surface-variant max-w-md font-body text-lg">Gerencie todas as suas criações artesanais com precisão financeira.</p>
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-1">
-              <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total de Receitas</p>
-              <p id="stat-total-receitas" class="text-4xl font-headline font-extrabold text-on-surface">—</p>
+          <div class="flex gap-3 shrink-0 pt-1">
+            <button type="button" id="btn-ver-rascunhos" class="px-5 py-3 rounded-full bg-surface-container-highest text-on-surface font-headline font-bold text-sm border-2 border-transparent hover:opacity-80 transition-all active:scale-95 flex items-center gap-2">
+              <span class="material-symbols-outlined text-base">edit_note</span> Rascunhos
+              <span id="badge-rascunhos" class="hidden bg-amber-500 text-white text-[10px] font-bold rounded-full px-1.5 min-w-[18px] text-center leading-[18px]">0</span>
+            </button>
+            <a href="criar-receita.html" class="px-7 py-3 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg">add</span> Nova Receita
+            </a>
+          </div>
+        </div>
+
+        <!-- Stat cards row -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-primary" style="font-size:1.25rem">menu_book</span>
             </div>
-            <div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-1">
-              <div class="flex items-center gap-1 ml-2">
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Publicadas</p>
+              <p id="stat-total-receitas" class="text-3xl font-headline font-extrabold text-on-surface leading-none mt-0.5">—</p>
+            </div>
+          </div>
+
+          <div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-secondary" style="font-size:1.25rem">percent</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-1">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Margem Média</p>
-                <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Percentual médio de lucro sobre o preço de venda das suas receitas publicadas. Quanto maior, mais rentável é o seu cardápio.">help</span>
+                <span class="tooltip-trigger material-symbols-outlined text-xs text-outline-variant cursor-help" data-tooltip="Média das margens de lucro das receitas publicadas. Receitas sem ingredientes cadastrados computam 100%, o que pode elevar a média — cadastre os custos para um resultado preciso.">help</span>
               </div>
-              <p id="stat-margem-media" class="text-4xl font-headline font-extrabold text-secondary">—</p>
+              <p id="stat-margem-media" class="text-3xl font-headline font-extrabold text-secondary leading-none mt-0.5">—</p>
+            </div>
+          </div>
+
+          <div class="bg-amber-50 border border-amber-100 p-5 rounded-2xl shadow-sm flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-amber-600" style="font-size:1.25rem">edit_note</span>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-amber-400">Rascunhos</p>
+              <p id="stat-total-rascunhos" class="text-3xl font-headline font-extrabold text-amber-600 leading-none mt-0.5">—</p>
+            </div>
+          </div>
+
+          <div id="stat-card-alerta" class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0" id="stat-alerta-icon-wrap">
+              <span class="material-symbols-outlined text-slate-400" style="font-size:1.25rem" id="stat-alerta-icon">warning</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-1">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Margem Baixa</p>
+                <span class="tooltip-trigger material-symbols-outlined text-xs text-outline-variant cursor-help" data-tooltip="Receitas publicadas com margem de lucro abaixo de 30%. Revise o preço de venda dessas receitas.">help</span>
+              </div>
+              <p id="stat-margem-baixa" class="text-3xl font-headline font-extrabold text-on-surface leading-none mt-0.5">—</p>
+              <p id="stat-abaixo-meta" class="hidden text-[10px] font-semibold text-amber-600 mt-1"></p>
             </div>
           </div>
         </div>
 
-        <!-- Right: actions + best margin card -->
-          <div class="flex flex-col justify-between gap-6">
-            <div class="flex gap-3 justify-end">
-              <button type="button" id="btn-ver-rascunhos" class="px-5 py-3 rounded-full bg-surface-container-highest text-on-surface font-headline font-bold text-sm border-2 border-transparent hover:opacity-80 transition-all active:scale-95 flex items-center gap-2">
-                <span class="material-symbols-outlined text-base">edit_note</span> Rascunhos
-              </button>
-              <a href="criar-receita.html" class="px-7 py-3 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 flex items-center gap-2">
-                <span class="material-symbols-outlined text-lg">add</span> Nova Receita
-              </a>
-            </div>
-          <div class="bg-primary p-6 rounded-2xl shadow-lg shadow-primary/20 text-on-primary relative overflow-hidden flex-1 flex flex-col justify-end min-h-[120px]">
-            <div class="absolute -right-4 -bottom-4 opacity-10">
-              <span class="material-symbols-outlined text-9xl">cake</span>
-            </div>
-            <p class="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-2">Melhor Margem</p>
-            <p id="stat-melhor-nome" class="text-2xl font-headline font-extrabold leading-tight">—</p>
-            <p id="stat-melhor-margem-pct" class="text-sm opacity-75 mt-1 font-semibold"></p>
+        <!-- Melhor Margem — faixa destacada -->
+        <div class="bg-primary rounded-2xl px-6 py-4 shadow-lg shadow-primary/20 text-on-primary relative overflow-hidden flex items-center gap-5">
+          <div class="absolute right-0 top-0 h-full flex items-center opacity-10 pointer-events-none">
+            <span class="material-symbols-outlined text-[8rem] pr-6">emoji_events</span>
+          </div>
+          <div class="w-10 h-10 shrink-0 bg-on-primary/15 rounded-xl flex items-center justify-center">
+            <span class="material-symbols-outlined text-on-primary">workspace_premium</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">Melhor Margem</p>
+            <p id="stat-melhor-nome" class="text-lg font-headline font-extrabold leading-snug truncate">—</p>
+          </div>
+          <div class="flex items-center gap-4 shrink-0">
+            <p id="stat-melhor-margem-pct" class="text-3xl font-headline font-extrabold"></p>
+            <a id="stat-melhor-link" href="#" class="hidden text-on-primary/70 text-xs font-bold flex items-center hover:text-on-primary transition-colors">
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
           </div>
         </div>
+
       </section>
 
       <!-- Filter Chips -->
