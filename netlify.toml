@@ -1,8 +1,0 @@
-[build]
-  # Substitui os valores default pelas variáveis de ambiente definidas no painel do Netlify.
-  # Localmente, o arquivo não é alterado e os defaults continuam funcionando.
-  command = """
-    [ -n \"$KONDITOR_API\" ] && sed -i \"s|http://localhost:8080|${KONDITOR_API}|g\" assets/js/konditor-config.js || true ;
-    [ -n \"$KONDITOR_GOOGLE_CLIENT_ID\" ] && sed -i \"s|1045651153478-4379bpb4fepqg0gvlg4goktic09vl883.apps.googleusercontent.com|${KONDITOR_GOOGLE_CLIENT_ID}|g\" assets/js/konditor-config.js || true
-  """
-  publish = "."
