@@ -12,6 +12,7 @@
   var _refreshTimer  = null;
   var _pendingRefresh = null;   // serializes concurrent renovarToken() calls
   var _SESSION_KEY   = 'konditor_at';
+  var _LOCAL_KEY     = 'konditor_at_x';  // cross-tab fallback (localStorage)
 
   /* Decode JWT exp claim without a library (no signature verification needed here) */
   function tokenExpiresInSeconds(token) {
@@ -30,11 +31,22 @@
       if (isTokenExpired(_accessToken)) { setAccessToken(null); return null; }
       return _accessToken;
     }
-    /* Restore from sessionStorage after same-tab navigation */
+    /* 1) Restore from sessionStorage (same-tab navigation) */
     try {
       var stored = sessionStorage.getItem(_SESSION_KEY) || null;
       if (stored && isTokenExpired(stored)) { sessionStorage.removeItem(_SESSION_KEY); stored = null; }
-      _accessToken = stored;
+      if (stored) { _accessToken = stored; return _accessToken; }
+    } catch (e) {}
+    /* 2) Fallback to localStorage for new tabs (middle-click / Ctrl+click) */
+    try {
+      var shared = localStorage.getItem(_LOCAL_KEY) || null;
+      if (shared && isTokenExpired(shared)) { localStorage.removeItem(_LOCAL_KEY); shared = null; }
+      if (shared) {
+        _accessToken = shared;
+        /* Promote to sessionStorage so subsequent same-tab calls are fast */
+        try { sessionStorage.setItem(_SESSION_KEY, shared); } catch (e) {}
+      }
+      _accessToken = shared;
     } catch (e) {}
     return _accessToken;
   }
@@ -44,6 +56,10 @@
     try {
       if (t) { sessionStorage.setItem(_SESSION_KEY, t); }
       else    { sessionStorage.removeItem(_SESSION_KEY); }
+    } catch (e) {}
+    try {
+      if (t) { localStorage.setItem(_LOCAL_KEY, t); }
+      else    { localStorage.removeItem(_LOCAL_KEY); }
     } catch (e) {}
   }
 
@@ -1019,7 +1035,7 @@
 
       /* Header */
       if (nomeEl) nomeEl.textContent = r.nome || '';
-      if (catEl)  catEl.textContent  = (r.categoria && r.categoria.nome) || 'Sem categoria';
+      if (catEl)  catEl.textContent  = r.categoriaNome || 'Sem categoria';
 
       if (metaEl) {
         var ts = r.atualizadoEm || r.criadoEm;
@@ -1093,30 +1109,41 @@
       applyBtn.addEventListener('click', function () {
         if (!id || _suggestedPrice <= 0 || !_receitaData) return;
         setLoading(applyBtn, true);
+        var r = _receitaData;
+        var payload = {
+          nome:                 r.nome                  || '',
+          descricao:            r.descricao             || '',
+          categoriaId:          r.categoriaId           || null,
+          rendimentoQuantidade: r.rendimentoQuantidade  || 1,
+          rendimentoUnidadeId:  r.rendimentoUnidadeId   || null,
+          tempoPreparoMinutos:  r.tempoPreparoMinutos   || 0,
+          notas:                r.notas                 || '',
+          precoFinal:           parseFloat(_suggestedPrice.toFixed(2)),
+          status:               r.status                || 'rascunho',
+          ingredientes: (r.ingredientes || []).map(function (ing) {
+            return { ingredienteId: ing.ingredienteId, quantidade: ing.quantidade, unidadeId: ing.unidadeId };
+          })
+        };
+        if (r.pesoPorUnidade && r.pesoPorUnidadeUnidadeId) {
+          payload.pesoPorUnidade          = r.pesoPorUnidade;
+          payload.pesoPorUnidadeUnidadeId = r.pesoPorUnidadeUnidadeId;
+        }
         apiFetch(API + '/receitas/' + encodeURIComponent(id), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nome:        _receitaData.nome,
-            descricao:   _receitaData.descricao  || '',
-            categoriaId: (_receitaData.categoria && _receitaData.categoria.id) || null,
-            ingredientes: (_receitaData.ingredientes || []).map(function (ing) {
-              return { ingredienteId: ing.ingredienteId, quantidade: ing.quantidade };
-            }),
-            status: _receitaData.status || 'rascunho'
-          })
+          body: JSON.stringify(payload)
         })
           .then(function (res) {
             setLoading(applyBtn, false);
             if (res.ok) {
               showToastDetail('Receita salva com sucesso!', 'sucesso');
             } else {
-              showToastDetail('Erro ao atualizar o pre\u00e7o. Tente novamente.', 'erro');
+              showToastDetail('Erro ao atualizar o preço. Tente novamente.', 'erro');
             }
           })
           .catch(function () {
             setLoading(applyBtn, false);
-            showToastDetail('Falha de conex\u00e3o.', 'erro');
+            showToastDetail('Falha de conexão.', 'erro');
           });
       });
     }
@@ -1190,6 +1217,7 @@
 
         /* Populate units select */
         var sel = document.getElementById('input-rendimento-unidade');
+        var selPesoUnidade = document.getElementById('input-peso-por-unidade-unidade');
         if (sel && Array.isArray(unidades) && unidades.length) {
           var TIPO_LABELS = { weight: 'Peso', volume: 'Volume', unit: 'Contagem' };
           var TIPO_ORDER  = ['weight', 'volume', 'unit'];
@@ -1208,10 +1236,29 @@
               var opt = document.createElement('option');
               opt.value       = u.id;
               opt.textContent = u.nome + ' (' + u.simbolo + ')';
+              opt.dataset.tipo = u.tipo || 'unit';
               grp.appendChild(opt);
             });
             sel.appendChild(grp);
           });
+          /* Populate weight/volume units for pesoPorUnidade select */
+          if (selPesoUnidade) {
+            selPesoUnidade.innerHTML = '<option value="">Selecione...</option>';
+            ['weight', 'volume'].forEach(function (tipo) {
+              if (!grupos[tipo] || !grupos[tipo].length) return;
+              var grp2 = document.createElement('optgroup');
+              grp2.label = TIPO_LABELS[tipo] || tipo;
+              grupos[tipo].forEach(function (u) {
+                var opt = document.createElement('option');
+                opt.value       = u.id;
+                opt.textContent = u.nome + ' (' + u.simbolo + ')';
+                opt.dataset.tipo = u.tipo;
+                opt.dataset.simbolo = u.simbolo;
+                grp2.appendChild(opt);
+              });
+              selPesoUnidade.appendChild(grp2);
+            });
+          }
         }
 
         /* Populate categories select */
@@ -1240,6 +1287,7 @@
       receitaId: null,
       ingredientes: [],   // { ingredienteId, unidadeId, nome, unidadeSimbolo, quantidade }
       precoSugerido: null,
+      precoFinalManual: false,  // true enquanto o cliente editar o campo manualmente
       calcTimer: null,
       searchTimer: null,
       custosFixosTipo: 'percentual'  // 'percentual' | 'fixo'
@@ -1248,7 +1296,6 @@
     /* ── DOM refs ── */
     var btnSalvar       = document.getElementById('btn-salvar-rascunho');
     var btnPublicar     = document.getElementById('btn-publicar');
-    var btnAplicar      = document.getElementById('btn-aplicar-preco');
     var nomInput        = document.getElementById('input-nome');
     var catSelect       = document.getElementById('input-categoria');
     var rendInput       = document.getElementById('input-rendimento');
@@ -1273,6 +1320,22 @@
     var btnCustosPct    = document.getElementById('btn-custos-pct');
     var btnCustosFixo   = document.getElementById('btn-custos-fixo');
     var custosFixosUnit = document.getElementById('custos-fixos-unit');
+    /* Novos campos */
+    var pesoPorUndInput    = document.getElementById('input-peso-por-unidade');
+    var pesoPorUndSelect   = document.getElementById('input-peso-por-unidade-unidade');
+    var pesoPorUndWrap     = document.getElementById('peso-por-unidade-wrap');
+    /* Painel de métricas avançadas */
+    var panelAvancado      = document.getElementById('panel-metricas-avancadas');
+    var panelPorGrama      = document.getElementById('panel-por-grama');
+    var panelPorPorcao     = document.getElementById('panel-por-porcao');
+    var elLabelPorGrama    = document.getElementById('val-label-por-grama');
+    var elLabelPrecoPorGrama = document.getElementById('val-label-preco-por-grama');
+    var elCustoPorGrama    = document.getElementById('val-custo-por-grama');
+    var elPrecoPorGrama    = document.getElementById('val-preco-por-grama');
+    var elNumeroPorcoes    = document.getElementById('val-numero-porcoes');
+    var elCustoPorPorcao   = document.getElementById('val-custo-por-porcao');
+    var elPrecoPorPorcao   = document.getElementById('val-preco-por-porcao');
+    var elPrecoUndLabel    = document.getElementById('val-preco-unidade-label');
 
     /* ── Helpers ── */
     function fmtBRL(val) {
@@ -1465,6 +1528,28 @@
     if (btnCustosPct)  btnCustosPct.addEventListener('click',  function () { setCustosFixosTipo('percentual'); });
     if (btnCustosFixo) btnCustosFixo.addEventListener('click', function () { setCustosFixosTipo('fixo'); });
 
+    /* ── Mostrar/ocultar peso por unidade conforme tipo de rendimento ── */
+    function atualizarVisibilidadePesoPorUnidade() {
+      if (!rendUndSelect || !pesoPorUndWrap) return;
+      var opt = rendUndSelect.options[rendUndSelect.selectedIndex];
+      var tipo = opt ? opt.dataset.tipo : '';
+      var visivel = tipo === 'weight' || tipo === 'volume';
+      pesoPorUndWrap.classList.toggle('hidden', !visivel);
+      if (!visivel) {
+        /* Limpar os campos quando oculto */
+        if (pesoPorUndInput)  pesoPorUndInput.value  = '';
+        if (pesoPorUndSelect) pesoPorUndSelect.value = '';
+      }
+    }
+    if (rendUndSelect) {
+      rendUndSelect.addEventListener('change', function () {
+        atualizarVisibilidadePesoPorUnidade();
+        scheduleCalculo();
+      });
+    }
+    if (pesoPorUndInput)  pesoPorUndInput.addEventListener('input', scheduleCalculo);
+    if (pesoPorUndSelect) pesoPorUndSelect.addEventListener('change', scheduleCalculo);
+
     [inpValorHora, inpCustFixos, inpMargemLucro, rendInput, tempoInput].forEach(function (el) {
       if (el) el.addEventListener('input', function () {
         /* Update display badges */
@@ -1491,25 +1576,35 @@
       if (!validos.length) return;
 
       var rendQtd      = parseFloat(rendInput ? rendInput.value : '') || 1;
+      var rendUndId    = rendUndSelect && rendUndSelect.value ? rendUndSelect.value : null;
       var valorHora    = parseFloat(inpValorHora ? inpValorHora.value : '') || 0;
       var custFixosVal = parseFloat(inpCustFixos ? inpCustFixos.value : '') || 0;
       var margem       = pctVal(inpMargemLucro, 30);
       var tempoMin     = parseTempoMinutos();
+      var pesoPorUnd   = pesoPorUndInput && pesoPorUndInput.value ? parseFloat(pesoPorUndInput.value) : null;
+      var pesoPorUndId = pesoPorUndSelect && pesoPorUndSelect.value ? pesoPorUndSelect.value : null;
+
+      var body = {
+        ingredientes: validos.map(function (ing) {
+          return { ingredienteId: ing.ingredienteId, quantidade: Number(ing.quantidade), unidadeId: ing.unidadeId };
+        }),
+        rendimentoQuantidade:  rendQtd,
+        maoDeObraValorHora:    valorHora,
+        tempoPreparoMinutos:   tempoMin,
+        custosFixosValor:      custFixosVal,
+        custosFixosTipo:       state.custosFixosTipo,
+        margemDesejada:        margem
+      };
+      if (rendUndId)   body.rendimentoUnidadeId      = rendUndId;
+      if (pesoPorUnd && pesoPorUndId) {
+        body.pesoPorUnidade          = pesoPorUnd;
+        body.pesoPorUnidadeUnidadeId = pesoPorUndId;
+      }
 
       apiFetch(API + '/receitas/calcular', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ingredientes: validos.map(function (ing) {
-            return { ingredienteId: ing.ingredienteId, quantidade: Number(ing.quantidade), unidadeId: ing.unidadeId };
-          }),
-          rendimentoQuantidade:  rendQtd,
-          maoDeObraValorHora:    valorHora,
-          tempoPreparoMinutos:   tempoMin,
-          custosFixosValor:      custFixosVal,
-          custosFixosTipo:       state.custosFixosTipo,
-          margemDesejada:        margem
-        })
+        body: JSON.stringify(body)
       })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (data) { if (data) atualizarPainel(data); })
@@ -1517,17 +1612,32 @@
     }
 
     function atualizarPainel(data) {
-      state.precoSugerido = data.precoSugeridoPorUnidade;
+      /* Preço sugerido do lote inteiro — sempre exibido no destaque principal */
+      state.precoSugerido = data.precoSugerido;
+
       if (elCustoIngr) elCustoIngr.textContent = fmtBRL(data.custoIngredientes);
       if (elMaoObra)   elMaoObra.textContent   = fmtBRL(data.custoMaoDeObra);
       if (elCustFixos) elCustFixos.textContent = fmtBRL(data.custosFixos);
       if (elCustTotal) elCustTotal.textContent = fmtBRL(data.custoTotal);
-      if (elPrecoSug)  elPrecoSug.textContent  = fmtBRL(data.precoSugeridoPorUnidade);
+      /* Preço do lote inteiro em destaque */
+      if (elPrecoSug)  elPrecoSug.textContent  = fmtBRL(data.precoSugerido);
+      /* Auto-preenche precoFinal se o cliente não editou manualmente */
+      if (!state.precoFinalManual && data.precoSugerido != null && elPrecoFinal) {
+        elPrecoFinal.value = Number(data.precoSugerido).toFixed(2);
+      }
+      /* Preço por unidade na linha abaixo */
+      var elPrecoUnid = document.getElementById('val-preco-por-unidade');
+      if (elPrecoUnid) {
+        var precoUnd = (data.numeroPorcoesUnidades != null && data.precoPorPorcaoOuUnidade != null)
+          ? data.precoPorPorcaoOuUnidade
+          : (data.precoSugeridoPorUnidade != null ? data.precoSugeridoPorUnidade : null);
+        elPrecoUnid.textContent = precoUnd != null ? fmtBRL(precoUnd) : '—';
+      }
       var margem = Math.round(data.margemUtilizada || data.margem || 0);
       if (elMargem) elMargem.textContent = margem + '%';
-      /* Mão de obra badge: show effective valor/hora */
+      /* Mão de obra badge */
       if (pctMaoDisplay && inpValorHora) pctMaoDisplay.textContent = 'R$' + (parseFloat(inpValorHora.value) || 0).toFixed(2) + '/h';
-      /* Custos fixos badge: show % or R$ depending on tipo */
+      /* Custos fixos badge */
       if (pctFixDisplay && inpCustFixos) {
         pctFixDisplay.textContent = state.custosFixosTipo === 'percentual'
           ? (parseFloat(inpCustFixos.value) || 0) + '%'
@@ -1535,14 +1645,45 @@
       }
       var bar = document.getElementById('margem-bar');
       if (bar) bar.style.width = Math.min(100, margem) + '%';
+
+      /* ── Métricas aprimoradas ── */
+      var temGrama  = data.custoPorGramaOuMl != null;
+      var temPorcao = data.numeroPorcoesUnidades != null;
+      var algumAvancado = temGrama || temPorcao;
+
+      if (panelAvancado) panelAvancado.classList.toggle('hidden', !algumAvancado);
+
+      /* Custo por g/ml */
+      if (panelPorGrama) panelPorGrama.classList.toggle('hidden', !temGrama);
+      if (temGrama) {
+        /* Descobre símbolo da unidade de rendimento para o label */
+        var rendOpt = rendUndSelect ? rendUndSelect.options[rendUndSelect.selectedIndex] : null;
+        var rendSim = rendOpt ? (rendOpt.textContent.match(/\(([^)]+)\)/) || [])[1] || 'g' : 'g';
+        var baseLabel = rendSim === 'L' || rendSim === 'ml' ? 'ml' : 'g';
+        if (elLabelPorGrama)    elLabelPorGrama.textContent    = 'Custo por ' + baseLabel;
+        if (elLabelPrecoPorGrama) elLabelPrecoPorGrama.textContent = 'Preço sugerido por ' + baseLabel;
+        if (elCustoPorGrama)    elCustoPorGrama.textContent    = fmtBRL(data.custoPorGramaOuMl);
+        if (elPrecoPorGrama)    elPrecoPorGrama.textContent    = fmtBRL(data.precoPorGramaOuMl);
+      }
+
+      /* Custo por porção */
+      if (panelPorPorcao) panelPorPorcao.classList.toggle('hidden', !temPorcao);
+      if (temPorcao) {
+        if (elNumeroPorcoes)  elNumeroPorcoes.textContent  = Number(data.numeroPorcoesUnidades).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+        if (elCustoPorPorcao) elCustoPorPorcao.textContent = fmtBRL(data.custoPorPorcaoOuUnidade);
+        if (elPrecoPorPorcao) elPrecoPorPorcao.textContent = fmtBRL(data.precoPorPorcaoOuUnidade);
+      }
+
+      /* Label "por unidade" ou "por porção" abaixo do preço sugerido */
+      if (elPrecoUndLabel) {
+        elPrecoUndLabel.textContent = temPorcao ? 'por porção/unidade' : 'por unidade';
+      }
     }
 
-    /* ── Apply suggested price ── */
-    if (btnAplicar) {
-      btnAplicar.addEventListener('click', function () {
-        if (state.precoSugerido !== null && elPrecoFinal) {
-          elPrecoFinal.value = Number(state.precoSugerido).toFixed(2);
-        }
+    /* ── Preço Final: detecta edição manual, volta ao automático se limpar ── */
+    if (elPrecoFinal) {
+      elPrecoFinal.addEventListener('input', function () {
+        state.precoFinalManual = elPrecoFinal.value.trim() !== '';
       });
     }
 
@@ -1574,6 +1715,13 @@
         notas:      notasInput ? notasInput.value.trim() : '',
         precoFinal: isNaN(precoFin) || precoFin < 0 ? 0 : precoFin
       };
+      /* Peso por unidade — só quando preenchido */
+      var ppuVal = pesoPorUndInput ? parseFloat(pesoPorUndInput.value) : NaN;
+      var ppuId  = pesoPorUndSelect ? pesoPorUndSelect.value : '';
+      if (!isNaN(ppuVal) && ppuVal > 0 && ppuId) {
+        payload.pesoPorUnidade          = ppuVal;
+        payload.pesoPorUnidadeUnidadeId = ppuId;
+      }
       if (status) payload.status = status;
       return payload;
     }
@@ -2413,6 +2561,14 @@
     var nomeInput    = document.getElementById('edit-nome');
     var catSelect    = document.getElementById('edit-categoria');
     var statusSelect = document.getElementById('edit-status');
+    var rendInput    = document.getElementById('edit-rendimento');
+    var rendUndSelect = document.getElementById('edit-rendimento-unidade');
+    var tempoInput   = document.getElementById('edit-tempo');
+    var notasInput   = document.getElementById('edit-notas');
+    var precoFinalInput = document.getElementById('edit-preco-final');
+    var pesoPorUndInput  = document.getElementById('edit-peso-por-unidade');
+    var pesoPorUndSelect = document.getElementById('edit-peso-por-unidade-unidade');
+    var pesoPorUndWrap   = document.getElementById('edit-peso-por-unidade-wrap');
     var searchInput  = document.getElementById('edit-ingrediente-search');
     var dropdown     = document.getElementById('edit-ingrediente-dropdown');
     var emptyHint    = document.getElementById('edit-ingredientes-empty');
@@ -2519,7 +2675,7 @@
         if (!dropdown) return;
         if (q.length < 2) { dropdown.classList.add('hidden'); return; }
         state.searchTimer = setTimeout(function () {
-          apiFetch(API + '/ingredientes/estoque?search=' + encodeURIComponent(q) + '&size=10')
+          apiFetch(API + '/ingredientes?query=' + encodeURIComponent(q))
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
               if (!data) return;
@@ -2529,7 +2685,7 @@
                 var sym  = (it.unidadeSimbolo || it.unidade || '').toUpperCase();
                 var marca = it.marca ? ' — ' + it.marca : '';
                 return '<button type="button" class="edit-search-item w-full text-left px-4 py-3 hover:bg-primary-container/20 transition-colors text-sm font-medium" '
-                  + 'data-id="' + escH(it.id) + '" data-nome="' + escH(it.nome + marca) + '" data-unidade-id="' + escH(it.unidadeId || it.unidade_id || '') + '" data-simbolo="' + escH(sym) + '">'
+                  + 'data-id="' + escH(it.id) + '" data-nome="' + escH(it.nome) + '" data-unidade-id="' + escH(it.unidadeId || '') + '" data-simbolo="' + escH(sym) + '">'
                   + '<span class="font-bold">' + escH(it.nome) + '</span>'
                   + (marca ? '<span class="text-outline-variant">' + escH(marca) + '</span>' : '')
                   + ' <span class="text-xs text-outline bg-surface-container px-2 py-0.5 rounded-full ml-1">' + sym + '</span>'
@@ -2563,17 +2719,32 @@
 
     /* ── Build PUT payload ── */
     function buildPayload() {
-      return {
-        nome:        nomeInput    ? nomeInput.value.trim() : '',
-        descricao:   '',
-        categoriaId: catSelect    && catSelect.value    ? catSelect.value    : null,
-        status:      statusSelect && statusSelect.value ? statusSelect.value : 'rascunho',
+      var rendQtd  = parseFloat(rendInput ? rendInput.value : '') || 1;
+      var precoFin = precoFinalInput ? parseFloat(precoFinalInput.value) : NaN;
+      var tempoMin = tempoInput && tempoInput.value ? parseInt(tempoInput.value) || 0 : 0;
+      var payload = {
+        nome:                 nomeInput    ? nomeInput.value.trim()  : '',
+        descricao:            '',
+        categoriaId:          catSelect    && catSelect.value    ? catSelect.value    : null,
+        status:               statusSelect && statusSelect.value ? statusSelect.value : 'rascunho',
+        rendimentoQuantidade: rendQtd,
+        rendimentoUnidadeId:  rendUndSelect && rendUndSelect.value ? rendUndSelect.value : null,
+        tempoPreparoMinutos:  tempoMin,
+        notas:                notasInput ? notasInput.value.trim() : '',
+        precoFinal:           isNaN(precoFin) || precoFin < 0 ? 0 : precoFin,
         ingredientes: state.ingredientes
           .filter(function (i) { return i.ingredienteId && i.unidadeId && i.quantidade; })
           .map(function (i) {
             return { ingredienteId: i.ingredienteId, quantidade: Number(i.quantidade), unidadeId: i.unidadeId };
           })
       };
+      var ppuVal = pesoPorUndInput ? parseFloat(pesoPorUndInput.value) : NaN;
+      var ppuId  = pesoPorUndSelect ? pesoPorUndSelect.value : '';
+      if (!isNaN(ppuVal) && ppuVal > 0 && ppuId) {
+        payload.pesoPorUnidade          = ppuVal;
+        payload.pesoPorUnidadeUnidadeId = ppuId;
+      }
+      return payload;
     }
 
     /* ── Validate ── */
@@ -2625,6 +2796,7 @@
       if (!tok) { window.location.href = 'login.html'; return; }
       Promise.all([
         apiFetch(API + '/receitas/categorias').then(function (r) { return r.ok ? r.json() : []; }),
+        apiFetch(API + '/unidades').then(function (r) { return r.ok ? r.json() : []; }),
         apiFetch(API + '/receitas/' + encodeURIComponent(id)).then(function (r) {
           if (!r.ok) throw new Error('not_found');
           return r.json();
@@ -2632,7 +2804,8 @@
       ])
         .then(function (results) {
           var categorias = results[0];
-          var data       = results[1];
+          var unidades   = results[1];
+          var data       = results[2];
 
           /* Populate categories */
           if (catSelect) {
@@ -2647,12 +2820,69 @@
             }
           }
 
+          /* Populate units selects */
+          if (Array.isArray(unidades) && unidades.length) {
+            var TIPO_LABELS = { weight: 'Peso', volume: 'Volume', unit: 'Contagem' };
+            var TIPO_ORDER  = ['weight', 'volume', 'unit'];
+            var grupos = {};
+            unidades.forEach(function (u) {
+              var t = u.tipo || 'unit';
+              if (!grupos[t]) grupos[t] = [];
+              grupos[t].push(u);
+            });
+
+            function populateUndSelect(sel, tiposPermitidos) {
+              if (!sel) return;
+              sel.innerHTML = '<option value="">Selecione...</option>';
+              (tiposPermitidos || TIPO_ORDER).forEach(function (tipo) {
+                if (!grupos[tipo] || !grupos[tipo].length) return;
+                var grp = document.createElement('optgroup');
+                grp.label = TIPO_LABELS[tipo] || tipo;
+                grupos[tipo].forEach(function (u) {
+                  var opt = document.createElement('option');
+                  opt.value           = u.id;
+                  opt.textContent     = u.nome + ' (' + u.simbolo + ')';
+                  opt.dataset.tipo    = u.tipo || 'unit';
+                  opt.dataset.simbolo = u.simbolo || '';
+                  grp.appendChild(opt);
+                });
+                sel.appendChild(grp);
+              });
+            }
+
+            populateUndSelect(rendUndSelect, TIPO_ORDER);
+            populateUndSelect(pesoPorUndSelect, ['weight', 'volume']);
+          }
+
+          /* Helper — mostra/oculta campo pesoPorUnidade */
+          function atualizarVisibilidadePPU() {
+            if (!rendUndSelect || !pesoPorUndWrap) return;
+            var opt  = rendUndSelect.options[rendUndSelect.selectedIndex];
+            var tipo = opt ? opt.dataset.tipo : '';
+            pesoPorUndWrap.classList.toggle('hidden', tipo !== 'weight' && tipo !== 'volume');
+          }
+          if (rendUndSelect) rendUndSelect.addEventListener('change', atualizarVisibilidadePPU);
+
           /* Pre-fill fields */
           document.title = 'Konditor | Editar — ' + (data.nome || '');
           if (nomeHeading) nomeHeading.textContent = data.nome || 'Receita';
-          if (nomeInput)   nomeInput.value        = data.nome         || '';
-          if (statusSelect) statusSelect.value    = data.status       || 'rascunho';
-          if (catSelect && data.categoria && data.categoria.id) catSelect.value = data.categoria.id;
+          if (nomeInput)      nomeInput.value      = data.nome            || '';
+          if (statusSelect)   statusSelect.value   = data.status          || 'rascunho';
+          if (rendInput)      rendInput.value      = data.rendimentoQuantidade != null ? data.rendimentoQuantidade : '';
+          if (tempoInput)     tempoInput.value     = data.tempoPreparoMinutos != null  ? data.tempoPreparoMinutos  : '';
+          if (notasInput)     notasInput.value     = data.notas           || '';
+          if (precoFinalInput) precoFinalInput.value = data.precoFinal != null ? data.precoFinal : '';
+          if (catSelect && data.categoriaId) catSelect.value = data.categoriaId;
+          if (rendUndSelect && data.rendimentoUnidadeId) {
+            rendUndSelect.value = data.rendimentoUnidadeId;
+            atualizarVisibilidadePPU();
+          }
+          if (data.pesoPorUnidade && pesoPorUndInput) {
+            pesoPorUndInput.value = data.pesoPorUnidade;
+          }
+          if (data.pesoPorUnidadeUnidadeId && pesoPorUndSelect) {
+            pesoPorUndSelect.value = data.pesoPorUnidadeUnidadeId;
+          }
 
           /* Pre-fill ingredients */
           if (Array.isArray(data.ingredientes)) {
@@ -2660,8 +2890,8 @@
               return {
                 ingredienteId:  ing.ingredienteId,
                 unidadeId:      ing.unidadeId      || '',
-                nome:           ing.nome           || '',
-                unidadeSimbolo: ing.unidade        || '',
+                nome:           ing.ingredienteNome || ing.nome || '',
+                unidadeSimbolo: ing.unidadeSimbolo || ing.unidade || '',
                 quantidade:     ing.quantidade     || ''
               };
             });

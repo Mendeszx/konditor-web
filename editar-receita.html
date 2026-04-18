@@ -106,17 +106,73 @@
             </div>
           </div>
 
-          <!-- Status -->
+          <!-- Rendimento -->
           <div class="space-y-2">
-            <label for="edit-status" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Status</label>
-            <div class="relative w-full sm:w-64">
-              <select id="edit-status"
-                class="w-full appearance-none bg-none bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all text-on-surface shadow-sm focus:shadow-lg pr-12">
-                <option value="rascunho">Rascunho</option>
-                <option value="publicada">Publicada</option>
-              </select>
-              <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">expand_more</span>
+            <div class="flex items-center gap-1 ml-2">
+              <label class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">Rendimento</label>
+              <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Quantidade total produzida pela receita e sua unidade.">help</span>
             </div>
+            <div class="flex items-center gap-2">
+              <input id="edit-rendimento" type="number" min="0.001" step="any"
+                class="flex-1 min-w-0 bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                placeholder="ex: 450" />
+              <div class="relative shrink-0 w-40">
+                <select id="edit-rendimento-unidade"
+                  class="w-full appearance-none bg-none bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-4 pr-10 font-headline transition-all text-on-surface shadow-sm focus:shadow-lg text-sm">
+                  <option value="">Unidade</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none text-sm">expand_more</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tempo + Status -->
+          <div class="grid grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label for="edit-tempo" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Tempo de Preparo (min)</label>
+              <input id="edit-tempo" type="number" min="0" step="1"
+                class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                placeholder="ex: 30" />
+            </div>
+            <div class="space-y-2">
+              <label for="edit-status" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Status</label>
+              <div class="relative">
+                <select id="edit-status"
+                  class="w-full appearance-none bg-none bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all text-on-surface shadow-sm focus:shadow-lg pr-12">
+                  <option value="rascunho">Rascunho</option>
+                  <option value="publicada">Publicada</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">expand_more</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Peso por unidade (exibido dinamicamente via JS quando rendimento é peso/volume) -->
+          <div id="edit-peso-por-unidade-wrap" class="hidden space-y-2">
+            <div class="flex items-center gap-1 ml-2">
+              <label class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">Peso / Volume por Unidade</label>
+              <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Informe o peso ou volume de cada unidade produzida. Ex: 15g por brigadeiro. Permite calcular custo e preço por porção.">help</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <input id="edit-peso-por-unidade" type="number" min="0.001" step="any"
+                class="flex-1 min-w-0 bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+                placeholder="ex: 15" />
+              <div class="relative shrink-0 w-40">
+                <select id="edit-peso-por-unidade-unidade"
+                  class="w-full appearance-none bg-none bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-4 pr-10 font-headline transition-all text-on-surface shadow-sm focus:shadow-lg text-sm">
+                  <option value="">Unidade</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none text-sm">expand_more</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preço Final -->
+          <div class="space-y-2">
+            <label for="edit-preco-final" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Preço de Venda (R$)</label>
+            <input id="edit-preco-final" type="number" min="0" step="0.01"
+              class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
+              placeholder="0,00" />
           </div>
 
         </div>
@@ -153,6 +209,14 @@
           <p id="edit-ingredientes-empty" class="text-sm text-on-surface-variant text-center py-6 hidden">
             Nenhum ingrediente adicionado. Use a busca acima para selecionar.
           </p>
+        </div>
+
+        <!-- Notas -->
+        <div class="bg-surface-container-lowest rounded-3xl p-8 mt-6 border-2 border-outline-variant/40 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+          <div class="flex items-center gap-1 mb-4">
+            <h3 class="text-xl font-bold font-headline uppercase tracking-widest text-outline mb-0">Notas do Processo</h3>
+          </div>
+          <textarea id="edit-notas" class="w-full h-48 bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl resize-none font-body placeholder:text-outline-variant/60 text-base leading-relaxed p-4 shadow-sm focus:shadow-lg transition-all" placeholder="Observações sobre o preparo, dicas, pontos de atenção..."></textarea>
         </div>
 
         <!-- Bottom action bar -->
