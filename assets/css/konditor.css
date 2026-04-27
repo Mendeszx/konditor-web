@@ -170,3 +170,71 @@ img {
   #app-sidebar, #sidebar-overlay, header { display: none !important; }
   main { margin-left: 0 !important; }
 }
+
+/* ── Display P3: normalise primary colour on wide-gamut iOS / Mac screens ─────────
+   Safari on P3 displays renders sRGB hex colours without ICC management on some iOS
+   versions, making saturated hues (especially #bd0050) appear more vivid / vibrant
+   than on a standard sRGB desktop monitor.
+   The overrides below use the mathematically-equivalent Display-P3 coordinates:
+     #bd0050  →  color(display-p3 0.679 0.138 0.317)
+     #ffa9b9  →  color(display-p3 0.951 0.678 0.727)
+   so the perceived colour matches between iOS and desktop.
+   Opacity-variant Tailwind classes (e.g. "bg-primary/20") are intentionally
+   omitted — the difference is imperceptible at low opacities.                   ── */
+@supports (color: color(display-p3 1 0 0)) {
+  @media (color-gamut: p3) {
+
+    .skip-link {
+      background: color(display-p3 0.679 0.138 0.317);
+    }
+
+    .berry-gradient {
+      background: linear-gradient(
+        135deg,
+        color(display-p3 0.679 0.138 0.317) 0%,
+        color(display-p3 0.951 0.678 0.727) 100%
+      );
+    }
+
+    :focus-visible {
+      outline-color: color(display-p3 0.679 0.138 0.317);
+    }
+
+    input[type="range"] {
+      background: linear-gradient(
+        to right,
+        color(display-p3 0.679 0.138 0.317) 65%,
+        #e6e8ec 65%
+      );
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      border-color: color(display-p3 0.679 0.138 0.317);
+      box-shadow: 0 2px 8px color(display-p3 0.679 0.138 0.317 / 0.3);
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      box-shadow: 0 4px 12px color(display-p3 0.679 0.138 0.317 / 0.4);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      border-color: color(display-p3 0.679 0.138 0.317);
+      box-shadow: 0 2px 8px color(display-p3 0.679 0.138 0.317 / 0.3);
+    }
+
+    input[type="range"]:focus-visible {
+      outline-color: color(display-p3 0.679 0.138 0.317);
+    }
+
+    .prose-konditor ul li::before {
+      background: color(display-p3 0.679 0.138 0.317);
+    }
+
+    /* Tailwind solid-colour utility overrides */
+    .bg-primary     { background-color: color(display-p3 0.679 0.138 0.317) !important; }
+    .text-primary   { color:            color(display-p3 0.679 0.138 0.317) !important; }
+    .border-primary { border-color:     color(display-p3 0.679 0.138 0.317) !important; }
+    .fill-primary   { fill:             color(display-p3 0.679 0.138 0.317) !important; }
+    .ring-primary   { --tw-ring-color:  color(display-p3 0.679 0.138 0.317) !important; }
+  }
+}
