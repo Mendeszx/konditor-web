@@ -1,0 +1,23 @@
+# Configuração local do Claude Code
+.claude/
+
+# Arquivos de sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editores / IDEs
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs e temporários
+*.log
+tmp/
+.cache/
+
+# Dependências / build (caso futuramente adote build do Tailwind)
+node_modules/
+dist/
+.env
+.env.local
