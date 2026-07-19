@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/konditor.css" />
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="assets/css/tailwind.css" />
   <script src="assets/js/konditor-config.js"></script>
 </head>
 <body class="bg-background font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
@@ -24,14 +24,14 @@
   <aside id="app-sidebar" class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-lowest flex flex-col p-6 gap-2 -translate-x-full lg:translate-x-0" aria-label="Menu principal"></aside>
 
   <!-- Main Content -->
-  <main id="main-content" class="lg:ml-64 p-10 min-h-[calc(100vh-64px)]">
+  <main id="main-content" class="lg:ml-64 p-6 md:p-10 min-h-[calc(100vh-64px)]">
     <div class="max-w-6xl mx-auto">
 
       <!-- Page Header -->
-      <section class="mb-10 flex items-end justify-between">
+      <section class="mb-10 flex flex-wrap items-end justify-between gap-6">
         <div class="space-y-2">
           <span class="text-xs font-bold tracking-[0.2em] text-primary uppercase font-label">Câmara Fria</span>
-          <h2 class="text-5xl font-extrabold font-headline text-on-surface tracking-tight leading-tight">Gestão de <span class="text-primary italic">Ingredientes</span></h2>
+          <h2 class="text-4xl md:text-5xl font-extrabold font-headline text-on-surface tracking-tight leading-tight">Gestão de <span class="text-primary italic">Ingredientes</span></h2>
           <p class="text-on-surface-variant max-w-md font-body text-lg">Matérias-primas do seu ateliê. Preços sincronizados com o mercado.</p>
         </div>
         <a href="criar-ingrediente.html" class="flex items-center gap-2 px-6 py-3 rounded-full berry-gradient text-on-primary font-headline font-bold text-sm shadow-xl shadow-primary/20 hover:scale-105 transition-transform active:scale-95">

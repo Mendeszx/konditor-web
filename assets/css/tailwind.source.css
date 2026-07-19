@@ -1,0 +1,5 @@
+/* Fonte do build do Tailwind — NÃO linkar este arquivo nas páginas.
+ * O build (scripts/build-css.sh) gera assets/css/tailwind.css a partir daqui. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

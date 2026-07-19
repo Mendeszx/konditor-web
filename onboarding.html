@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/konditor.css" />
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="assets/css/tailwind.css" />
   <script src="assets/js/konditor-config.js"></script>
 </head>
 <body class="bg-surface font-body text-on-surface min-h-screen">
@@ -20,7 +20,7 @@
 
   <!-- Top Nav (onboarding: logo + progress + já tenho conta) -->
   <nav class="fixed top-0 left-0 right-0 z-50 h-16 glass-nav shadow-[0_4px_32px_rgba(189,0,80,0.04)]">
-    <div class="max-w-7xl mx-auto h-full flex items-center justify-between px-8">
+    <div class="max-w-7xl mx-auto h-full flex items-center justify-between px-4 md:px-8">
       <a href="index.html" class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-xl berry-gradient flex items-center justify-center text-white shadow-lg">
           <span class="material-symbols-outlined text-xl" style="font-variation-settings:'FILL' 1;">bakery_dining</span>
@@ -98,7 +98,7 @@
           <a href="index.html" class="flex items-center gap-2 text-on-surface-variant font-bold hover:text-on-surface transition-colors">
             <span class="material-symbols-outlined">arrow_back</span> Voltar
           </a>
-          <button id="onboarding-submit-btn" disabled class="berry-gradient px-12 py-5 rounded-full text-white font-headline font-bold text-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95 flex items-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none">
+          <button id="onboarding-submit-btn" disabled class="berry-gradient px-6 sm:px-12 py-5 rounded-full text-white font-headline font-bold text-lg sm:text-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95 flex items-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none">
             Finalizar Configuração
             <span class="material-symbols-outlined">arrow_forward</span>
           </button>

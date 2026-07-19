@@ -47,15 +47,18 @@ O público-alvo acessa fortemente pelo **celular**, então responsividade é um 
 | Camada | Tecnologia |
 |---|---|
 | Marcação | HTML5 estático (uma página por rota) |
-| Estilo | [Tailwind CSS](https://tailwindcss.com) via **CDN** + `assets/css/konditor.css` (utilitários custom) |
+| Estilo | [Tailwind CSS](https://tailwindcss.com) **compilado em build** (`assets/css/tailwind.css`) + `assets/css/konditor.css` (utilitários custom) |
 | Script | JavaScript **vanilla** (ES5/ES6, padrão IIFE, sem framework nem bundler) |
 | Tipografia | Plus Jakarta Sans (títulos), Manrope (corpo) — via Google Fonts |
 | Ícones | Material Symbols Outlined (Google Fonts) |
 | Auth | Google OAuth 2.0 (OIDC *implicit* via popup) + JWT |
 | Backend | API REST externa (repositório separado) |
 
-> ⚠️ **Não há etapa de build.** Os arquivos são servidos como estão. O Tailwind é carregado
-> em runtime pelo CDN e configurado em [`assets/js/konditor-config.js`](assets/js/konditor-config.js).
+> ℹ️ **Único passo de build: o CSS do Tailwind.** O site continua estático e sem bundler; o
+> `assets/css/tailwind.css` (commitado) é gerado por [`scripts/build-css.sh`](scripts/build-css.sh)
+> usando o **Tailwind standalone CLI** (baixado automaticamente, sem Node/npm). Rode o script
+> sempre que criar/remover classes Tailwind no HTML/JS ou alterar tokens no
+> [`tailwind.config.js`](tailwind.config.js). Durante o desenvolvimento: `./scripts/build-css.sh --watch`.
 
 ---
 
@@ -159,7 +162,7 @@ Todas as chamadas autenticadas usam o helper **`apiFetch(url, options)`** (adici
 
 ## 🎨 Design system
 
-Tokens no padrão **Material Design 3** (fonte única em `konditor-config.js`), estendidos no Tailwind.
+Tokens no padrão **Material Design 3** (fonte única em [`tailwind.config.js`](tailwind.config.js)), estendidos no Tailwind.
 
 - **Cor primária (marca):** `#bd0050` (*berry/rosa*).
 - **Secundária:** `#006f1d` (verde — usada em indicadores positivos).
@@ -204,6 +207,13 @@ python3 -m http.server 8899
 # abra http://localhost:8899/index.html
 ```
 
+Se você alterou classes Tailwind ou tokens, regenere o CSS antes:
+
+```bash
+./scripts/build-css.sh          # gera assets/css/tailwind.css (minificado)
+./scripts/build-css.sh --watch  # rebuild automático em desenvolvimento
+```
+
 > O login com Google exige que a **origin** esteja autorizada no Google Cloud Console e que a
 > **API** (`KONDITOR_API`) esteja no ar. Sem a API, as telas públicas funcionam; as autenticadas não.
 
@@ -238,7 +248,6 @@ window.KONDITOR_GOOGLE_CLIENT_ID = '…apps.googleusercontent.com';  // OAuth Cl
 | Prioridade | Item | Notas |
 |---|---|---|
 | 🔴 Alta | **Responsividade mobile** | Overflow horizontal em `index`, `precos`, `lucro` (conteúdo não cabe em 390px) |
-| 🔴 Alta | **Tailwind via CDN em produção** | Trocar por build local (Tailwind CLI/PostCSS) — CDN causa FOUC e não é recomendado pelo Tailwind |
 | 🟡 Média | **Semântica de headings** | Páginas do app (`precos`, `lucro`, `receitas`) sem `<h1>` |
 | 🟡 Média | **Duplicação de HTML** | Header/sidebar replicados em várias páginas — avaliar SSG/includes |
 
