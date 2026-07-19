@@ -4,8 +4,8 @@
 > Transforma receitas em dados financeiros precisos: custo por ingrediente, margem real,
 > precificação sugerida e visão de lucro.
 
-Este repositório contém o **front-end web** do Konditor — um site estático servido
-diretamente (sem etapa de build), que consome uma **API REST** própria.
+Este repositório contém o **front-end web** do Konditor — um site estático (único passo de
+build é o CSS do Tailwind), que consome uma **API REST** própria.
 
 ---
 
@@ -85,9 +85,11 @@ konditor-web/
 │
 └── assets/
     ├── css/
-    │   └── konditor.css          # Utilitários custom: glass, gradientes, sidebar, range, focus
+    │   ├── konditor.css          # Utilitários custom: glass, gradientes, sidebar, range, focus
+    │   ├── tailwind.source.css   # Fonte do build do Tailwind (@tailwind base/components/utilities)
+    │   └── tailwind.css          # CSS gerado pelo build (commitado — é o que as páginas linkam)
     └── js/
-        ├── konditor-config.js    # Config do Tailwind + design tokens + URL da API + Client ID Google
+        ├── konditor-config.js    # URL da API + Client ID Google (runtime)
         └── konditor-app.js       # Toda a lógica da aplicação (~3.2k linhas)
 ```
 
@@ -247,7 +249,6 @@ window.KONDITOR_GOOGLE_CLIENT_ID = '…apps.googleusercontent.com';  // OAuth Cl
 
 | Prioridade | Item | Notas |
 |---|---|---|
-| 🔴 Alta | **Responsividade mobile** | Overflow horizontal em `index`, `precos`, `lucro` (conteúdo não cabe em 390px) |
 | 🟡 Média | **Semântica de headings** | Páginas do app (`precos`, `lucro`, `receitas`) sem `<h1>` |
 | 🟡 Média | **Duplicação de HTML** | Header/sidebar replicados em várias páginas — avaliar SSG/includes |
 
