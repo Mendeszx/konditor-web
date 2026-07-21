@@ -71,7 +71,7 @@
                   <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Quantidade total produzida pela receita e sua unidade. Ex: 24 unidades, 1 kg, 500 g.">help</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <input id="input-rendimento" class="flex-1 min-w-0 bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg" placeholder="ex: 24" type="number" min="1" step="any" />
+                  <input id="input-rendimento" class="flex-1 min-w-0 bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg" placeholder="ex: 24" type="number" min="1" max="1000000" step="any" />
                   <div class="relative shrink-0 w-36">
                     <select id="input-rendimento-unidade"
                       class="w-full appearance-none bg-none bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-4 pr-10 font-headline transition-all text-on-surface shadow-sm focus:shadow-lg text-sm">
@@ -99,7 +99,7 @@
               <div class="space-y-2">
                 <label for="input-tempo" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Tempo de Preparo</label>
                 <div class="flex items-center gap-1">
-                  <input id="input-tempo" class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg" placeholder="ex: 90" type="number" min="0" step="1" inputmode="numeric" />
+                  <input id="input-tempo" class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg" placeholder="ex: 90" type="number" min="0" max="100000" step="1" inputmode="numeric" />
                   <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Informe o tempo total de preparo em minutos. Apenas valores inteiros são permitidos (ex: 90 para 1h30min).">help</span>
                 </div>
               </div>
@@ -112,7 +112,7 @@
                 <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Informe o peso ou volume de cada unidade produzida. Ex: 15g por brigadeiro, 50ml por porção. Ativa cálculo de custo e preço por unidade/porção.">help</span>
               </div>
               <div class="flex items-center gap-2">
-                <input id="input-peso-por-unidade" type="number" min="0.001" step="any"
+                <input id="input-peso-por-unidade" type="number" min="0.001" max="1000000" step="any"
                   class="flex-1 min-w-0 bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
                   placeholder="ex: 15" />
                 <div class="relative shrink-0 w-40">
@@ -196,7 +196,7 @@
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
                   <span class="text-xs font-bold text-outline">R$</span>
-                  <input id="input-valor-hora" type="number" min="0" step="0.01" value="25"
+                  <input id="input-valor-hora" type="number" min="0" max="1000000" step="0.01" value="25"
                     class="w-20 text-center bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-1.5 px-2 font-bold text-sm transition-all shadow-sm" />
                   <span class="text-xs font-bold text-outline">/h</span>
                 </div>
@@ -215,7 +215,7 @@
                     <button type="button" id="btn-custos-fixo"
                       class="px-2 py-1 bg-transparent text-outline-variant transition-colors">R$</button>
                   </div>
-                  <input id="input-custos-fixos" type="number" min="0" step="any" value="15"
+                  <input id="input-custos-fixos" type="number" min="0" max="1000000" step="any" value="15"
                     class="w-16 text-center bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-1.5 px-2 font-bold text-sm transition-all shadow-sm" />
                   <span id="custos-fixos-unit" class="text-sm font-bold text-outline">%</span>
                 </div>
@@ -314,7 +314,7 @@
 
             <div class="mt-5 flex items-center gap-3">
               <label for="input-preco-final" class="text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap shrink-0">Preço Final</label>
-              <input id="input-preco-final" type="number" step="0.01" min="0" placeholder="0,00" class="flex-1 min-w-0 bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-xl py-2 px-4 text-right font-bold text-on-surface transition-all shadow-sm" />
+              <input id="input-preco-final" type="number" step="0.01" min="0" max="1000000" placeholder="0,00" class="flex-1 min-w-0 bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-xl py-2 px-4 text-right font-bold text-on-surface transition-all shadow-sm" />
             </div>
           </div>
 

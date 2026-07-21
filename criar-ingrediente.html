@@ -177,7 +177,7 @@
                 </div>
                 <div class="relative">
                   <span class="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-outline text-sm pointer-events-none">R$</span>
-                  <input id="ci-preco-compra" type="number" min="0" step="0.01"
+                  <input id="ci-preco-compra" type="number" min="0" max="1000000" step="0.01"
                     class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 pl-14 pr-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
                     placeholder="8,50" />
                 </div>
@@ -191,7 +191,7 @@
                   <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Quantidade total da embalagem na unidade de medida selecionada. Ex: 395 (gramas) para uma lata de leite condensado.">help</span>
                 </div>
                 <div class="relative">
-                  <input id="ci-qtd-embalagem" type="number" min="0" step="any"
+                  <input id="ci-qtd-embalagem" type="number" min="0" max="1000000" step="any"
                     class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 pr-16 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
                     placeholder="395" />
                   <span id="ci-unidade-sufixo" class="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-bold text-outline-variant pointer-events-none">—</span>
@@ -216,7 +216,7 @@
                 </div>
                 <div class="relative">
                   <span class="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-outline text-sm pointer-events-none">R$</span>
-                  <input id="ci-preco" type="number" min="0" step="any" required
+                  <input id="ci-preco" type="number" min="0" max="1000000" step="any" required
                     class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 pl-14 pr-40 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
                     placeholder="0,00" />
                   <span id="ci-preco-calc-badge" class="hidden absolute right-4 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 bg-primary-container text-primary text-[10px] font-bold uppercase tracking-wider rounded-full px-3 py-1 pointer-events-none">
@@ -251,7 +251,7 @@
                   </label>
                   <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Quantidade atual disponível no seu estoque. Deixe em branco para não controlar estoque.">help</span>
                 </div>
-                <input id="ci-estoque-qtd" type="number" min="0" step="any"
+                <input id="ci-estoque-qtd" type="number" min="0" max="1000000" step="any"
                   class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
                   placeholder="ex: 5.5" />
               </div>
@@ -264,7 +264,7 @@
                   </label>
                   <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Quando a quantidade em estoque cair abaixo deste valor, o ingrediente será sinalizado como crítico.">help</span>
                 </div>
-                <input id="ci-estoque-alerta" type="number" min="0" step="any"
+                <input id="ci-estoque-alerta" type="number" min="0" max="1000000" step="any"
                   class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
                   placeholder="ex: 1.0" />
               </div>

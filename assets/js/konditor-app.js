@@ -1535,7 +1535,7 @@
           + '<span class="font-medium text-sm text-on-surface truncate" title="' + escHtml(ing.nome) + '">' + escHtml(ing.nome) + '</span>'
           + '</div>'
           + '<div class="col-span-3 flex items-center justify-end">'
-          + '<input type="number" min="0.001" step="any" class="ingredient-qty-input w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-xl text-right font-bold py-1.5 px-3 text-sm transition-all shadow-sm" value="' + escHtml(String(ing.quantidade || '')) + '" placeholder="Qtd." />'
+          + '<input type="number" min="0.001" max="1000000" step="any" class="ingredient-qty-input w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-xl text-right font-bold py-1.5 px-3 text-sm transition-all shadow-sm" value="' + escHtml(String(ing.quantidade || '')) + '" placeholder="Qtd." />'
           + '</div>'
           + '<div class="col-span-4 flex items-center">'
           + '<span class="ml-2 text-sm font-bold text-outline uppercase">' + escHtml(ing.unidadeSimbolo) + '</span>'
@@ -3119,9 +3119,35 @@
   }
 
   /* ─────────────────────────────────────────────
+     Number limits — clamp de inputs numéricos ao sair do campo
+     Contém valores exorbitantes/digitação equivocada nos formulários.
+     Usa delegação (focusout borbulha) para cobrir inputs adicionados
+     dinamicamente (ex: linhas de ingrediente da receita).
+  ───────────────────────────────────────────── */
+  function initNumberLimits() {
+    document.addEventListener('focusout', function (e) {
+      var el = e.target;
+      if (!el || el.tagName !== 'INPUT' || el.type !== 'number' || el.value === '') return;
+      var val = parseFloat(el.value);
+      if (isNaN(val)) return;
+      var max = el.getAttribute('max');
+      var min = el.getAttribute('min');
+      var novo = null;
+      if (max !== null && val > parseFloat(max)) novo = max;
+      else if (min !== null && val < parseFloat(min)) novo = min;
+      if (novo !== null) {
+        el.value = novo;
+        /* dispara input para recalcular custos/prévias que dependem do campo */
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+  }
+
+  /* ─────────────────────────────────────────────
      Init
   ───────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', function () {
+    initNumberLimits();
     initSidebarHtml();
     initSidebar();
     initMobileNav();
