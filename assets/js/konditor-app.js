@@ -2365,7 +2365,6 @@
      Ingredientes — ingredientes.html
      GET /ingredientes/categorias         → chips de filtro
      GET /ingredientes/estoque/resumo     → painéis de resumo
-     GET /ingredientes/estoque/alertas-mercado → alerta de mercado
      GET /ingredientes/estoque            → grid paginado
   ───────────────────────────────────────────── */
   function initIngredientes() {
@@ -2381,9 +2380,6 @@
     var carregando     = false;
 
     /* ── DOM refs ── */
-    var alertaCount     = document.getElementById('alerta-count');
-    var alertaLista     = document.getElementById('alerta-lista');
-    var alertaTimestamp = document.getElementById('alerta-timestamp');
     var statTotal       = document.getElementById('stat-total-ingredientes');
     var statCritico     = document.getElementById('stat-estoque-critico');
     var filterGroup     = document.getElementById('filter-chips-ingredientes');
@@ -2556,38 +2552,6 @@
         });
     }
 
-    /* ── Render alerta de mercado ── */
-    function renderAlertaMercado(alertas) {
-      if (!alertaLista || !alertas || !alertas.length) return;
-      var total = alertas.length;
-      var top   = alertas.slice(0, 3);
-      if (alertaCount) alertaCount.textContent = total + ' Atualiza\u00e7\u00e3o' + (total !== 1 ? '\u00f5es' : '');
-      alertaLista.innerHTML = top.map(function (a) {
-        var isAlta  = a.tipo === 'alta';
-        var varCls  = isAlta ? 'text-error' : 'text-secondary';
-        var varStr  = isAlta
-          ? '+' + Number(a.variacaoPercent).toFixed(1) + '%'
-          : '\u2212' + Math.abs(Number(a.variacaoPercent)).toFixed(1) + '%';
-        /* precoAnterior → precoAtual */
-        var priceRange = '';
-        if (a.precoAnterior != null && a.precoAtual != null) {
-          var fmtAnt = Number(a.precoAnterior).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-          var fmtAt  = Number(a.precoAtual).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-          priceRange = '<span class="text-[10px] text-outline-variant block">' + fmtAnt + ' \u2192 ' + fmtAt + '</span>';
-        }
-        return '<li class="flex justify-between items-start gap-2 text-sm">'
-          + '<span class="text-on-surface-variant leading-snug">' + escHtml(a.ingredienteNome) + priceRange + '</span>'
-          + '<span class="font-bold ' + varCls + ' shrink-0">' + varStr + '</span>'
-          + '</li>';
-      }).join('');
-      if (alertaTimestamp && alertas.length) {
-        /* timestamp from the most recently changed alert across all */
-        var latest     = alertas.reduce(function (m, a) { return new Date(a.dataAlteracao) > new Date(m.dataAlteracao) ? a : m; }, alertas[0]);
-        var horasAtras = Math.max(1, Math.round((Date.now() - new Date(latest.dataAlteracao)) / 3600000));
-        alertaTimestamp.textContent = 'Atualizado h\u00e1 ' + horasAtras + (horasAtras === 1 ? ' hora' : ' horas');
-      }
-    }
-
     /* ── Wire all chip clicks (called after DOM chips are ready) ── */
     function wireChips() {
       if (!filterGroup) return;
@@ -2657,20 +2621,17 @@
       Promise.all([
         apiFetch(API + '/ingredientes/categorias').then(function (r) { return r.ok ? r.json() : []; }),
         apiFetch(API + '/ingredientes/estoque/resumo').then(function (r) { return r.ok ? r.json() : null; }),
-        apiFetch(API + '/ingredientes/estoque/alertas-mercado').then(function (r) { return r.ok ? r.json() : []; }),
         apiFetch(API + '/ingredientes/estoque?pagina=0&tamanho=20').then(function (r) { return r.ok ? r.json() : null; })
       ]).then(function (results) {
         var categorias  = results[0];
         var resumo      = results[1];
-        var alertas     = results[2];
-        var estoqueData = results[3];
+        var estoqueData = results[2];
 
         if (resumo) {
           if (statTotal)   statTotal.textContent   = resumo.totalIngredientes;
           if (statCritico) statCritico.textContent = resumo.estoqueCritico;
         }
 
-        renderAlertaMercado(alertas);
         renderCategorias(categorias);
 
         if (estoqueData) {

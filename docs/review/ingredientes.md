@@ -1,6 +1,8 @@
 # Review — `ingredientes.html` (Gestão de Ingredientes)
 
-**Rota:** `/ingredientes.html` · **Tipo:** app (logada) · **Objetivo:** estoque de ingredientes, alertas de mercado e grid.
+**Rota:** `/ingredientes.html` · **Tipo:** app (logada) · **Objetivo:** estoque de ingredientes (resumo + grid).
+
+> Nota (2026-07-21): a feature "Alerta de Mercado" foi removida do produto. Bullets abaixo que a mencionam são anteriores à remoção.
 
 Legenda: 🔴 Alta · 🟡 Média · 🟢 Baixa
 
