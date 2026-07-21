@@ -414,6 +414,50 @@
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  /* ─────────────────────────────────────────────
+     Máscara de moeda (R$) — campos de preço com 2 casas
+     Baseada em centavos: o cliente digita só números e os centavos são
+     posicionados automaticamente (ex: "1234" → "12,34"), sem digitar vírgula.
+     (Não inclui o custo/unidade do ingrediente, que precisa de mais casas.)
+  ───────────────────────────────────────────── */
+  var MONEY_MAX = 1000000; // espelha o limite do backend (LimitesValores.MAX_VALOR)
+  var MONEY_INPUT_IDS = ['ci-preco-compra', 'input-valor-hora', 'input-preco-final', 'edit-preco-final'];
+
+  /** "1.234,56" (ou "12,34", "8,5") → 1234.56. Retorna NaN se não houver dígitos. */
+  function parseMoney(str) {
+    if (str == null) return NaN;
+    var digits = String(str).replace(/\D/g, '');
+    if (digits === '') return NaN;
+    return parseInt(digits, 10) / 100;
+  }
+
+  /** 1234.56 → "1.234,56" (sem o símbolo R$, que já fica ao lado do input). */
+  function formatMoney(num) {
+    if (num == null || isNaN(num)) return '';
+    return Number(num).toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  /** Reformata o valor do input como moeda, aplicando o teto MONEY_MAX. */
+  function aplicarMascaraMoeda(el) {
+    var n = parseMoney(el.value);
+    if (isNaN(n)) { el.value = ''; return; }
+    if (n > MONEY_MAX) n = MONEY_MAX;
+    el.value = formatMoney(n);
+  }
+
+  /** Liga a máscara nos campos de preço da página (formata valor inicial + on input). */
+  function initMoneyMasks() {
+    MONEY_INPUT_IDS.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (el.value.trim() !== '') aplicarMascaraMoeda(el);
+      el.addEventListener('input', function () { aplicarMascaraMoeda(el); });
+    });
+  }
+
   function filterRecipeCards(categoria) {
     var grid = document.getElementById('recipe-grid');
     if (!grid) return;
@@ -1677,7 +1721,7 @@
     [inpValorHora, inpCustFixos, inpMargemLucro, rendInput, tempoInput].forEach(function (el) {
       if (el) el.addEventListener('input', function () {
         /* Update display badges */
-        if (inpValorHora && pctMaoDisplay) pctMaoDisplay.textContent = 'R$' + (parseFloat(inpValorHora.value) || 0).toFixed(2) + '/h';
+        if (inpValorHora && pctMaoDisplay) pctMaoDisplay.textContent = 'R$' + (parseMoney(inpValorHora.value) || 0).toFixed(2) + '/h';
         if (inpCustFixos && pctFixDisplay) {
           pctFixDisplay.textContent = state.custosFixosTipo === 'percentual'
             ? (parseFloat(inpCustFixos.value) || 0) + '%'
@@ -1701,7 +1745,7 @@
 
       var rendQtd      = parseFloat(rendInput ? rendInput.value : '') || 1;
       var rendUndId    = rendUndSelect && rendUndSelect.value ? rendUndSelect.value : null;
-      var valorHora    = parseFloat(inpValorHora ? inpValorHora.value : '') || 0;
+      var valorHora    = parseMoney(inpValorHora ? inpValorHora.value : '') || 0;
       var custFixosVal = parseFloat(inpCustFixos ? inpCustFixos.value : '') || 0;
       var margem       = pctVal(inpMargemLucro, 30);
       var tempoMin     = parseTempoMinutos();
@@ -1748,7 +1792,7 @@
       if (elPrecoSug)  elPrecoSug.textContent  = fmtBRL(data.precoSugerido);
       /* Auto-preenche precoFinal se o cliente não editou manualmente */
       if (!state.precoFinalManual && data.precoSugerido != null && elPrecoFinal) {
-        elPrecoFinal.value = Number(data.precoSugerido).toFixed(2);
+        elPrecoFinal.value = formatMoney(data.precoSugerido);
       }
       /* Preço por unidade na linha abaixo */
       var elPrecoUnid = document.getElementById('val-preco-por-unidade');
@@ -1761,7 +1805,7 @@
       var margem = Math.round(data.margemUtilizada || data.margem || 0);
       if (elMargem) elMargem.textContent = margem + '%';
       /* Mão de obra badge */
-      if (pctMaoDisplay && inpValorHora) pctMaoDisplay.textContent = 'R$' + (parseFloat(inpValorHora.value) || 0).toFixed(2) + '/h';
+      if (pctMaoDisplay && inpValorHora) pctMaoDisplay.textContent = 'R$' + (parseMoney(inpValorHora.value) || 0).toFixed(2) + '/h';
       /* Custos fixos badge */
       if (pctFixDisplay && inpCustFixos) {
         pctFixDisplay.textContent = state.custosFixosTipo === 'percentual'
@@ -1824,7 +1868,7 @@
 
     function buildPayload(status) {
       var rendQtd  = parseFloat(rendInput ? rendInput.value : '') || 1;
-      var precoFin = elPrecoFinal ? parseFloat(elPrecoFinal.value) : NaN;
+      var precoFin = elPrecoFinal ? parseMoney(elPrecoFinal.value) : NaN;
       var cd = state.calcData;
       var payload = {
         nome:                nomInput  ? nomInput.value.trim() : '',
@@ -1841,7 +1885,7 @@
         notas:      notasInput ? notasInput.value.trim() : '',
         precoFinal: isNaN(precoFin) || precoFin < 0 ? 0 : precoFin,
         /* Parâmetros de configuração de cálculo — sempre enviados */
-        maoDeObraValorHora: cd && cd.maoDeObraValorHora != null ? cd.maoDeObraValorHora : (parseFloat(inpValorHora ? inpValorHora.value : '') || 0),
+        maoDeObraValorHora: cd && cd.maoDeObraValorHora != null ? cd.maoDeObraValorHora : (parseMoney(inpValorHora ? inpValorHora.value : '') || 0),
         custosFixosValor:   cd && cd.custosFixosValor   != null ? cd.custosFixosValor   : (parseFloat(inpCustFixos ? inpCustFixos.value : '') || 0),
         custosFixosTipo:    (cd && cd.custosFixosTipo)  || state.custosFixosTipo,
         margemDesejada:     cd && cd.margemUtilizada    != null ? cd.margemUtilizada     : pctVal(inpMargemLucro, 30)
@@ -2053,7 +2097,7 @@
     /* ── Calculadora por embalagem ── */
     function calcularCusto() {
       if (!precoCompraInput || !qtdEmbalagemInput || !precoInput) return;
-      var preco = parseFloat(precoCompraInput.value);
+      var preco = parseMoney(precoCompraInput.value);
       var qtd   = parseFloat(qtdEmbalagemInput.value);
       if (preco > 0 && qtd > 0) {
         precoInput.value = parseFloat((preco / qtd).toFixed(6));
@@ -2882,7 +2926,7 @@
     /* ── Build PUT payload ── */
     function buildPayload() {
       var rendQtd  = parseFloat(rendInput ? rendInput.value : '') || 1;
-      var precoFin = precoFinalInput ? parseFloat(precoFinalInput.value) : NaN;
+      var precoFin = precoFinalInput ? parseMoney(precoFinalInput.value) : NaN;
       var tempoMin = tempoInput && tempoInput.value ? parseInt(tempoInput.value) || 0 : 0;
       var cd = state.calcData;
       var payload = {
@@ -3063,7 +3107,7 @@
           if (rendInput)      rendInput.value      = data.rendimentoQuantidade != null ? data.rendimentoQuantidade : '';
           if (tempoInput)     tempoInput.value     = data.tempoPreparoMinutos != null  ? data.tempoPreparoMinutos  : '';
           if (notasInput)     notasInput.value     = data.notas           || '';
-          if (precoFinalInput) precoFinalInput.value = data.precoFinal != null ? data.precoFinal : '';
+          if (precoFinalInput) precoFinalInput.value = data.precoFinal != null ? formatMoney(data.precoFinal) : '';
           if (catSelect && data.categoriaId) catSelect.value = data.categoriaId;
           if (rendUndSelect && data.rendimentoUnidadeId) {
             rendUndSelect.value = data.rendimentoUnidadeId;
@@ -3148,6 +3192,7 @@
   ───────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', function () {
     initNumberLimits();
+    initMoneyMasks();
     initSidebarHtml();
     initSidebar();
     initMobileNav();
