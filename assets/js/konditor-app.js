@@ -2428,6 +2428,22 @@
     var statCritico     = document.getElementById('stat-estoque-critico');
     var filterGroup     = document.getElementById('filter-chips-ingredientes');
 
+    /* ── Card → tela de edição (criar-ingrediente.html?id=) ──
+       Delegação no grid: sobrevive a re-renders e à paginação. */
+    function abrirEdicao(card) {
+      var id = card && card.getAttribute('data-id');
+      if (id) window.location.href = 'criar-ingrediente.html?id=' + encodeURIComponent(id);
+    }
+    grid.addEventListener('click', function (e) {
+      var card = e.target.closest('[data-id]');
+      if (card && grid.contains(card)) abrirEdicao(card);
+    });
+    grid.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var card = e.target.closest('[data-id]');
+      if (card && grid.contains(card)) { e.preventDefault(); abrirEdicao(card); }
+    });
+
     /* ── Chip classes ── */
     var CHIP_ACTIVE   = ['bg-primary', 'text-on-primary'];
     var CHIP_INACTIVE = ['bg-surface-container', 'text-on-surface-variant', 'hover:bg-surface-container-high'];
@@ -2507,6 +2523,8 @@
 
       return '<div class="rounded-2xl border-l-4 ' + accentCls + ' ' + wrapCls + ' transition-colors duration-200 cursor-pointer px-5 py-4 flex items-center gap-4"'
         + ' data-id="' + escHtml(item.id || '') + '"'
+        + ' role="button" tabindex="0"'
+        + ' aria-label="Editar ' + escHtml(item.nome) + '"'
         + ' data-categoria-id="' + escHtml(item.categoriaId || '') + '">'
         /* Icon */
         + '<div class="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ' + iconBaseCl + '"' + iconStyle + '>'
