@@ -204,7 +204,7 @@
         output.textContent = input.value + '%';
         var pct = ((input.value - input.min) / (input.max - input.min)) * 100;
         input.style.backgroundImage =
-          'linear-gradient(to right, #bd0050 ' + pct + '%, #e6e8ec ' + pct + '%)';
+          'linear-gradient(to right, #e01466 ' + pct + '%, #e6e8ec ' + pct + '%)';
       }
 
       input.addEventListener('input', sync);
@@ -1131,7 +1131,7 @@
       /* Track fill */
       if (sliderEl) {
         var pct = ((pctVal - Number(sliderEl.min)) / (Number(sliderEl.max) - Number(sliderEl.min))) * 100;
-        sliderEl.style.backgroundImage = 'linear-gradient(to right, #bd0050 ' + pct + '%, #e6e8ec ' + pct + '%)';
+        sliderEl.style.backgroundImage = 'linear-gradient(to right, #e01466 ' + pct + '%, #e6e8ec ' + pct + '%)';
       }
     }
 
