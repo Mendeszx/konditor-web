@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Controle o estoque de ingredientes e monitore variacoes de preco em tempo real." />
+  <meta name="description" content="Cadastre e gerencie os ingredientes do seu ateliê, com custos sempre atualizados." />
   <title>Konditor | Ingredientes</title>
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="color-scheme" content="light" />
@@ -41,20 +41,15 @@
       </section>
 
       <!-- Stats -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
-        <div class="bg-primary-container/20 rounded-3xl p-6 flex flex-col justify-between">
-          <div class="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+      <div class="mb-10">
+        <div class="inline-flex items-center gap-4 bg-primary-container/20 rounded-3xl px-6 py-4">
+          <div class="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
             <span class="material-symbols-outlined">inventory_2</span>
           </div>
-          <p id="stat-total-ingredientes" class="text-5xl font-extrabold font-headline text-primary">—</p>
-          <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant mt-2">Ingredientes Catalogados</p>
-        </div>
-        <div class="bg-surface-container-highest rounded-3xl p-6 flex flex-col justify-between">
-          <div class="w-10 h-10 rounded-2xl bg-error/10 flex items-center justify-center text-error mb-4">
-            <span class="material-symbols-outlined">warning</span>
+          <div>
+            <p id="stat-total-ingredientes" class="text-3xl font-extrabold font-headline text-primary leading-none">—</p>
+            <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant mt-1">Ingredientes Catalogados</p>
           </div>
-          <p id="stat-estoque-critico" class="text-5xl font-extrabold font-headline text-error">—</p>
-          <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant mt-2">Estoque Crítico</p>
         </div>
       </div>
 

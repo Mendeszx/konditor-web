@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Cadastre novos ingredientes no seu estoque com custo, unidade e alertas configurados." />
+  <meta name="description" content="Cadastre novos ingredientes do seu ateliê com custo e unidade." />
   <title>Konditor | Novo Ingrediente</title>
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="color-scheme" content="light" />
@@ -42,7 +42,7 @@
             Novo <span class="text-primary italic">Ingrediente</span>
           </h2>
           <p class="text-on-surface-variant max-w-md font-body text-lg">
-            Cadastre a matéria-prima com custo, estoque e alertas. Receitas já refletem o novo preço automaticamente.
+            Cadastre a matéria-prima com custo e unidade. Receitas já refletem o novo preço automaticamente.
           </p>
         </div>
         <div class="flex gap-4">
@@ -229,48 +229,6 @@
             </div>
           </div>
 
-          <!-- Controle de Estoque -->
-          <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
-            <div class="flex items-center gap-3 mb-6">
-              <h3 class="text-base font-bold font-headline uppercase tracking-widest text-outline">Controle de Estoque</h3>
-              <div class="flex items-center gap-1">
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input id="ci-estoque-toggle" type="checkbox" class="sr-only peer" checked />
-                  <div class="w-10 h-5 bg-outline-variant/40 rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
-                </label>
-                <span class="text-xs text-on-surface-variant">Ativo</span>
-              </div>
-            </div>
-
-            <div id="ci-estoque-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              <!-- Quantidade em Estoque -->
-              <div class="space-y-2">
-                <div class="flex items-center gap-1 ml-2">
-                  <label for="ci-estoque-qtd" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">
-                    Quantidade em Estoque
-                  </label>
-                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Quantidade atual disponível no seu estoque. Deixe em branco para não controlar estoque.">help</span>
-                </div>
-                <input id="ci-estoque-qtd" type="number" min="0" max="1000000" step="any"
-                  class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
-                  placeholder="ex: 5.5" />
-              </div>
-
-              <!-- Alerta Mínimo -->
-              <div class="space-y-2">
-                <div class="flex items-center gap-1 ml-2">
-                  <label for="ci-estoque-alerta" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label">
-                    Alerta de Estoque Mínimo
-                  </label>
-                  <span class="tooltip-trigger material-symbols-outlined text-sm text-outline-variant cursor-help" data-tooltip="Quando a quantidade em estoque cair abaixo deste valor, o ingrediente será sinalizado como crítico.">help</span>
-                </div>
-                <input id="ci-estoque-alerta" type="number" min="0" max="1000000" step="any"
-                  class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
-                  placeholder="ex: 1.0" />
-              </div>
-            </div>
-          </div>
-
           <!-- Notas -->
           <div class="bg-surface-container-lowest rounded-3xl p-8 border-2 border-outline-variant/40 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
             <div class="flex items-center gap-1 mb-4">
@@ -295,7 +253,7 @@
               </div>
               <div>
                 <h3 class="font-headline font-extrabold text-xl tracking-tight">Pré-visualização</h3>
-                <p class="text-[10px] uppercase font-bold text-outline">Como aparece no estoque</p>
+                <p class="text-[10px] uppercase font-bold text-outline">Como aparece na lista</p>
               </div>
             </div>
 
@@ -317,9 +275,6 @@
                   <span id="ci-prev-preco">—</span>
                   <span id="ci-prev-unidade" class="text-[10px] font-normal text-outline-variant"></span>
                 </p>
-                <div class="flex items-center justify-end gap-1.5 mt-0.5">
-                  <span id="ci-prev-estoque" class="hidden text-xs text-on-surface-variant"></span>
-                </div>
               </div>
             </div>
 
@@ -335,14 +290,6 @@
                 <span class="text-sm text-on-surface-variant">Unidade</span>
                 <span id="ci-prev-und" class="font-bold text-on-surface text-sm">—</span>
               </div>
-              <div class="flex justify-between items-center p-3 bg-surface-container-low rounded-2xl">
-                <span class="text-sm text-on-surface-variant">Estoque atual</span>
-                <span id="ci-prev-estoque-val" class="font-bold text-on-surface text-sm">—</span>
-              </div>
-              <div class="flex justify-between items-center p-3 bg-surface-container-low rounded-2xl">
-                <span class="text-sm text-on-surface-variant">Alerta mínimo</span>
-                <span id="ci-prev-alerta-val" class="font-bold text-on-surface text-sm">—</span>
-              </div>
             </div>
           </div>
 
@@ -353,7 +300,7 @@
               <p class="text-xs font-bold uppercase tracking-wider text-primary">Dica Rápida</p>
             </div>
             <p class="text-sm text-on-surface-variant leading-relaxed">
-              Configure o <strong class="text-on-surface">Alerta Mínimo</strong> para que o sistema avise quando o estoque estiver crítico — e suas receitas sempre terão custo calculado com o preço mais atualizado.
+              Informe o <strong class="text-on-surface">custo por unidade</strong> com precisão — todas as receitas que usam este ingrediente são recalculadas automaticamente com o preço mais atualizado.
             </p>
           </div>
 

@@ -2016,10 +2016,6 @@
     var qtdEmbalagemInput = document.getElementById('ci-qtd-embalagem');
     var precoCalcBadge    = document.getElementById('ci-preco-calc-badge');
     var unidadeSufixo     = document.getElementById('ci-unidade-sufixo');
-    var estoqueToggle  = document.getElementById('ci-estoque-toggle');
-    var estoqueFields  = document.getElementById('ci-estoque-fields');
-    var estoqueQtd     = document.getElementById('ci-estoque-qtd');
-    var estoqueAlerta  = document.getElementById('ci-estoque-alerta');
     var notasInput     = document.getElementById('ci-notas');
     var btnSalvar      = document.getElementById('btn-salvar-ingrediente');
     var tooltipBox     = document.getElementById('ci-tooltip-box');
@@ -2029,11 +2025,8 @@
     var prevCodigo     = document.getElementById('ci-prev-codigo');
     var prevPreco      = document.getElementById('ci-prev-preco');
     var prevUnidade    = document.getElementById('ci-prev-unidade');
-    var prevEstoque    = document.getElementById('ci-prev-estoque');
     var prevCat        = document.getElementById('ci-prev-cat');
     var prevUnd        = document.getElementById('ci-prev-und');
-    var prevEstoqueVal = document.getElementById('ci-prev-estoque-val');
-    var prevAlertaVal  = document.getElementById('ci-prev-alerta-val');
 
     /* ── Toast ── */
     function showToast(msg, tipo) {
@@ -2079,21 +2072,6 @@
       });
     });
 
-    /* ── Estoque toggle ── */
-    if (estoqueToggle) {
-      estoqueToggle.addEventListener('change', function () {
-        if (estoqueFields) {
-          estoqueFields.style.opacity  = estoqueToggle.checked ? '' : '0.4';
-          estoqueFields.style.pointerEvents = estoqueToggle.checked ? '' : 'none';
-        }
-        if (!estoqueToggle.checked) {
-          if (estoqueQtd)    estoqueQtd.value    = '';
-          if (estoqueAlerta) estoqueAlerta.value = '';
-        }
-        atualizarPreview();
-      });
-    }
-
     /* ── Calculadora por embalagem ── */
     function calcularCusto() {
       if (!precoCompraInput || !qtdEmbalagemInput || !precoInput) return;
@@ -2121,8 +2099,6 @@
       var nome    = nomeInput   ? nomeInput.value.trim()   : '';
       var codigo  = codigoInput ? codigoInput.value.trim() : '';
       var preco   = precoInput  ? parseFloat(precoInput.value) : NaN;
-      var qtd     = estoqueQtd  ? parseFloat(estoqueQtd.value) : NaN;
-      var alerta  = estoqueAlerta ? parseFloat(estoqueAlerta.value) : NaN;
 
       /* Name */
       if (prevNome) prevNome.textContent = nome || 'Nome do ingrediente';
@@ -2159,32 +2135,10 @@
         var catOpt = catSelect.options[catSelect.selectedIndex];
         prevCat.textContent = (catOpt && catOpt.value) ? catOpt.text : '\u2014';
       }
-
-      /* Stock */
-      var undSym = (undSelect && undSelect.options[undSelect.selectedIndex])
-        ? (undSelect.options[undSelect.selectedIndex].dataset.simbolo || '') : '';
-      var qtdStr = (!isNaN(qtd) && estoqueToggle && estoqueToggle.checked)
-        ? qtd.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) + (undSym ? '\u00a0' + undSym : '')
-        : '\u2014';
-      var alertaStr = (!isNaN(alerta) && estoqueToggle && estoqueToggle.checked)
-        ? alerta.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) + (undSym ? '\u00a0' + undSym : '')
-        : '\u2014';
-      if (prevEstoqueVal) prevEstoqueVal.textContent = qtdStr;
-      if (prevAlertaVal)  prevAlertaVal.textContent  = alertaStr;
-
-      /* Card estoque badge */
-      if (prevEstoque) {
-        if (!isNaN(qtd) && estoqueToggle && estoqueToggle.checked) {
-          prevEstoque.textContent = qtdStr;
-          prevEstoque.classList.remove('hidden');
-        } else {
-          prevEstoque.classList.add('hidden');
-        }
-      }
     }
 
     /* Wire live preview listeners */
-    [nomeInput, codigoInput, precoInput, estoqueQtd, estoqueAlerta].forEach(function (el) {
+    [nomeInput, codigoInput, precoInput].forEach(function (el) {
       if (el) el.addEventListener('input', atualizarPreview);
     });
     if (catSelect)  catSelect.addEventListener('change',  atualizarPreview);
@@ -2245,12 +2199,6 @@
       if (desc)    payload.descricao  = desc;
       if (notas)   payload.notas      = notas;
       if (catId)   payload.categoriaId = catId;
-      if (estoqueToggle && estoqueToggle.checked) {
-        var qtd    = estoqueQtd    ? parseFloat(estoqueQtd.value)    : NaN;
-        var alerta = estoqueAlerta ? parseFloat(estoqueAlerta.value) : NaN;
-        if (!isNaN(qtd))    payload.estoqueQuantidade   = qtd;
-        if (!isNaN(alerta)) payload.estoqueAlertaMinimo = alerta;
-      }
       return payload;
     }
 
@@ -2376,14 +2324,6 @@
               if (precoInput)   precoInput.value   = data.precoPorUnidade != null ? data.precoPorUnidade : '';
               if (catSelect && data.categoriaId)  catSelect.value  = data.categoriaId;
               if (undSelect && data.unidadeId)    undSelect.value  = data.unidadeId;
-              var temEstoque = data.estoqueQuantidade != null || data.estoqueAlertaMinimo != null;
-              if (estoqueToggle) estoqueToggle.checked = temEstoque;
-              if (estoqueFields) {
-                estoqueFields.style.opacity      = temEstoque ? '' : '0.4';
-                estoqueFields.style.pointerEvents = temEstoque ? '' : 'none';
-              }
-              if (estoqueQtd    && data.estoqueQuantidade   != null) estoqueQtd.value    = data.estoqueQuantidade;
-              if (estoqueAlerta && data.estoqueAlertaMinimo != null) estoqueAlerta.value = data.estoqueAlertaMinimo;
               /* Update page title for edit mode */
               var h2 = document.querySelector('h2.font-headline');
               if (h2) h2.innerHTML = 'Editar <span class="text-primary italic">Ingrediente</span>';
@@ -2425,7 +2365,6 @@
 
     /* ── DOM refs ── */
     var statTotal       = document.getElementById('stat-total-ingredientes');
-    var statCritico     = document.getElementById('stat-estoque-critico');
     var filterGroup     = document.getElementById('filter-chips-ingredientes');
 
     /* ── Card → tela de edição (criar-ingrediente.html?id=) ──
@@ -2460,15 +2399,6 @@
     var _catCorMap = {};
 
     function buildIngredienteCard(item) {
-      var isCritico = item.estoqueCritico;
-      var priceCls  = isCritico ? 'text-error' : 'text-secondary';
-
-      /* Left accent color */
-      var accentCls = isCritico ? 'border-error' : 'border-primary/20';
-      var wrapCls   = isCritico
-        ? 'bg-error/[0.03] hover:bg-error/[0.06]'
-        : 'bg-surface-container-lowest hover:bg-surface-container-low';
-
       /* Category pill — tinted with cor from API if available */
       var catPill = '';
       if (item.categoria) {
@@ -2481,11 +2411,6 @@
       /* Code */
       var codeHtml = item.codigo
         ? '<span class="text-[10px] font-bold uppercase tracking-wider text-outline-variant">' + escHtml(item.codigo) + '</span>'
-        : '';
-
-      /* Critical badge */
-      var critBadge = isCritico
-        ? '<span class="flex items-center gap-0.5 text-[10px] font-bold text-error"><span class="material-symbols-outlined" style="font-size:0.85rem">warning</span>Cr\u00edtico</span>'
         : '';
 
       /* Price */
@@ -2506,46 +2431,35 @@
           + '</span>';
       }
 
-      /* Stock */
-      var estoqueHtml = '';
-      if (item.estoque !== null && item.estoque !== undefined) {
-        var estoqueNum = Number(item.estoque);
-        var estoqueCls = isCritico ? 'text-error font-semibold' : 'text-on-surface-variant';
-        estoqueHtml = '<span class="text-xs ' + estoqueCls + '">'
-          + estoqueNum.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) + (item.unidade ? '\u00a0' + escHtml(item.unidade) : '')
-          + (isCritico ? '\u00a0\u26a0' : '') + '</span>';
-      }
-
-      /* Icon tinted with category color when not critical */
-      var catCor2    = (!isCritico && item.categoriaId) ? (_catCorMap[item.categoriaId] || null) : null;
+      /* Icon tinted with category color */
+      var catCor2    = item.categoriaId ? (_catCorMap[item.categoriaId] || null) : null;
       var iconStyle  = catCor2 ? ' style="background:' + escHtml(catCor2) + '18;color:' + escHtml(catCor2) + '"' : '';
-      var iconBaseCl = isCritico ? 'bg-error/10 text-error' : (catCor2 ? '' : 'bg-secondary/10 text-secondary');
+      var iconBaseCl = catCor2 ? '' : 'bg-secondary/10 text-secondary';
 
-      return '<div class="rounded-2xl border-l-4 ' + accentCls + ' ' + wrapCls + ' transition-colors duration-200 cursor-pointer px-5 py-4 flex items-center gap-4"'
+      return '<div class="rounded-2xl border-l-4 border-primary/20 bg-surface-container-lowest hover:bg-surface-container-low transition-colors duration-200 cursor-pointer px-5 py-4 flex items-center gap-4"'
         + ' data-id="' + escHtml(item.id || '') + '"'
         + ' role="button" tabindex="0"'
         + ' aria-label="Editar ' + escHtml(item.nome) + '"'
         + ' data-categoria-id="' + escHtml(item.categoriaId || '') + '">'
         /* Icon */
         + '<div class="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ' + iconBaseCl + '"' + iconStyle + '>'
-        + '<span class="material-symbols-outlined" style="font-size:1.25rem">'
-        + (isCritico ? 'warning' : 'grocery') + '</span></div>'
+        + '<span class="material-symbols-outlined" style="font-size:1.25rem">grocery</span></div>'
         /* Main info */
         + '<div class="flex-1 min-w-0">'
         + '<div class="flex items-center gap-2 flex-wrap">'
         + '<p class="font-headline font-bold text-sm text-on-surface truncate">' + escHtml(item.nome) + '</p>'
-        + catPill + critBadge
+        + catPill
         + '</div>'
         + '<div class="flex items-center gap-2 mt-0.5 flex-wrap">'
         + codeHtml
-        + (codeHtml && item.descricao ? '<span class="text-outline-variant text-[10px]">·</span>' : '')
+        + (codeHtml && item.descricao ? '<span class="text-outline-variant text-[10px]">\u00b7</span>' : '')
         + (item.descricao ? '<span class="text-[10px] text-on-surface-variant truncate max-w-[200px]">' + escHtml(item.descricao) + '</span>' : '')
         + '</div>'
         + '</div>'
-        /* Right: price + stock */
+        /* Right: price + variation */
         + '<div class="text-right shrink-0">'
-        + '<p class="font-headline font-extrabold text-base ' + priceCls + '">' + precoStr + '<span class="text-[10px] font-normal text-outline-variant">' + unidadeStr + '</span></p>'
-        + '<div class="flex items-center justify-end gap-1.5 mt-0.5">' + estoqueHtml + varPill + '</div>'
+        + '<p class="font-headline font-extrabold text-base text-secondary">' + precoStr + '<span class="text-[10px] font-normal text-outline-variant">' + unidadeStr + '</span></p>'
+        + '<div class="flex items-center justify-end gap-1.5 mt-0.5">' + varPill + '</div>'
         + '</div>'
         + '</div>';
     }
@@ -2689,10 +2603,7 @@
         var resumo      = results[1];
         var estoqueData = results[2];
 
-        if (resumo) {
-          if (statTotal)   statTotal.textContent   = resumo.totalIngredientes;
-          if (statCritico) statCritico.textContent = resumo.estoqueCritico;
-        }
+        if (resumo && statTotal) statTotal.textContent = resumo.totalIngredientes;
 
         renderCategorias(categorias);
 
