@@ -16,7 +16,7 @@
   top: -48px;
   left: 1rem;
   z-index: 9999;
-  background: #bd0050;
+  background: #e01466;
   color: #fff;
   padding: 0.5rem 1rem;
   border-radius: 0 0 0.5rem 0.5rem;
@@ -39,7 +39,7 @@
 }
 
 /* ── Gradient & Glass utilities ── */
-.berry-gradient  { background: linear-gradient(135deg, #bd0050 0%, #ffa9b9 100%); }
+.berry-gradient  { background: linear-gradient(135deg, #e01466 0%, #ffa9b9 100%); }
 .glass,
 .glass-nav,
 .glass-card,
@@ -64,7 +64,7 @@
 
 /* ── Focus visible — consistent across all browsers ── */
 :focus-visible {
-  outline: 2px solid #bd0050;
+  outline: 2px solid #e01466;
   outline-offset: 3px;
   border-radius: 4px;
 }
@@ -80,7 +80,7 @@ input[type="range"] {
   width: 100%;
   height: 6px;
   border-radius: 9999px;
-  background: linear-gradient(to right, #bd0050 65%, #e6e8ec 65%);
+  background: linear-gradient(to right, #e01466 65%, #e6e8ec 65%);
   outline: none;
   cursor: pointer;
 }
@@ -91,26 +91,26 @@ input[type="range"]::-webkit-slider-thumb {
   height: 20px;
   border-radius: 50%;
   background: #ffffff;
-  border: 3px solid #bd0050;
-  box-shadow: 0 2px 8px rgba(189, 0, 80, 0.3);
+  border: 3px solid #e01466;
+  box-shadow: 0 2px 8px rgba(224, 20, 102, 0.3);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 input[type="range"]::-webkit-slider-thumb:hover {
   transform: scale(1.15);
-  box-shadow: 0 4px 12px rgba(189, 0, 80, 0.4);
+  box-shadow: 0 4px 12px rgba(224, 20, 102, 0.4);
 }
 input[type="range"]::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
   background: #ffffff;
-  border: 3px solid #bd0050;
-  box-shadow: 0 2px 8px rgba(189, 0, 80, 0.3);
+  border: 3px solid #e01466;
+  box-shadow: 0 2px 8px rgba(224, 20, 102, 0.3);
   cursor: pointer;
 }
 input[type="range"]:focus-visible {
-  outline: 2px solid #bd0050;
+  outline: 2px solid #e01466;
   outline-offset: 3px;
 }
 
@@ -152,7 +152,7 @@ input[type="range"]:focus-visible {
   width: 6px;
   height: 6px;
   min-width: 6px;
-  background: #bd0050;
+  background: #e01466;
   border-radius: 50%;
   margin-top: 0.525rem;
   flex-shrink: 0;
@@ -173,10 +173,10 @@ img {
 
 /* ── Display P3: normalise primary colour on wide-gamut iOS / Mac screens ─────────
    Safari on P3 displays renders sRGB hex colours without ICC management on some iOS
-   versions, making saturated hues (especially #bd0050) appear more vivid / vibrant
+   versions, making saturated hues (especially #e01466) appear more vivid / vibrant
    than on a standard sRGB desktop monitor.
    The overrides below use the mathematically-equivalent Display-P3 coordinates:
-     #bd0050  →  color(display-p3 0.679 0.138 0.317)
+     #e01466  →  color(display-p3 0.806 0.195 0.402)
      #ffa9b9  →  color(display-p3 0.951 0.678 0.727)
    so the perceived colour matches between iOS and desktop.
    Opacity-variant Tailwind classes (e.g. "bg-primary/20") are intentionally
@@ -185,56 +185,56 @@ img {
   @media (color-gamut: p3) {
 
     .skip-link {
-      background: color(display-p3 0.679 0.138 0.317);
+      background: color(display-p3 0.806 0.195 0.402);
     }
 
     .berry-gradient {
       background: linear-gradient(
         135deg,
-        color(display-p3 0.679 0.138 0.317) 0%,
+        color(display-p3 0.806 0.195 0.402) 0%,
         color(display-p3 0.951 0.678 0.727) 100%
       );
     }
 
     :focus-visible {
-      outline-color: color(display-p3 0.679 0.138 0.317);
+      outline-color: color(display-p3 0.806 0.195 0.402);
     }
 
     input[type="range"] {
       background: linear-gradient(
         to right,
-        color(display-p3 0.679 0.138 0.317) 65%,
+        color(display-p3 0.806 0.195 0.402) 65%,
         #e6e8ec 65%
       );
     }
 
     input[type="range"]::-webkit-slider-thumb {
-      border-color: color(display-p3 0.679 0.138 0.317);
-      box-shadow: 0 2px 8px color(display-p3 0.679 0.138 0.317 / 0.3);
+      border-color: color(display-p3 0.806 0.195 0.402);
+      box-shadow: 0 2px 8px color(display-p3 0.806 0.195 0.402 / 0.3);
     }
 
     input[type="range"]::-webkit-slider-thumb:hover {
-      box-shadow: 0 4px 12px color(display-p3 0.679 0.138 0.317 / 0.4);
+      box-shadow: 0 4px 12px color(display-p3 0.806 0.195 0.402 / 0.4);
     }
 
     input[type="range"]::-moz-range-thumb {
-      border-color: color(display-p3 0.679 0.138 0.317);
-      box-shadow: 0 2px 8px color(display-p3 0.679 0.138 0.317 / 0.3);
+      border-color: color(display-p3 0.806 0.195 0.402);
+      box-shadow: 0 2px 8px color(display-p3 0.806 0.195 0.402 / 0.3);
     }
 
     input[type="range"]:focus-visible {
-      outline-color: color(display-p3 0.679 0.138 0.317);
+      outline-color: color(display-p3 0.806 0.195 0.402);
     }
 
     .prose-konditor ul li::before {
-      background: color(display-p3 0.679 0.138 0.317);
+      background: color(display-p3 0.806 0.195 0.402);
     }
 
     /* Tailwind solid-colour utility overrides */
-    .bg-primary     { background-color: color(display-p3 0.679 0.138 0.317) !important; }
-    .text-primary   { color:            color(display-p3 0.679 0.138 0.317) !important; }
-    .border-primary { border-color:     color(display-p3 0.679 0.138 0.317) !important; }
-    .fill-primary   { fill:             color(display-p3 0.679 0.138 0.317) !important; }
-    .ring-primary   { --tw-ring-color:  color(display-p3 0.679 0.138 0.317) !important; }
+    .bg-primary     { background-color: color(display-p3 0.806 0.195 0.402) !important; }
+    .text-primary   { color:            color(display-p3 0.806 0.195 0.402) !important; }
+    .border-primary { border-color:     color(display-p3 0.806 0.195 0.402) !important; }
+    .fill-primary   { fill:             color(display-p3 0.806 0.195 0.402) !important; }
+    .ring-primary   { --tw-ring-color:  color(display-p3 0.806 0.195 0.402) !important; }
   }
 }

@@ -21,3 +21,6 @@ node_modules/
 dist/
 .env
 .env.local
+
+# Tailwind standalone CLI (baixado pelo scripts/build-css.sh)
+.tools/

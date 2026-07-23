@@ -204,7 +204,7 @@
         output.textContent = input.value + '%';
         var pct = ((input.value - input.min) / (input.max - input.min)) * 100;
         input.style.backgroundImage =
-          'linear-gradient(to right, #bd0050 ' + pct + '%, #e6e8ec ' + pct + '%)';
+          'linear-gradient(to right, #e01466 ' + pct + '%, #e6e8ec ' + pct + '%)';
       }
 
       input.addEventListener('input', sync);
@@ -412,6 +412,50 @@
     return String(str)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /* ─────────────────────────────────────────────
+     Máscara de moeda (R$) — campos de preço com 2 casas
+     Baseada em centavos: o cliente digita só números e os centavos são
+     posicionados automaticamente (ex: "1234" → "12,34"), sem digitar vírgula.
+     (Não inclui o custo/unidade do ingrediente, que precisa de mais casas.)
+  ───────────────────────────────────────────── */
+  var MONEY_MAX = 1000000; // espelha o limite do backend (LimitesValores.MAX_VALOR)
+  var MONEY_INPUT_IDS = ['ci-preco-compra', 'input-valor-hora', 'input-preco-final', 'edit-preco-final'];
+
+  /** "1.234,56" (ou "12,34", "8,5") → 1234.56. Retorna NaN se não houver dígitos. */
+  function parseMoney(str) {
+    if (str == null) return NaN;
+    var digits = String(str).replace(/\D/g, '');
+    if (digits === '') return NaN;
+    return parseInt(digits, 10) / 100;
+  }
+
+  /** 1234.56 → "1.234,56" (sem o símbolo R$, que já fica ao lado do input). */
+  function formatMoney(num) {
+    if (num == null || isNaN(num)) return '';
+    return Number(num).toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  /** Reformata o valor do input como moeda, aplicando o teto MONEY_MAX. */
+  function aplicarMascaraMoeda(el) {
+    var n = parseMoney(el.value);
+    if (isNaN(n)) { el.value = ''; return; }
+    if (n > MONEY_MAX) n = MONEY_MAX;
+    el.value = formatMoney(n);
+  }
+
+  /** Liga a máscara nos campos de preço da página (formata valor inicial + on input). */
+  function initMoneyMasks() {
+    MONEY_INPUT_IDS.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (el.value.trim() !== '') aplicarMascaraMoeda(el);
+      el.addEventListener('input', function () { aplicarMascaraMoeda(el); });
+    });
   }
 
   function filterRecipeCards(categoria) {
@@ -1087,7 +1131,7 @@
       /* Track fill */
       if (sliderEl) {
         var pct = ((pctVal - Number(sliderEl.min)) / (Number(sliderEl.max) - Number(sliderEl.min))) * 100;
-        sliderEl.style.backgroundImage = 'linear-gradient(to right, #bd0050 ' + pct + '%, #e6e8ec ' + pct + '%)';
+        sliderEl.style.backgroundImage = 'linear-gradient(to right, #e01466 ' + pct + '%, #e6e8ec ' + pct + '%)';
       }
     }
 
@@ -1535,7 +1579,7 @@
           + '<span class="font-medium text-sm text-on-surface truncate" title="' + escHtml(ing.nome) + '">' + escHtml(ing.nome) + '</span>'
           + '</div>'
           + '<div class="col-span-3 flex items-center justify-end">'
-          + '<input type="number" min="0.001" step="any" class="ingredient-qty-input w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-xl text-right font-bold py-1.5 px-3 text-sm transition-all shadow-sm" value="' + escHtml(String(ing.quantidade || '')) + '" placeholder="Qtd." />'
+          + '<input type="number" min="0.001" max="1000000" step="any" class="ingredient-qty-input w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-xl text-right font-bold py-1.5 px-3 text-sm transition-all shadow-sm" value="' + escHtml(String(ing.quantidade || '')) + '" placeholder="Qtd." />'
           + '</div>'
           + '<div class="col-span-4 flex items-center">'
           + '<span class="ml-2 text-sm font-bold text-outline uppercase">' + escHtml(ing.unidadeSimbolo) + '</span>'
@@ -1677,7 +1721,7 @@
     [inpValorHora, inpCustFixos, inpMargemLucro, rendInput, tempoInput].forEach(function (el) {
       if (el) el.addEventListener('input', function () {
         /* Update display badges */
-        if (inpValorHora && pctMaoDisplay) pctMaoDisplay.textContent = 'R$' + (parseFloat(inpValorHora.value) || 0).toFixed(2) + '/h';
+        if (inpValorHora && pctMaoDisplay) pctMaoDisplay.textContent = 'R$' + (parseMoney(inpValorHora.value) || 0).toFixed(2) + '/h';
         if (inpCustFixos && pctFixDisplay) {
           pctFixDisplay.textContent = state.custosFixosTipo === 'percentual'
             ? (parseFloat(inpCustFixos.value) || 0) + '%'
@@ -1701,7 +1745,7 @@
 
       var rendQtd      = parseFloat(rendInput ? rendInput.value : '') || 1;
       var rendUndId    = rendUndSelect && rendUndSelect.value ? rendUndSelect.value : null;
-      var valorHora    = parseFloat(inpValorHora ? inpValorHora.value : '') || 0;
+      var valorHora    = parseMoney(inpValorHora ? inpValorHora.value : '') || 0;
       var custFixosVal = parseFloat(inpCustFixos ? inpCustFixos.value : '') || 0;
       var margem       = pctVal(inpMargemLucro, 30);
       var tempoMin     = parseTempoMinutos();
@@ -1748,7 +1792,7 @@
       if (elPrecoSug)  elPrecoSug.textContent  = fmtBRL(data.precoSugerido);
       /* Auto-preenche precoFinal se o cliente não editou manualmente */
       if (!state.precoFinalManual && data.precoSugerido != null && elPrecoFinal) {
-        elPrecoFinal.value = Number(data.precoSugerido).toFixed(2);
+        elPrecoFinal.value = formatMoney(data.precoSugerido);
       }
       /* Preço por unidade na linha abaixo */
       var elPrecoUnid = document.getElementById('val-preco-por-unidade');
@@ -1761,7 +1805,7 @@
       var margem = Math.round(data.margemUtilizada || data.margem || 0);
       if (elMargem) elMargem.textContent = margem + '%';
       /* Mão de obra badge */
-      if (pctMaoDisplay && inpValorHora) pctMaoDisplay.textContent = 'R$' + (parseFloat(inpValorHora.value) || 0).toFixed(2) + '/h';
+      if (pctMaoDisplay && inpValorHora) pctMaoDisplay.textContent = 'R$' + (parseMoney(inpValorHora.value) || 0).toFixed(2) + '/h';
       /* Custos fixos badge */
       if (pctFixDisplay && inpCustFixos) {
         pctFixDisplay.textContent = state.custosFixosTipo === 'percentual'
@@ -1824,7 +1868,7 @@
 
     function buildPayload(status) {
       var rendQtd  = parseFloat(rendInput ? rendInput.value : '') || 1;
-      var precoFin = elPrecoFinal ? parseFloat(elPrecoFinal.value) : NaN;
+      var precoFin = elPrecoFinal ? parseMoney(elPrecoFinal.value) : NaN;
       var cd = state.calcData;
       var payload = {
         nome:                nomInput  ? nomInput.value.trim() : '',
@@ -1841,7 +1885,7 @@
         notas:      notasInput ? notasInput.value.trim() : '',
         precoFinal: isNaN(precoFin) || precoFin < 0 ? 0 : precoFin,
         /* Parâmetros de configuração de cálculo — sempre enviados */
-        maoDeObraValorHora: cd && cd.maoDeObraValorHora != null ? cd.maoDeObraValorHora : (parseFloat(inpValorHora ? inpValorHora.value : '') || 0),
+        maoDeObraValorHora: cd && cd.maoDeObraValorHora != null ? cd.maoDeObraValorHora : (parseMoney(inpValorHora ? inpValorHora.value : '') || 0),
         custosFixosValor:   cd && cd.custosFixosValor   != null ? cd.custosFixosValor   : (parseFloat(inpCustFixos ? inpCustFixos.value : '') || 0),
         custosFixosTipo:    (cd && cd.custosFixosTipo)  || state.custosFixosTipo,
         margemDesejada:     cd && cd.margemUtilizada    != null ? cd.margemUtilizada     : pctVal(inpMargemLucro, 30)
@@ -1972,10 +2016,6 @@
     var qtdEmbalagemInput = document.getElementById('ci-qtd-embalagem');
     var precoCalcBadge    = document.getElementById('ci-preco-calc-badge');
     var unidadeSufixo     = document.getElementById('ci-unidade-sufixo');
-    var estoqueToggle  = document.getElementById('ci-estoque-toggle');
-    var estoqueFields  = document.getElementById('ci-estoque-fields');
-    var estoqueQtd     = document.getElementById('ci-estoque-qtd');
-    var estoqueAlerta  = document.getElementById('ci-estoque-alerta');
     var notasInput     = document.getElementById('ci-notas');
     var btnSalvar      = document.getElementById('btn-salvar-ingrediente');
     var tooltipBox     = document.getElementById('ci-tooltip-box');
@@ -1985,11 +2025,8 @@
     var prevCodigo     = document.getElementById('ci-prev-codigo');
     var prevPreco      = document.getElementById('ci-prev-preco');
     var prevUnidade    = document.getElementById('ci-prev-unidade');
-    var prevEstoque    = document.getElementById('ci-prev-estoque');
     var prevCat        = document.getElementById('ci-prev-cat');
     var prevUnd        = document.getElementById('ci-prev-und');
-    var prevEstoqueVal = document.getElementById('ci-prev-estoque-val');
-    var prevAlertaVal  = document.getElementById('ci-prev-alerta-val');
 
     /* ── Toast ── */
     function showToast(msg, tipo) {
@@ -2035,25 +2072,10 @@
       });
     });
 
-    /* ── Estoque toggle ── */
-    if (estoqueToggle) {
-      estoqueToggle.addEventListener('change', function () {
-        if (estoqueFields) {
-          estoqueFields.style.opacity  = estoqueToggle.checked ? '' : '0.4';
-          estoqueFields.style.pointerEvents = estoqueToggle.checked ? '' : 'none';
-        }
-        if (!estoqueToggle.checked) {
-          if (estoqueQtd)    estoqueQtd.value    = '';
-          if (estoqueAlerta) estoqueAlerta.value = '';
-        }
-        atualizarPreview();
-      });
-    }
-
     /* ── Calculadora por embalagem ── */
     function calcularCusto() {
       if (!precoCompraInput || !qtdEmbalagemInput || !precoInput) return;
-      var preco = parseFloat(precoCompraInput.value);
+      var preco = parseMoney(precoCompraInput.value);
       var qtd   = parseFloat(qtdEmbalagemInput.value);
       if (preco > 0 && qtd > 0) {
         precoInput.value = parseFloat((preco / qtd).toFixed(6));
@@ -2077,8 +2099,6 @@
       var nome    = nomeInput   ? nomeInput.value.trim()   : '';
       var codigo  = codigoInput ? codigoInput.value.trim() : '';
       var preco   = precoInput  ? parseFloat(precoInput.value) : NaN;
-      var qtd     = estoqueQtd  ? parseFloat(estoqueQtd.value) : NaN;
-      var alerta  = estoqueAlerta ? parseFloat(estoqueAlerta.value) : NaN;
 
       /* Name */
       if (prevNome) prevNome.textContent = nome || 'Nome do ingrediente';
@@ -2115,32 +2135,10 @@
         var catOpt = catSelect.options[catSelect.selectedIndex];
         prevCat.textContent = (catOpt && catOpt.value) ? catOpt.text : '\u2014';
       }
-
-      /* Stock */
-      var undSym = (undSelect && undSelect.options[undSelect.selectedIndex])
-        ? (undSelect.options[undSelect.selectedIndex].dataset.simbolo || '') : '';
-      var qtdStr = (!isNaN(qtd) && estoqueToggle && estoqueToggle.checked)
-        ? qtd.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) + (undSym ? '\u00a0' + undSym : '')
-        : '\u2014';
-      var alertaStr = (!isNaN(alerta) && estoqueToggle && estoqueToggle.checked)
-        ? alerta.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) + (undSym ? '\u00a0' + undSym : '')
-        : '\u2014';
-      if (prevEstoqueVal) prevEstoqueVal.textContent = qtdStr;
-      if (prevAlertaVal)  prevAlertaVal.textContent  = alertaStr;
-
-      /* Card estoque badge */
-      if (prevEstoque) {
-        if (!isNaN(qtd) && estoqueToggle && estoqueToggle.checked) {
-          prevEstoque.textContent = qtdStr;
-          prevEstoque.classList.remove('hidden');
-        } else {
-          prevEstoque.classList.add('hidden');
-        }
-      }
     }
 
     /* Wire live preview listeners */
-    [nomeInput, codigoInput, precoInput, estoqueQtd, estoqueAlerta].forEach(function (el) {
+    [nomeInput, codigoInput, precoInput].forEach(function (el) {
       if (el) el.addEventListener('input', atualizarPreview);
     });
     if (catSelect)  catSelect.addEventListener('change',  atualizarPreview);
@@ -2201,12 +2199,6 @@
       if (desc)    payload.descricao  = desc;
       if (notas)   payload.notas      = notas;
       if (catId)   payload.categoriaId = catId;
-      if (estoqueToggle && estoqueToggle.checked) {
-        var qtd    = estoqueQtd    ? parseFloat(estoqueQtd.value)    : NaN;
-        var alerta = estoqueAlerta ? parseFloat(estoqueAlerta.value) : NaN;
-        if (!isNaN(qtd))    payload.estoqueQuantidade   = qtd;
-        if (!isNaN(alerta)) payload.estoqueAlertaMinimo = alerta;
-      }
       return payload;
     }
 
@@ -2332,14 +2324,6 @@
               if (precoInput)   precoInput.value   = data.precoPorUnidade != null ? data.precoPorUnidade : '';
               if (catSelect && data.categoriaId)  catSelect.value  = data.categoriaId;
               if (undSelect && data.unidadeId)    undSelect.value  = data.unidadeId;
-              var temEstoque = data.estoqueQuantidade != null || data.estoqueAlertaMinimo != null;
-              if (estoqueToggle) estoqueToggle.checked = temEstoque;
-              if (estoqueFields) {
-                estoqueFields.style.opacity      = temEstoque ? '' : '0.4';
-                estoqueFields.style.pointerEvents = temEstoque ? '' : 'none';
-              }
-              if (estoqueQtd    && data.estoqueQuantidade   != null) estoqueQtd.value    = data.estoqueQuantidade;
-              if (estoqueAlerta && data.estoqueAlertaMinimo != null) estoqueAlerta.value = data.estoqueAlertaMinimo;
               /* Update page title for edit mode */
               var h2 = document.querySelector('h2.font-headline');
               if (h2) h2.innerHTML = 'Editar <span class="text-primary italic">Ingrediente</span>';
@@ -2365,7 +2349,6 @@
      Ingredientes — ingredientes.html
      GET /ingredientes/categorias         → chips de filtro
      GET /ingredientes/estoque/resumo     → painéis de resumo
-     GET /ingredientes/estoque/alertas-mercado → alerta de mercado
      GET /ingredientes/estoque            → grid paginado
   ───────────────────────────────────────────── */
   function initIngredientes() {
@@ -2381,12 +2364,24 @@
     var carregando     = false;
 
     /* ── DOM refs ── */
-    var alertaCount     = document.getElementById('alerta-count');
-    var alertaLista     = document.getElementById('alerta-lista');
-    var alertaTimestamp = document.getElementById('alerta-timestamp');
     var statTotal       = document.getElementById('stat-total-ingredientes');
-    var statCritico     = document.getElementById('stat-estoque-critico');
     var filterGroup     = document.getElementById('filter-chips-ingredientes');
+
+    /* ── Card → tela de edição (criar-ingrediente.html?id=) ──
+       Delegação no grid: sobrevive a re-renders e à paginação. */
+    function abrirEdicao(card) {
+      var id = card && card.getAttribute('data-id');
+      if (id) window.location.href = 'criar-ingrediente.html?id=' + encodeURIComponent(id);
+    }
+    grid.addEventListener('click', function (e) {
+      var card = e.target.closest('[data-id]');
+      if (card && grid.contains(card)) abrirEdicao(card);
+    });
+    grid.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var card = e.target.closest('[data-id]');
+      if (card && grid.contains(card)) { e.preventDefault(); abrirEdicao(card); }
+    });
 
     /* ── Chip classes ── */
     var CHIP_ACTIVE   = ['bg-primary', 'text-on-primary'];
@@ -2404,15 +2399,6 @@
     var _catCorMap = {};
 
     function buildIngredienteCard(item) {
-      var isCritico = item.estoqueCritico;
-      var priceCls  = isCritico ? 'text-error' : 'text-secondary';
-
-      /* Left accent color */
-      var accentCls = isCritico ? 'border-error' : 'border-primary/20';
-      var wrapCls   = isCritico
-        ? 'bg-error/[0.03] hover:bg-error/[0.06]'
-        : 'bg-surface-container-lowest hover:bg-surface-container-low';
-
       /* Category pill — tinted with cor from API if available */
       var catPill = '';
       if (item.categoria) {
@@ -2425,11 +2411,6 @@
       /* Code */
       var codeHtml = item.codigo
         ? '<span class="text-[10px] font-bold uppercase tracking-wider text-outline-variant">' + escHtml(item.codigo) + '</span>'
-        : '';
-
-      /* Critical badge */
-      var critBadge = isCritico
-        ? '<span class="flex items-center gap-0.5 text-[10px] font-bold text-error"><span class="material-symbols-outlined" style="font-size:0.85rem">warning</span>Cr\u00edtico</span>'
         : '';
 
       /* Price */
@@ -2450,44 +2431,35 @@
           + '</span>';
       }
 
-      /* Stock */
-      var estoqueHtml = '';
-      if (item.estoque !== null && item.estoque !== undefined) {
-        var estoqueNum = Number(item.estoque);
-        var estoqueCls = isCritico ? 'text-error font-semibold' : 'text-on-surface-variant';
-        estoqueHtml = '<span class="text-xs ' + estoqueCls + '">'
-          + estoqueNum.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) + (item.unidade ? '\u00a0' + escHtml(item.unidade) : '')
-          + (isCritico ? '\u00a0\u26a0' : '') + '</span>';
-      }
-
-      /* Icon tinted with category color when not critical */
-      var catCor2    = (!isCritico && item.categoriaId) ? (_catCorMap[item.categoriaId] || null) : null;
+      /* Icon tinted with category color */
+      var catCor2    = item.categoriaId ? (_catCorMap[item.categoriaId] || null) : null;
       var iconStyle  = catCor2 ? ' style="background:' + escHtml(catCor2) + '18;color:' + escHtml(catCor2) + '"' : '';
-      var iconBaseCl = isCritico ? 'bg-error/10 text-error' : (catCor2 ? '' : 'bg-secondary/10 text-secondary');
+      var iconBaseCl = catCor2 ? '' : 'bg-secondary/10 text-secondary';
 
-      return '<div class="rounded-2xl border-l-4 ' + accentCls + ' ' + wrapCls + ' transition-colors duration-200 cursor-pointer px-5 py-4 flex items-center gap-4"'
+      return '<div class="rounded-2xl border-l-4 border-primary/20 bg-surface-container-lowest hover:bg-surface-container-low transition-colors duration-200 cursor-pointer px-5 py-4 flex items-center gap-4"'
         + ' data-id="' + escHtml(item.id || '') + '"'
+        + ' role="button" tabindex="0"'
+        + ' aria-label="Editar ' + escHtml(item.nome) + '"'
         + ' data-categoria-id="' + escHtml(item.categoriaId || '') + '">'
         /* Icon */
         + '<div class="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ' + iconBaseCl + '"' + iconStyle + '>'
-        + '<span class="material-symbols-outlined" style="font-size:1.25rem">'
-        + (isCritico ? 'warning' : 'grocery') + '</span></div>'
+        + '<span class="material-symbols-outlined" style="font-size:1.25rem">grocery</span></div>'
         /* Main info */
         + '<div class="flex-1 min-w-0">'
         + '<div class="flex items-center gap-2 flex-wrap">'
         + '<p class="font-headline font-bold text-sm text-on-surface truncate">' + escHtml(item.nome) + '</p>'
-        + catPill + critBadge
+        + catPill
         + '</div>'
         + '<div class="flex items-center gap-2 mt-0.5 flex-wrap">'
         + codeHtml
-        + (codeHtml && item.descricao ? '<span class="text-outline-variant text-[10px]">·</span>' : '')
+        + (codeHtml && item.descricao ? '<span class="text-outline-variant text-[10px]">\u00b7</span>' : '')
         + (item.descricao ? '<span class="text-[10px] text-on-surface-variant truncate max-w-[200px]">' + escHtml(item.descricao) + '</span>' : '')
         + '</div>'
         + '</div>'
-        /* Right: price + stock */
+        /* Right: price + variation */
         + '<div class="text-right shrink-0">'
-        + '<p class="font-headline font-extrabold text-base ' + priceCls + '">' + precoStr + '<span class="text-[10px] font-normal text-outline-variant">' + unidadeStr + '</span></p>'
-        + '<div class="flex items-center justify-end gap-1.5 mt-0.5">' + estoqueHtml + varPill + '</div>'
+        + '<p class="font-headline font-extrabold text-base text-secondary">' + precoStr + '<span class="text-[10px] font-normal text-outline-variant">' + unidadeStr + '</span></p>'
+        + '<div class="flex items-center justify-end gap-1.5 mt-0.5">' + varPill + '</div>'
         + '</div>'
         + '</div>';
     }
@@ -2554,38 +2526,6 @@
           if (filterGroup) filterGroup.querySelectorAll('[data-ingr-chip]').forEach(function (c) { c.disabled = false; });
           if (!append) grid.innerHTML = '<p class="col-span-full text-center text-on-surface-variant py-16">Erro ao carregar ingredientes.</p>';
         });
-    }
-
-    /* ── Render alerta de mercado ── */
-    function renderAlertaMercado(alertas) {
-      if (!alertaLista || !alertas || !alertas.length) return;
-      var total = alertas.length;
-      var top   = alertas.slice(0, 3);
-      if (alertaCount) alertaCount.textContent = total + ' Atualiza\u00e7\u00e3o' + (total !== 1 ? '\u00f5es' : '');
-      alertaLista.innerHTML = top.map(function (a) {
-        var isAlta  = a.tipo === 'alta';
-        var varCls  = isAlta ? 'text-error' : 'text-secondary';
-        var varStr  = isAlta
-          ? '+' + Number(a.variacaoPercent).toFixed(1) + '%'
-          : '\u2212' + Math.abs(Number(a.variacaoPercent)).toFixed(1) + '%';
-        /* precoAnterior → precoAtual */
-        var priceRange = '';
-        if (a.precoAnterior != null && a.precoAtual != null) {
-          var fmtAnt = Number(a.precoAnterior).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-          var fmtAt  = Number(a.precoAtual).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-          priceRange = '<span class="text-[10px] text-outline-variant block">' + fmtAnt + ' \u2192 ' + fmtAt + '</span>';
-        }
-        return '<li class="flex justify-between items-start gap-2 text-sm">'
-          + '<span class="text-on-surface-variant leading-snug">' + escHtml(a.ingredienteNome) + priceRange + '</span>'
-          + '<span class="font-bold ' + varCls + ' shrink-0">' + varStr + '</span>'
-          + '</li>';
-      }).join('');
-      if (alertaTimestamp && alertas.length) {
-        /* timestamp from the most recently changed alert across all */
-        var latest     = alertas.reduce(function (m, a) { return new Date(a.dataAlteracao) > new Date(m.dataAlteracao) ? a : m; }, alertas[0]);
-        var horasAtras = Math.max(1, Math.round((Date.now() - new Date(latest.dataAlteracao)) / 3600000));
-        alertaTimestamp.textContent = 'Atualizado h\u00e1 ' + horasAtras + (horasAtras === 1 ? ' hora' : ' horas');
-      }
     }
 
     /* ── Wire all chip clicks (called after DOM chips are ready) ── */
@@ -2657,20 +2597,14 @@
       Promise.all([
         apiFetch(API + '/ingredientes/categorias').then(function (r) { return r.ok ? r.json() : []; }),
         apiFetch(API + '/ingredientes/estoque/resumo').then(function (r) { return r.ok ? r.json() : null; }),
-        apiFetch(API + '/ingredientes/estoque/alertas-mercado').then(function (r) { return r.ok ? r.json() : []; }),
         apiFetch(API + '/ingredientes/estoque?pagina=0&tamanho=20').then(function (r) { return r.ok ? r.json() : null; })
       ]).then(function (results) {
         var categorias  = results[0];
         var resumo      = results[1];
-        var alertas     = results[2];
-        var estoqueData = results[3];
+        var estoqueData = results[2];
 
-        if (resumo) {
-          if (statTotal)   statTotal.textContent   = resumo.totalIngredientes;
-          if (statCritico) statCritico.textContent = resumo.estoqueCritico;
-        }
+        if (resumo && statTotal) statTotal.textContent = resumo.totalIngredientes;
 
-        renderAlertaMercado(alertas);
         renderCategorias(categorias);
 
         if (estoqueData) {
@@ -2921,7 +2855,7 @@
     /* ── Build PUT payload ── */
     function buildPayload() {
       var rendQtd  = parseFloat(rendInput ? rendInput.value : '') || 1;
-      var precoFin = precoFinalInput ? parseFloat(precoFinalInput.value) : NaN;
+      var precoFin = precoFinalInput ? parseMoney(precoFinalInput.value) : NaN;
       var tempoMin = tempoInput && tempoInput.value ? parseInt(tempoInput.value) || 0 : 0;
       var cd = state.calcData;
       var payload = {
@@ -3102,7 +3036,7 @@
           if (rendInput)      rendInput.value      = data.rendimentoQuantidade != null ? data.rendimentoQuantidade : '';
           if (tempoInput)     tempoInput.value     = data.tempoPreparoMinutos != null  ? data.tempoPreparoMinutos  : '';
           if (notasInput)     notasInput.value     = data.notas           || '';
-          if (precoFinalInput) precoFinalInput.value = data.precoFinal != null ? data.precoFinal : '';
+          if (precoFinalInput) precoFinalInput.value = data.precoFinal != null ? formatMoney(data.precoFinal) : '';
           if (catSelect && data.categoriaId) catSelect.value = data.categoriaId;
           if (rendUndSelect && data.rendimentoUnidadeId) {
             rendUndSelect.value = data.rendimentoUnidadeId;
@@ -3158,9 +3092,36 @@
   }
 
   /* ─────────────────────────────────────────────
+     Number limits — clamp de inputs numéricos ao sair do campo
+     Contém valores exorbitantes/digitação equivocada nos formulários.
+     Usa delegação (focusout borbulha) para cobrir inputs adicionados
+     dinamicamente (ex: linhas de ingrediente da receita).
+  ───────────────────────────────────────────── */
+  function initNumberLimits() {
+    document.addEventListener('focusout', function (e) {
+      var el = e.target;
+      if (!el || el.tagName !== 'INPUT' || el.type !== 'number' || el.value === '') return;
+      var val = parseFloat(el.value);
+      if (isNaN(val)) return;
+      var max = el.getAttribute('max');
+      var min = el.getAttribute('min');
+      var novo = null;
+      if (max !== null && val > parseFloat(max)) novo = max;
+      else if (min !== null && val < parseFloat(min)) novo = min;
+      if (novo !== null) {
+        el.value = novo;
+        /* dispara input para recalcular custos/prévias que dependem do campo */
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+  }
+
+  /* ─────────────────────────────────────────────
      Init
   ───────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', function () {
+    initNumberLimits();
+    initMoneyMasks();
     initSidebarHtml();
     initSidebar();
     initMobileNav();

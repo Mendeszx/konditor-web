@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/konditor.css" />
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="assets/css/tailwind.css" />
   <script src="assets/js/konditor-config.js"></script>
 </head>
 <body class="bg-background font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
@@ -31,7 +31,7 @@
   <aside id="app-sidebar" class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-lowest flex flex-col p-6 gap-2 -translate-x-full lg:translate-x-0" aria-label="Menu principal"></aside>
 
   <!-- Main Content -->
-  <main id="main-content" class="lg:ml-64 p-12 min-h-screen">
+  <main id="main-content" class="lg:ml-64 p-6 md:p-12 min-h-screen">
     <div class="max-w-4xl mx-auto">
 
       <!-- Loading skeleton -->
@@ -170,7 +170,7 @@
           <!-- Preço Final -->
           <div class="space-y-2">
             <label for="edit-preco-final" class="text-[10px] uppercase tracking-wider font-bold text-outline font-label ml-2">Preço de Venda (R$)</label>
-            <input id="edit-preco-final" type="number" min="0" step="0.01"
+            <input id="edit-preco-final" type="text" inputmode="decimal"
               class="w-full bg-white/70 border-2 border-outline-variant/30 focus:border-primary focus:ring-4 focus:ring-primary/20 rounded-2xl py-4 px-6 text-lg font-headline transition-all placeholder:text-outline-variant shadow-sm focus:shadow-lg"
               placeholder="0,00" />
           </div>
